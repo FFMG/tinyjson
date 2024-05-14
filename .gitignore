@@ -1,3 +1,11 @@
+# VStudio stuff
+/.vs
+/.vscode
+
+# Build directories
+/out
+/build
+
 # Prerequisites
 *.d
 
