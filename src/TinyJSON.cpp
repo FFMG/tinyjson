@@ -28,176 +28,50 @@ namespace TinyJSON
   {
   }
 
-  TinyJSON* TinyJSON::Parse(const char* src)
+  TJValue* TinyJSON::Parse(const char* src)
   {
     const char* p = src;
 
     return start(p);
   }
 
-  TinyJSON* TinyJSON::start(const char*& p)
+  TJValue* TinyJSON::start(const char*& p)
   {
+    // at the root we can only have an array or an object.
+    // not both and not more than one
+    TJValue* object_found = nullptr;
     while (*p != '\0') 
     {
       char c = *p;
       switch (c)
       {
       TJ_CASE_SPACE
+        p++;
         break;
 
       TJ_CASE_BEGIN_OBJECT
       {
-        auto tjobject = new TJObject();
-        auto json = tjobject->finish_object(++p);
-        if (nullptr == json)
+        auto tjvalue_object = TJMember::try_continue_read_object(++p);
+        if (nullptr == tjvalue_object)
         {
-          //  something went wrong, the error was logged.
-          delete tjobject;
-        }
-        return json;
-      }
-
-      default:
-        break;
-      }
-      p++;
-    }
-
-    // something went wrong.
-    return nullptr;
-  }
-
-  ///////////////////////////////////////
-  /// TJObject
-  TJObject::TJObject() : 
-    _members(nullptr)
-  {
-  }
-
-  TJObject::~TJObject()
-  {
-    free_elements();
-  }
-
-  void TJObject::free_elements()
-  {
-    if (_members != nullptr)
-    {
-      for each (auto var in *_members)
-      {
-        delete var;
-      }
-      delete _members;
-      _members = nullptr;
-    }
-  }
-
-  const TJValue* TJObject::try_get_value(const char* name) const
-  {
-    if (nullptr == name)
-    {
-      return nullptr;
-    }
-    if (nullptr == _members)
-    {
-      return nullptr;
-    }
-
-    auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
-      return stricmp(name, value->name()) == 0;
-      });
-    
-    return (it == _members->end()) ? nullptr : (*it)->value();
-  }
-
-  const char* TJObject::try_get_string(const char* name) const
-  {
-    auto value = try_get_value(name);
-    return (value == nullptr) ? nullptr : value->ToString();
-  }
-
-  TJObject* TJObject::finish_object(const char*& p)
-  {
-    TJObject* object_created = nullptr;
-    bool after_string = false;
-    bool waiting_for_a_string = false;
-    while (*p != '\0')
-    {
-      char c = *p;
-      switch (c)
-      {
-        TJ_CASE_SPACE
-          p++;
-          break;
-
-        TJ_CASE_END_OBJECT
-          if (nullptr != object_created)
-          {
-            // ERROR we tried to close the object more than once.
-            //       the object is complete so it does not make sense to have this here.
-            return nullptr;
-          }
-
-          //  we are now done with this object.
-          object_created = this;
-          
-          // but is it what we expected?
-          if (waiting_for_a_string)
-          {
-            // ERROR: unexpected end of object, there was a "," after
-            //        the last string and we expected a string now, not a close "}"
-            return nullptr;
-          }
-          p++;
-          break;
-
-        TJ_CASE_START_STRING
-        {
-          // we got our string, no longer waiting for one.
-          waiting_for_a_string = false;
-
-          // we are no longer after the string
-          after_string = false;
-
-          // read the actual string and value
-          // that's the way it has to be.
-          auto element = TJMember::try_read_string_and_value(p);
-          if (element == nullptr)
-          {
-            // ERROR: There was an error reading the name and/or the value
-            return nullptr;
-          }
-          if (nullptr == _members)
-          {
-            _members = new std::vector<TJMember*>();
-          }
-          _members->push_back(element);
-          after_string = true;
-        }
-        break;
-
-      TJ_CASE_COMMA
-        if(!after_string)
-        {
-          // ERROR: found a comma out of order
+          // Error:  something went wrong, the error was logged.
           return nullptr;
         }
-        // we are no longer after the string
-        after_string = false;
-        waiting_for_a_string = true;
-        p++;
-        break;
+        object_found = tjvalue_object;
+      }
+      break;
 
       default:
-        // ERROR: unknown character
+        //  no idea what this is.
+        // clear our memory and return the error.
+        delete object_found;
         return nullptr;
       }
     }
 
-    // return what we might have found
-    return object_created;
+    // return if we found anything.
+    return object_found;
   }
-
 
   ///////////////////////////////////////
   /// TJMember
@@ -227,7 +101,7 @@ namespace TinyJSON
     {
       return false;
     }
-    _value->ToString();
+    return _value->to_string();
   }
 
   void TJMember::free_string()
@@ -325,6 +199,19 @@ namespace TinyJSON
           return nullptr;
         }
         return new TJMember(string, new TJValueNull());
+
+      TJ_CASE_BEGIN_OBJECT
+        {
+          // an object within the object
+          auto tjvalue_object = try_continue_read_object(++p);
+          if (tjvalue_object == nullptr)
+          {
+            // Error:  something went wrong, the error was logged.
+            delete tjvalue_object;
+            return nullptr;
+          }
+          return new TJMember(string, tjvalue_object);
+        }
 
       default:
         // ERROR: expected colon after the string
@@ -469,6 +356,112 @@ namespace TinyJSON
     return nullptr;
   }
 
+  TJValue* TJMember::try_read_object(const char*& p)
+  {
+    if (*p != '{')
+    {
+      return nullptr;
+    }
+    ++p;
+    return try_continue_read_object(p);
+  }
+
+  void TJMember::free_members(std::vector<TJMember*>* members)
+  {
+    if (members == nullptr)
+    {
+      return;
+    }
+
+    for each (auto var in *members)
+    {
+      delete var;
+    }
+    delete members;
+    members = nullptr;
+  }
+
+  TJValue* TJMember::try_continue_read_object(const char*& p)
+  {
+    //  assume no members in that object.
+    std::vector<TJMember*>* members = nullptr;
+    bool after_string = false;
+    bool waiting_for_a_string = false;
+    while (*p != '\0')
+    {
+      char c = *p;
+      switch (c)
+      {
+      TJ_CASE_SPACE
+        p++;
+        break;
+
+      TJ_CASE_END_OBJECT
+        // but is it what we expected?
+        if (waiting_for_a_string)
+        {
+          // ERROR: unexpected end of object, there was a "," after
+          //        the last string and we expected a string now, not a close "}"
+          free_members(members);
+          return false;
+        }
+        p++;
+
+        // we are done, we found it.
+        // we give the ownership of the members over.
+        return new TJValueObject(members);
+
+      TJ_CASE_START_STRING
+      {
+        // we got our string, no longer waiting for one.
+        waiting_for_a_string = false;
+
+        // we are no longer after the string
+        after_string = false;
+
+        // read the actual string and value
+        // that's the way it has to be.
+        auto element = TJMember::try_read_string_and_value(p);
+        if (element == nullptr)
+        {
+          // ERROR: There was an error reading the name and/or the value
+          free_members(members);
+          return nullptr;
+        }
+        if (nullptr == members)
+        {
+          members = new std::vector<TJMember*>();
+        }
+        members->push_back(element);
+        after_string = true;
+      }
+      break;
+
+      TJ_CASE_COMMA
+        if (!after_string)
+        {
+          // ERROR: found a comma out of order
+          free_members(members);
+          return nullptr;
+        }
+        // we are no longer after the string
+        after_string = false;
+        waiting_for_a_string = true;
+        p++;
+        break;
+
+      default:
+        // ERROR: unknown character
+        free_members(members);
+        return nullptr;
+      }
+    }
+
+    // ERROR end of the string was found and we didn't find what we needed.
+    free_members(members);
+    return nullptr;
+  }
+
   ///////////////////////////////////////
   /// TJValue
   TJValue::TJValue()
@@ -501,7 +494,7 @@ namespace TinyJSON
     _value = nullptr;
   }
 
-  const char* TJValueString::ToString() const
+  const char* TJValueString::to_string() const
   {
     return _value;
   }
@@ -512,7 +505,7 @@ namespace TinyJSON
   {
   }
 
-  const char* TJValueTrue::ToString() const
+  const char* TJValueTrue::to_string() const
   {
     return "true";
   }
@@ -523,7 +516,7 @@ namespace TinyJSON
   {
   }
 
-  const char* TJValueFalse::ToString() const
+  const char* TJValueFalse::to_string() const
   {
     return "false";
   }
@@ -534,8 +527,69 @@ namespace TinyJSON
   {
   }
 
-  const char* TJValueNull::ToString() const
+  const char* TJValueNull::to_string() const
   {
     return "null";
+  }
+
+  ///////////////////////////////////////
+  /// TJValueObject
+  TJValueObject::TJValueObject() :
+    _members(nullptr)
+  {
+  }
+
+  TJValueObject::TJValueObject(std::vector<TJMember*>* members) :
+    _members(members)
+  {
+  }
+
+  TJValueObject::~TJValueObject()
+  {
+    free_members();
+  }
+
+  const char* TJValueObject::to_string() const
+  {
+    return "TJValueObject";
+  }
+
+  void TJValueObject::free_members()
+  {
+    if (_members == nullptr)
+    {
+      return;
+    }
+
+    for each (auto var in *_members)
+    {
+      delete var;
+    }
+    delete _members;
+    _members = nullptr;
+  }
+
+  const TJValue* TJValueObject::try_get_value(const char* name) const
+  {
+    if (nullptr == name)
+    {
+      return nullptr;
+    }
+    if (nullptr == _members)
+    {
+      return nullptr;
+    }
+
+    auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
+      return stricmp(name, value->name()) == 0;
+      });
+
+    return (it == _members->end()) ? nullptr : (*it)->value();
+  }
+
+  const char* TJValueObject::try_get_string(const char* name) const
+  {
+    auto value = try_get_value(name);
+    return (value == nullptr) ? nullptr : value->to_string();
   }
 } // TinyJSON
