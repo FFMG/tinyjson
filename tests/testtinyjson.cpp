@@ -1,3 +1,6 @@
+// Licensed to Florent Guelfucci under one or more agreements.
+// Florent Guelfucci licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 #if defined(_MSC_VER)
 #  define _CRTDBG_MAP_ALLOC
 #  include <stdlib.h>

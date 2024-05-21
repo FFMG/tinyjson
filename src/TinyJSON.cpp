@@ -1,10 +1,13 @@
+// Licensed to Florent Guelfucci under one or more agreements.
+// Florent Guelfucci licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 #include "TinyJSON.h"
 
 #include <algorithm>
 
-#define TJ_CASE_SPACE         case ' ': \
-                              case '\t':\
-                              case '\n':\
+#define TJ_CASE_SPACE         case ' ':  \
+                              case '\t': \
+                              case '\n': \
                               case '\r':
 
 #define TJ_CASE_START_STRING  case '"':
@@ -14,6 +17,7 @@
 #define TJ_CASE_COLON         case ':':
 
 #define TJ_CASE_BEGIN_OBJECT  case '{':
+
 #define TJ_CASE_END_OBJECT    case '}':
 
 namespace TinyJSON
