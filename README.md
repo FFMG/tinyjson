@@ -2,6 +2,16 @@
 
 TinyJSON is a fast and small C++ JSON parser
 
+## Simple example
+
+In versy simple terms 
+
+```cpp
+  auto json = TinyJSON::TinyJSON::Parse( "{ \"Hello\" : \"World\" }" );
+  auto value = json->try_get_string("Hello"); //  "World"
+  auto no_value = json->try_get_string("Life"); //  null
+```
+
 ## Getting Started
 
 All you need is to include the .h and .cpp file to your project and you are ready to go.
@@ -26,3 +36,5 @@ All you need is to include the .h and .cpp file to your project and you are read
 [] More tests!
 [] Version number
 [x] Copyright
+[] Add 2 kinds of error handling, either throw or return an error structure.
+[] Automated build
