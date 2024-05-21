@@ -74,7 +74,7 @@ TEST(TestBasic, TheStringNameValueIsSaved) {
   EXPECT_NE(nullptr, json);
   EXPECT_NE(nullptr, dynamic_cast<TinyJSON::TJObject*>(json));
 
-  EXPECT_STREQ(json->TryGet("Hello"), "World");
+  EXPECT_STREQ(json->try_get_string("Hello"), "World");
 
   delete json;
 }
@@ -91,7 +91,7 @@ TEST(TestBasic, TheStringNameValueIsSavedMultiLine) {
   EXPECT_NE(nullptr, json);
   EXPECT_NE(nullptr, dynamic_cast<TinyJSON::TJObject*>(json));
 
-  EXPECT_STREQ(json->TryGet("Hello"), "World");
+  EXPECT_STREQ(json->try_get_string("Hello"), "World");
 
   delete json;
 }
@@ -108,9 +108,9 @@ TEST(TestBasic, TheStringNameValueIsSavedNultiplItems) {
   EXPECT_NE(nullptr, json);
   EXPECT_NE(nullptr, dynamic_cast<TinyJSON::TJObject*>(json));
 
-  EXPECT_STREQ(json->TryGet("a name"), "a value");
-  EXPECT_STREQ(json->TryGet("b name"), "b value");
-  EXPECT_STREQ(json->TryGet("c name"), "c value");
+  EXPECT_STREQ(json->try_get_string("a name"), "a value");
+  EXPECT_STREQ(json->try_get_string("b name"), "b value");
+  EXPECT_STREQ(json->try_get_string("c name"), "c value");
   
   delete json;
 }
@@ -135,6 +135,89 @@ TEST(TestBasic, CommaAfterTheLastString) {
 )"
 );
   EXPECT_EQ(nullptr, json);
+
+  delete json;
+}
+
+TEST(TestBasic, CheckForTrue) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : true
+}
+)"
+);
+  EXPECT_NE(nullptr, json);
+  EXPECT_NE(nullptr, dynamic_cast<TinyJSON::TJObject*>(json));
+
+  EXPECT_STREQ(json->try_get_string("a"), "true");
+  EXPECT_NE(nullptr, json->try_get_value("a"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueTrue*>(json->try_get_value("a")));
+
+  delete json;
+}
+
+TEST(TestBasic, CheckForFalse) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : false
+}
+)"
+);
+  EXPECT_NE(nullptr, json);
+  EXPECT_NE(nullptr, dynamic_cast<TinyJSON::TJObject*>(json));
+
+  EXPECT_STREQ(json->try_get_string("a"), "false");
+  EXPECT_NE(nullptr, json->try_get_value("a"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueFalse*>(json->try_get_value("a")));
+
+  delete json;
+}
+
+TEST(TestBasic, CheckForNull) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : null
+}
+)"
+);
+  EXPECT_NE(nullptr, json);
+  EXPECT_NE(nullptr, dynamic_cast<TinyJSON::TJObject*>(json));
+
+  EXPECT_STREQ(json->try_get_string("a"), "null");
+  EXPECT_NE(nullptr, json->try_get_value("a"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueNull*>(json->try_get_value("a")));
+
+  delete json;
+}
+
+TEST(TestBasic, CheckForDifferentValueTypes) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : null,
+  "b" : true,
+  "c" : false,
+  "d" : "world"
+}
+)"
+);
+  EXPECT_NE(nullptr, json);
+  EXPECT_NE(nullptr, dynamic_cast<TinyJSON::TJObject*>(json));
+
+  EXPECT_STREQ(json->try_get_string("a"), "null");
+  EXPECT_NE(nullptr, json->try_get_value("a"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueNull*>(json->try_get_value("a")));
+
+  EXPECT_STREQ(json->try_get_string("b"), "true");
+  EXPECT_NE(nullptr, json->try_get_value("b"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueTrue*>(json->try_get_value("b")));
+
+  EXPECT_STREQ(json->try_get_string("c"), "false");
+  EXPECT_NE(nullptr, json->try_get_value("c"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueFalse*>(json->try_get_value("c")));
+
+  EXPECT_STREQ(json->try_get_string("d"), "world");
+  EXPECT_NE(nullptr, json->try_get_value("d"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueString*>(json->try_get_value("d")));
 
   delete json;
 }

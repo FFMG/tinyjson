@@ -29,7 +29,14 @@ namespace TinyJSON
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    virtual const char* TryGet(const char* name) const = 0;
+    virtual const char* try_get_string(const char* name) const = 0;
+
+    /// <summary>
+    /// Try and get the value of this member if it exists.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    virtual const TJValue* try_get_value(const char* name) const = 0;
 
   protected:
     static TinyJSON* start(const char*& p);
@@ -47,7 +54,14 @@ namespace TinyJSON
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    const char* TryGet(const char* name) const;
+    const char* try_get_string(const char* name) const;
+
+    /// <summary>
+    /// Try and get the value of this member if it exists.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    virtual const TJValue* try_get_value(const char* name) const;
 
   protected:
     TJObject* finish_object(const char*& p);
@@ -67,16 +81,21 @@ namespace TinyJSON
     TJMember(const char* string, const TJValue* value);
     virtual ~TJMember();
 
-    const char* Name() const
+    const char* name() const
     {
       return _string;
+    }
+
+    const TJValue* value() const
+    {
+      return _value;
     }
 
     /// <summary>
     /// Try and get a string representation of the value.
     /// </summary>
     /// <returns></returns>
-    const char* ToString() const;
+    const char* to_string() const;
 
   protected:
     // create while passing the ownership of the memory.
@@ -84,6 +103,9 @@ namespace TinyJSON
 
     static TJMember* try_read_string_and_value(const char*& p);
     static char* try_read_string(const char*& p);
+    static bool try_read_true(const char*& p);
+    static bool try_read_false(const char*& p);
+    static bool try_read_null(const char*& p);
 
   private:
     char* _string;
@@ -129,5 +151,47 @@ namespace TinyJSON
   private:
     char* _value;
     void free_value();
+  };
+
+  // A true bolean JSon
+  class TJValueTrue : public TJValue
+  {
+  public:
+    TJValueTrue();
+    virtual ~TJValueTrue() = default;
+
+    /// <summary>
+    /// Try and get a string representation of the value.
+    /// </summary>
+    /// <returns></returns>
+    const char* ToString() const;
+  };
+
+  // A true bolean JSon
+  class TJValueFalse : public TJValue
+  {
+  public:
+    TJValueFalse();
+    virtual ~TJValueFalse() = default;
+
+    /// <summary>
+    /// Try and get a string representation of the value.
+    /// </summary>
+    /// <returns></returns>
+    const char* ToString() const;
+  };
+
+  // A true bolean JSon
+  class TJValueNull : public TJValue
+  {
+  public:
+    TJValueNull();
+    virtual ~TJValueNull() = default;
+
+    /// <summary>
+    /// Try and get a string representation of the value.
+    /// </summary>
+    /// <returns></returns>
+    const char* ToString() const;
   };
 } // TinyJSON

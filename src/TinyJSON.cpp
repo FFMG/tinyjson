@@ -92,7 +92,7 @@ namespace TinyJSON
     }
   }
 
-  const char* TJObject::TryGet(const char* name) const 
+  const TJValue* TJObject::try_get_value(const char* name) const
   {
     if (nullptr == name)
     {
@@ -104,13 +104,16 @@ namespace TinyJSON
     }
 
     auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
-      return stricmp(name, value->Name()) == 0;
+      return stricmp(name, value->name()) == 0;
       });
-    if (it == _members->end())
-    {
-      return nullptr;
-    }
-    return (*it)->ToString();
+    
+    return (it == _members->end()) ? nullptr : (*it)->value();
+  }
+
+  const char* TJObject::try_get_string(const char* name) const
+  {
+    auto value = try_get_value(name);
+    return (value == nullptr) ? nullptr : value->ToString();
   }
 
   TJObject* TJObject::finish_object(const char*& p)
@@ -218,7 +221,7 @@ namespace TinyJSON
     free_value();
   }
 
-  const char* TJMember::ToString() const
+  const char* TJMember::to_string() const
   {
     if (nullptr == _value)
     {
@@ -293,9 +296,35 @@ namespace TinyJSON
 
         // whave read the string
         // no need to try and move further forward.
-
         return new TJMember(string, new TJValueString(value));
       }
+
+      case 't':
+        if (!try_read_true(p))
+        {
+          //  ERROR could not read the word 'true'
+          delete[] string;
+          return nullptr;
+        }
+        return new TJMember(string, new TJValueTrue());
+
+      case 'f':
+        if (!try_read_false(p))
+        {
+          //  ERROR could not read the word 'true'
+          delete[] string;
+          return nullptr;
+        }
+        return new TJMember(string, new TJValueFalse());
+
+      case 'n':
+        if (!try_read_null(p))
+        {
+          //  ERROR could not read the word 'true'
+          delete[] string;
+          return nullptr;
+        }
+        return new TJMember(string, new TJValueNull());
 
       default:
         // ERROR: expected colon after the string
@@ -307,6 +336,85 @@ namespace TinyJSON
     // ERROR: Unable to read a string and/or value
     delete[] string;
     return nullptr;
+  }
+
+  bool TJMember::try_read_true(const char*& p)
+  {
+    if (*p != 't')
+    {
+      return false;
+    }
+    if (*(p + 1) != 'r')
+    {
+      return false;
+    }
+    if (*(p + 2) != 'u')
+    {
+      return false;
+    }
+    if (*(p + 3) != 'e')
+    {
+      return false;
+    }
+
+    p += 4;
+
+    // all good.
+    return true;
+  }
+
+  bool TJMember::try_read_false(const char*& p)
+  {
+    if (*p != 'f')
+    {
+      return false;
+    }
+    if (*(p + 1) != 'a')
+    {
+      return false;
+    }
+    if (*(p + 2) != 'l')
+    {
+      return false;
+    }
+    if (*(p + 3) != 's')
+    {
+      return false;
+    }
+    if (*(p + 4) != 'e')
+    {
+      return false;
+    }
+
+    p += 5;
+
+    // all good.
+    return true;
+  }
+
+  bool TJMember::try_read_null(const char*& p)
+  {
+    if (*p != 'n')
+    {
+      return false;
+    }
+    if (*(p + 1) != 'u')
+    {
+      return false;
+    }
+    if (*(p + 2) != 'l')
+    {
+      return false;
+    }
+    if (*(p + 3) != 'l')
+    {
+      return false;
+    }
+
+    p += 4;
+
+    // all good.
+    return true;
   }
 
   char* TJMember::try_read_string(const char*& p)
@@ -396,5 +504,38 @@ namespace TinyJSON
   const char* TJValueString::ToString() const
   {
     return _value;
+  }
+
+  ///////////////////////////////////////
+  /// TJValue true
+  TJValueTrue::TJValueTrue()
+  {
+  }
+
+  const char* TJValueTrue::ToString() const
+  {
+    return "true";
+  }
+
+  ///////////////////////////////////////
+  /// TJValue false
+  TJValueFalse::TJValueFalse()
+  {
+  }
+
+  const char* TJValueFalse::ToString() const
+  {
+    return "false";
+  }
+
+  ///////////////////////////////////////
+  /// TJValue null
+  TJValueNull::TJValueNull()
+  {
+  }
+
+  const char* TJValueNull::ToString() const
+  {
+    return "null";
   }
 } // TinyJSON
