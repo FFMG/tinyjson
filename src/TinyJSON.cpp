@@ -4,6 +4,21 @@
 #include "TinyJSON.h"
 
 #include <algorithm>
+#include <cmath> 
+
+#define TJ_CASE_SIGN          case '-': \
+                              case '+': 
+
+#define TJ_CASE_DIGIT         case '0': \
+                              case '1': \
+                              case '2': \
+                              case '3': \
+                              case '4': \
+                              case '5': \
+                              case '6': \
+                              case '7': \
+                              case '8': \
+                              case '9': 
 
 #define TJ_CASE_SPACE         case ' ':  \
                               case '\t': \
@@ -200,6 +215,19 @@ namespace TinyJSON
         }
         return new TJMember(string, new TJValueNull());
 
+      TJ_CASE_DIGIT
+      TJ_CASE_SIGN
+        {
+          auto number = try_read_number(p);
+          if (nullptr == number)
+          {
+            //  ERROR could not read the word 'true'
+            delete[] string;
+            return nullptr;
+          }
+          return new TJMember(string, number);
+        }
+
       TJ_CASE_BEGIN_OBJECT
         {
           // an object within the object
@@ -279,6 +307,53 @@ namespace TinyJSON
     return true;
   }
 
+  TJValue* TJMember::try_read_number(const char*& p)
+  {
+    bool is_negative = false;
+    if (*p == '-')
+    {
+      is_negative = true;
+      p++;
+    }
+
+    // then try and read the digit.
+    auto possible_number = try_read_whole_number(p);
+    if (nullptr == possible_number)
+    {
+      // ERROR: Could not locate he number.
+      return nullptr;
+    }
+
+    // we can now put it all together.
+    const auto& unsigned_whole_number = std::strtoull(possible_number, nullptr, 10);
+    delete[] possible_number;
+
+    bool is_fraction = false;
+    unsigned long long unsigned_fraction = 0;
+    if (*p == '.')
+    {
+      p++;
+      auto possible_fraction_number = try_read_whole_number(p);
+      if (nullptr == possible_fraction_number)
+      {
+        // ERROR: we cannot have a number like '-12.' or '42.
+        return nullptr;
+      }
+
+      unsigned_fraction = std::strtoull(possible_fraction_number, nullptr, 10);
+      delete [] possible_fraction_number;
+    }
+
+    if (unsigned_fraction == 0)
+    {
+      auto number = new TJValueNumberInt(unsigned_whole_number, is_negative);
+      return number;
+    }
+
+    auto number = new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, is_negative);
+    return number;
+  }
+
   bool TJMember::try_read_null(const char*& p)
   {
     if (*p != 'n')
@@ -302,6 +377,48 @@ namespace TinyJSON
 
     // all good.
     return true;
+  }
+
+  char* TJMember::try_read_whole_number(const char*& p)
+  {
+    const char* start = nullptr;
+    const char* end = nullptr;
+    while (*p != '\0')
+    {
+      char c = *p;
+      switch (c)
+      {
+      TJ_CASE_DIGIT
+        if (nullptr == start)
+        {
+          start = p; // this is the start
+        }
+        p++;
+        break;
+
+        break;
+
+      default:
+        // if we are still in the string, then we are good.
+        if (nullptr == start)
+        {
+          // ERROR: unknown character
+          return nullptr;
+        }
+
+        // Calculate the length of the text inside the quotes
+        const auto& length = p - start;
+
+        // Allocate memory for the result string
+        char* result = new char[length + 1];
+        std::strncpy(result, start, length);
+        result[length] = '\0'; // Null-terminate the string
+        return result;
+      }
+    }
+
+    // // ERROR: we could not close the object.
+    return nullptr;
   }
 
   char* TJMember::try_read_string(const char*& p)
@@ -591,5 +708,59 @@ namespace TinyJSON
   {
     auto value = try_get_value(name);
     return (value == nullptr) ? nullptr : value->to_string();
+  }
+
+  ///////////////////////////////////////
+  /// TJValue Number
+  TJValueNumber::TJValueNumber(const bool is_negative) : 
+    _is_negative(is_negative)
+  {
+  }
+
+  const char* TJValueNumber::to_string() const
+  {
+    return "number";
+  }
+
+  ///////////////////////////////////////
+  /// TJValue whole Number
+  TJValueNumberInt::TJValueNumberInt(const unsigned long long& number, const bool is_negative) :
+    TJValueNumber(is_negative),
+    _number(number)
+  {
+  }
+
+  const long long TJValueNumberInt::get_number() const
+  {
+    return _is_negative ? -1* _number : _number;
+  }
+
+  ///////////////////////////////////////
+  /// TJValue float Number
+  TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long fraction, bool is_negative) :
+    TJValueNumber(is_negative),
+    _number(number),
+    _fraction(fraction)
+  {
+  }
+
+  const long double TJValueNumberFloat::get_number() const
+  {
+    if (_fraction == 0) {
+      return static_cast<const long double>(_number);
+    }
+
+    short digits = 0;
+    long long copy = _fraction;
+    while (copy != 0) {
+      copy /= 10;
+      digits++;
+    }
+
+    // Convert b to its fractional form
+    long double fraction = _fraction / std::pow(10, digits);
+
+    // Combine the number and the fraction
+    return _is_negative ? -1*(_number + fraction) : _number + fraction;
   }
 } // TinyJSON

@@ -60,6 +60,9 @@ namespace TinyJSON
     static bool try_read_true(const char*& p);
     static bool try_read_false(const char*& p);
     static bool try_read_null(const char*& p);
+    static TJValue* try_read_number(const char*& p);
+    static char* try_read_whole_number(const char*& p);
+
     /// <summary>
     /// Try and read a complete object {}
     /// </summary>
@@ -203,5 +206,50 @@ namespace TinyJSON
     std::vector<TJMember*>* _members;
 
     void free_members();
+  };
+
+  // A number JSon, float or int
+  class TJValueNumber : public TJValue
+  {
+  protected:
+    TJValueNumber(const bool is_negative);
+    virtual ~TJValueNumber() = default;
+
+  public:
+    /// <summary>
+    /// Try and get a string representation of the value.
+    /// </summary>
+    /// <returns></returns>
+    const char* to_string() const;
+
+  protected:
+    const bool _is_negative;
+  };
+
+  // A number JSon, float or int
+  class TJValueNumberInt : public TJValueNumber
+  {
+  public:
+    TJValueNumberInt(const unsigned long long& number, const bool is_negative);
+    virtual ~TJValueNumberInt() = default;
+
+    const long long get_number() const;
+
+  private:
+    const long long _number;
+  };
+
+  // A number JSon, float or int
+  class TJValueNumberFloat : public TJValueNumber
+  {
+  public:
+    TJValueNumberFloat(const unsigned long long& number, const unsigned long long fraction, bool is_negative);
+    virtual ~TJValueNumberFloat() = default;
+
+    const long double get_number() const;
+
+  private:
+    const unsigned long long _number;
+    const unsigned long long _fraction;
   };
 } // TinyJSON

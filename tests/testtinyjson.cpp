@@ -272,3 +272,98 @@ TEST(TestBasic, ObjectInsideAnObject) {
 
   delete json;
 }
+
+TEST(TestBasic, ObjectMultipleDepth) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : true,
+  "b" : {
+    "aa" : true,
+    "bb" : {
+      "aaa" : true,
+      "bbb" : {
+        "aaaa" : true
+      }
+    }
+  }
+}
+)"
+);
+  EXPECT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  EXPECT_NE(nullptr, jobject);
+
+  auto valueb = dynamic_cast<const TinyJSON::TJValueObject*>(jobject->try_get_value("b"));
+  EXPECT_NE(nullptr, valueb);
+
+  auto valuebb = dynamic_cast<const TinyJSON::TJValueObject*>(valueb->try_get_value("bb"));
+  EXPECT_NE(nullptr, valuebb);
+
+  auto valuebbb = dynamic_cast<const TinyJSON::TJValueObject*>(valuebb->try_get_value("bbb"));
+  EXPECT_NE(nullptr, valuebbb);
+
+  // finally check that the value are correct.
+  EXPECT_STREQ(valuebbb->try_get_string("aaaa"), "true");
+  EXPECT_NE(nullptr, valuebbb->try_get_value("aaaa"));
+  EXPECT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueTrue*>(valuebbb->try_get_value("aaaa")));
+
+  delete json;
+}
+
+TEST(TestBasic, WholeNumbers) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12
+  "b" : -42,
+  "c" : 42.00
+}
+)"
+);
+  EXPECT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  EXPECT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
+  EXPECT_NE(nullptr, valuea);
+  EXPECT_EQ(12, valuea->get_number());
+
+  auto valueb = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("b"));
+  EXPECT_NE(nullptr, valueb);
+  EXPECT_EQ(-42, valueb->get_number());
+
+  // c is still an integer even if it was given as a fraction
+  auto valuec = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("c"));
+  EXPECT_NE(nullptr, valuec);
+  EXPECT_EQ(42, valuec->get_number());
+
+  delete json;
+}
+
+TEST(TestBasic, FractionNUmbers) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12.1
+  "b" : -42.6,
+  "c" : 42.17
+}
+)"
+);
+  EXPECT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  EXPECT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
+  EXPECT_NE(nullptr, valuea);
+  EXPECT_EQ(12.1, valuea->get_number());
+
+  auto valueb = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("b"));
+  EXPECT_NE(nullptr, valueb);
+  EXPECT_EQ(-42.6, valueb->get_number());
+
+  // c is still an integer even if it was given as a fraction
+  auto valuec = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("c"));
+  EXPECT_NE(nullptr, valuec);
+  EXPECT_EQ(42.17, valuec->get_number());
+
+  delete json;
+}
