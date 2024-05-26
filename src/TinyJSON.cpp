@@ -333,7 +333,7 @@ namespace TinyJSON
     if (*p == '.')
     {
       p++;
-      auto possible_fraction_number = try_read_whole_number(p);
+      auto possible_fraction_number = try_read_whole_number_as_fraction(p);
       if (nullptr == possible_fraction_number)
       {
         // ERROR: we cannot have a number like '-12.' or '42.
@@ -377,6 +377,26 @@ namespace TinyJSON
 
     // all good.
     return true;
+  }
+
+  char* TJMember::try_read_whole_number_as_fraction(const char*& p)
+  {
+    // try read the number
+    auto whole_number = try_read_whole_number(p);
+    if (nullptr == whole_number)
+    {
+      return nullptr;
+    }
+    // trip the trailling zeros are they are not needed in a fraction
+    // but we need to make sure that we have at least one
+    // so 42.000000 becomes 42.0
+    auto len = std::strlen(whole_number);
+    while (len > 1 && whole_number[len - 1] == '0')
+    {
+      whole_number[len - 1] = '\0';
+      --len;
+    }
+    return whole_number;
   }
 
   char* TJMember::try_read_whole_number(const char*& p)

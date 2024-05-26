@@ -62,6 +62,7 @@ namespace TinyJSON
     static bool try_read_null(const char*& p);
     static TJValue* try_read_number(const char*& p);
     static char* try_read_whole_number(const char*& p);
+    static char* try_read_whole_number_as_fraction(const char*& p);
 
     /// <summary>
     /// Try and read a complete object {}
