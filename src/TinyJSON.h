@@ -61,7 +61,8 @@ namespace TinyJSON
     static bool try_read_false(const char*& p);
     static bool try_read_null(const char*& p);
     static TJValue* try_read_number(const char*& p);
-    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction);
+    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const long long& exponent);
+    static int get_number_of_digits(const unsigned long long& number);
     static char* try_read_whole_number(const char*& p);
     static char* try_read_whole_number_as_fraction(const char*& p);
 

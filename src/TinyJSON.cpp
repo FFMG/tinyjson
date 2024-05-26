@@ -343,21 +343,101 @@ namespace TinyJSON
       delete [] possible_fraction_number;
     }
 
-    return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction);
+    long long exponent = 0;
+    if (*p == 'e' || *p == 'E')
+    {
+      p++;
+
+      bool is_negative_exponent = false;
+      if (*p == '-')
+      {
+        is_negative_exponent = true;
+        p++;
+      }
+      const auto& possible_exponent = try_read_whole_number(p);
+      if (nullptr == possible_exponent)
+      {
+        // ERROR: we cannot have a number like '-12.' or '42.
+        return nullptr;
+      }
+
+      const auto& unsigned_exponent = std::strtoull(possible_exponent, nullptr, 10);
+      delete[] possible_exponent;
+
+      if (0 == unsigned_exponent)
+      {
+        // ERROR: we cannot have an exponent with zero.
+        return nullptr;
+      }
+      exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
+    }
+    return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, exponent);
   }
 
-  TJValue* TJMember::try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction)
+  TJValue* TJMember::try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const long long& exponent)
   {
-    if (unsigned_fraction == 0)
+    if (exponent == 0)
     {
-      if (unsigned_whole_number == 0)
+      if (unsigned_fraction == 0)
       {
-        return new TJValueNumberInt(unsigned_whole_number, false);
+        if (unsigned_whole_number == 0)
+        {
+          return new TJValueNumberInt(unsigned_whole_number, false);
+        }
+        return new TJValueNumberInt(unsigned_whole_number, is_negative);
       }
-      return new TJValueNumberInt(unsigned_whole_number, is_negative);
+      return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, is_negative);
     }
 
-    return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, is_negative);
+    // if the number is 
+    // 123.456 with e=2
+    // then the number will become
+    // 12345.6 e=0
+    auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
+    auto number_of_digit_fraction = get_number_of_digits(unsigned_fraction);
+    if (exponent > 0)
+    {
+      if (number_of_digit_fraction <= exponent)
+      {
+        auto shifted_unsigned_whole_number = unsigned_whole_number * std::pow(10, number_of_digit_fraction);
+        shifted_unsigned_whole_number += unsigned_fraction;
+        if (exponent - number_of_digit_fraction > 0)
+        {
+          shifted_unsigned_whole_number = shifted_unsigned_whole_number * std::pow(10, exponent - number_of_digit_fraction);
+        }
+        return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
+      }
+
+      // we cannot shift the full amount
+      // so we have something like
+      // 123.456e2
+      // we need to multiply the whole number by exponent
+      auto multiplier = std::pow(10, exponent);
+      auto divider = std::pow(10, number_of_digit_fraction - exponent);
+      auto shifted_unsigned_whole_number = unsigned_whole_number * multiplier;
+      // devide the fraction by fraction_digits - exponent
+      auto number_to_add = static_cast<unsigned long long>(unsigned_fraction / divider);
+      // add it to the wholenuber
+      shifted_unsigned_whole_number += number_to_add;
+
+      // finally we need to convert the fraction to just what we have not used.
+      auto shifted_unsigned_fraction = (unsigned_fraction)-(number_to_add * divider);
+
+      return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, is_negative);
+    }
+    return nullptr;
+  }
+
+  int TJMember::get_number_of_digits(const unsigned long long& number )
+  {
+    unsigned long long truncated_number = number;
+    int count = 0;
+    do
+    {
+      truncated_number /= 10;
+      ++count;
+    } while (truncated_number != 0);
+    return count;
   }
 
   bool TJMember::try_read_null(const char*& p)
@@ -527,6 +607,7 @@ namespace TinyJSON
   TJValue* TJMember::try_continue_read_object(const char*& p)
   {
     //  assume no members in that object.
+    bool found_comma = false;
     std::vector<TJMember*>* members = nullptr;
     bool after_string = false;
     bool waiting_for_a_string = false;
@@ -562,6 +643,16 @@ namespace TinyJSON
         // we are no longer after the string
         after_string = false;
 
+        // if we have members then it means we must have a comma
+        // as we are expecting the elements to be separated by a comma
+        // if we have no elements then it is the first one and it does not matter.
+        if (members != nullptr && !found_comma)
+        {
+          // ERROR: expected a comma after the last element
+          free_members(members);
+          return nullptr;
+        }
+
         // read the actual string and value
         // that's the way it has to be.
         auto element = TJMember::try_read_string_and_value(p);
@@ -575,6 +666,8 @@ namespace TinyJSON
         {
           members = new std::vector<TJMember*>();
         }
+
+        found_comma = false;
         members->push_back(element);
         after_string = true;
       }
@@ -590,6 +683,7 @@ namespace TinyJSON
         // we are no longer after the string
         after_string = false;
         waiting_for_a_string = true;
+        found_comma = true;
         p++;
         break;
 

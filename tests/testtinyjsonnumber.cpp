@@ -8,28 +8,28 @@
 TEST(TestNumbers, WholeNumbers) {
   auto json = TinyJSON::TinyJSON::Parse(R"(
 {
-  "a" : 12
+  "a" : 12,
   "b" : -42,
   "c" : 42.00
 }
 )"
 );
-  EXPECT_NE(nullptr, json);
+  ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
-  EXPECT_NE(nullptr, jobject);
+  ASSERT_NE(nullptr, jobject);
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
-  EXPECT_NE(nullptr, valuea);
-  EXPECT_EQ(12, valuea->get_number());
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(12, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("b"));
-  EXPECT_NE(nullptr, valueb);
-  EXPECT_EQ(-42, valueb->get_number());
+  ASSERT_NE(nullptr, valueb);
+  ASSERT_EQ(-42, valueb->get_number());
 
   // c is still an integer even if it was given as a fraction
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("c"));
-  EXPECT_NE(nullptr, valuec);
-  EXPECT_EQ(42, valuec->get_number());
+  ASSERT_NE(nullptr, valuec);
+  ASSERT_EQ(42, valuec->get_number());
 
   delete json;
 }
@@ -37,28 +37,28 @@ TEST(TestNumbers, WholeNumbers) {
 TEST(TestNumbers, WholeNumbersWithZeroDecimals) {
   auto json = TinyJSON::TinyJSON::Parse(R"(
 {
-  "a" : 12.10000
+  "a" : 12.10000,
   "b" : -42.000,
   "c" : 42.00
 }
 )"
 );
-  EXPECT_NE(nullptr, json);
+  ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
-  EXPECT_NE(nullptr, jobject);
+  ASSERT_NE(nullptr, jobject);
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
-  EXPECT_NE(nullptr, valuea);
-  EXPECT_EQ(12.1, valuea->get_number());
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(12.1, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("b"));
-  EXPECT_NE(nullptr, valueb);
-  EXPECT_EQ(-42, valueb->get_number());
+  ASSERT_NE(nullptr, valueb);
+  ASSERT_EQ(-42, valueb->get_number());
 
   // c is still an integer even if it was given as a fraction
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("c"));
-  EXPECT_NE(nullptr, valuec);
-  EXPECT_EQ(42, valuec->get_number());
+  ASSERT_NE(nullptr, valuec);
+  ASSERT_EQ(42, valuec->get_number());
 
   delete json;
 }
@@ -66,28 +66,28 @@ TEST(TestNumbers, WholeNumbersWithZeroDecimals) {
 TEST(TestNumbers, WholeNumbersIsZero) {
   auto json = TinyJSON::TinyJSON::Parse(R"(
 {
-  "a" : 0
+  "a" : 0,
   "b" : -0,
   "c" : 0.00
 }
 )"
 );
-  EXPECT_NE(nullptr, json);
+  ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
-  EXPECT_NE(nullptr, jobject);
+  ASSERT_NE(nullptr, jobject);
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
-  EXPECT_NE(nullptr, valuea);
-  EXPECT_EQ(0, valuea->get_number());
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(0, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("b"));
-  EXPECT_NE(nullptr, valueb);
-  EXPECT_EQ(0, valueb->get_number());
+  ASSERT_NE(nullptr, valueb);
+  ASSERT_EQ(0, valueb->get_number());
 
   // c is still an integer even if it was given as a fraction
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("c"));
-  EXPECT_NE(nullptr, valuec);
-  EXPECT_EQ(0, valuec->get_number());
+  ASSERT_NE(nullptr, valuec);
+  ASSERT_EQ(0, valuec->get_number());
 
   delete json;
 }
@@ -95,32 +95,32 @@ TEST(TestNumbers, WholeNumbersIsZero) {
 TEST(TestNumbers, FractionNUmbers) {
   auto json = TinyJSON::TinyJSON::Parse(R"(
 {
-  "a" : 12.1
+  "a" : 12.1,
   "b" : -42.6,
   "c" : 42.17,
   "d" : 0.12
 }
 )"
 );
-  EXPECT_NE(nullptr, json);
+  ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
-  EXPECT_NE(nullptr, jobject);
+  ASSERT_NE(nullptr, jobject);
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
-  EXPECT_NE(nullptr, valuea);
-  EXPECT_EQ(12.1, valuea->get_number());
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(12.1, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("b"));
-  EXPECT_NE(nullptr, valueb);
-  EXPECT_EQ(-42.6, valueb->get_number());
+  ASSERT_NE(nullptr, valueb);
+  ASSERT_EQ(-42.6, valueb->get_number());
 
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("c"));
-  EXPECT_NE(nullptr, valuec);
-  EXPECT_EQ(42.17, valuec->get_number());
+  ASSERT_NE(nullptr, valuec);
+  ASSERT_EQ(42.17, valuec->get_number());
 
   auto valued = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("d"));
-  EXPECT_NE(nullptr, valued);
-  EXPECT_EQ(0.12, valued->get_number());
+  ASSERT_NE(nullptr, valued);
+  ASSERT_EQ(0.12, valued->get_number());
 
   delete json;
 }
@@ -132,5 +132,86 @@ TEST(TestNumbers, InvalidWholeNumber) {
 }
 )"
 );
-  EXPECT_EQ(nullptr, json);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, InvalidMissingPositiveExponent) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12.2e
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, InvalidMissingNegativeExponent) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12.2-e
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, ExponentCannotBeZero) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12.2e0
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, FractionNUmbersWithExponentIsActuallyWholeNumber) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12.1e1,
+  "b" : 12.1e2,
+  "c" : 12.3e6
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(121, valuea->get_number());
+
+  auto valueb = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("b"));
+  ASSERT_NE(nullptr, valueb);
+  ASSERT_EQ(1210, valueb->get_number());
+
+  auto valuec = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("c"));
+  ASSERT_NE(nullptr, valuec);
+  ASSERT_EQ(12300000, valuec->get_number());
+
+  delete json;
+}
+
+TEST(TestNumbers, FractionNUmbersWithExponentRemoveUnusedExponent) {
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 123.456e2,
+  "b" : -123.456e2
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(12345.6, valuea->get_number());
+
+  auto valueb = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("b"));
+  ASSERT_NE(nullptr, valueb);
+  ASSERT_EQ(-12345.6, valueb->get_number());
+
+  delete json;
 }
