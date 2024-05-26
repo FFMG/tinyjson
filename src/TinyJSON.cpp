@@ -328,12 +328,11 @@ namespace TinyJSON
     const auto& unsigned_whole_number = std::strtoull(possible_number, nullptr, 10);
     delete[] possible_number;
 
-    bool is_fraction = false;
     unsigned long long unsigned_fraction = 0;
     if (*p == '.')
     {
       p++;
-      auto possible_fraction_number = try_read_whole_number_as_fraction(p);
+      const auto& possible_fraction_number = try_read_whole_number_as_fraction(p);
       if (nullptr == possible_fraction_number)
       {
         // ERROR: we cannot have a number like '-12.' or '42.
@@ -344,14 +343,21 @@ namespace TinyJSON
       delete [] possible_fraction_number;
     }
 
+    return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction);
+  }
+
+  TJValue* TJMember::try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction)
+  {
     if (unsigned_fraction == 0)
     {
-      auto number = new TJValueNumberInt(unsigned_whole_number, is_negative);
-      return number;
+      if (unsigned_whole_number == 0)
+      {
+        return new TJValueNumberInt(unsigned_whole_number, false);
+      }
+      return new TJValueNumberInt(unsigned_whole_number, is_negative);
     }
 
-    auto number = new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, is_negative);
-    return number;
+    return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, is_negative);
   }
 
   bool TJMember::try_read_null(const char*& p)
