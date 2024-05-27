@@ -43,7 +43,7 @@ namespace TinyJSON
   {
   }
 
-  TJValue* TinyJSON::Parse(const char* src)
+  TJValue* TinyJSON::parse(const char* src)
   {
     const char* p = src;
 
@@ -316,7 +316,7 @@ namespace TinyJSON
       p++;
     }
 
-    // then try and read the digit.
+    // then try and read the digit(s).
     auto possible_number = try_read_whole_number(p);
     if (nullptr == possible_number)
     {
@@ -324,11 +324,13 @@ namespace TinyJSON
       return nullptr;
     }
 
-    // we can now put it all together.
+    // convert that number to an unsigned long, long
     const auto& unsigned_whole_number = std::strtoull(possible_number, nullptr, 10);
     delete[] possible_number;
 
+    // read the faction if there is one.
     unsigned long long unsigned_fraction = 0;
+    unsigned int fraction_exponent = 0;
     if (*p == '.')
     {
       p++;
@@ -339,10 +341,13 @@ namespace TinyJSON
         return nullptr;
       }
 
+      // so 001 become exponent = 3
+      fraction_exponent = std::strlen(possible_fraction_number);
       unsigned_fraction = std::strtoull(possible_fraction_number, nullptr, 10);
       delete [] possible_fraction_number;
     }
 
+    // try read the exponent if there is one.
     long long exponent = 0;
     if (*p == 'e' || *p == 'E')
     {
@@ -371,49 +376,47 @@ namespace TinyJSON
       }
       exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
     }
-    return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, exponent);
+    return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent);
   }
 
-  TJValue* TJMember::try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const long long& exponent)
+  TJValue* TJMember::try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const long long& exponent)
   {
+    // no exponent number is int or float
     if (exponent == 0)
     {
       if (unsigned_fraction == 0)
       {
-        if (unsigned_whole_number == 0)
-        {
-          return new TJValueNumberInt(unsigned_whole_number, false);
-        }
-        return new TJValueNumberInt(unsigned_whole_number, is_negative);
+        // zero is a positive number
+        return new TJValueNumberInt(unsigned_whole_number, unsigned_whole_number == 0 ? false : is_negative);
       }
-      return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, is_negative);
+      return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, fraction_exponent, is_negative);
     }
 
-    // if the number is 
-    // 123.456 with e=2
-    // then the number will become
-    // 12345.6 e=0
+    // if the number is something like 123.456 with e=2
+    // then the number will become 12345.6 e=0
+    // so we need the number of digits.
     auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
-    auto number_of_digit_fraction = get_number_of_digits(unsigned_fraction);
+
+    // positive exponent.
     if (exponent > 0)
     {
-      if (number_of_digit_fraction <= exponent)
+      // more fractions than exponents so we can 
+      // move the fraction to the whole number, (and maybe add zeros)
+      if (fraction_exponent <= exponent)
       {
-        auto shifted_unsigned_whole_number = unsigned_whole_number * std::pow(10, number_of_digit_fraction);
+        auto shifted_unsigned_whole_number = unsigned_whole_number * std::pow(10, fraction_exponent);
         shifted_unsigned_whole_number += unsigned_fraction;
-        if (exponent - number_of_digit_fraction > 0)
+        if (exponent - fraction_exponent > 0)
         {
-          shifted_unsigned_whole_number = shifted_unsigned_whole_number * std::pow(10, exponent - number_of_digit_fraction);
+          shifted_unsigned_whole_number = shifted_unsigned_whole_number * std::pow(10, exponent - fraction_exponent);
         }
         return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
       }
 
-      // we cannot shift the full amount
-      // so we have something like
-      // 123.456e2
+      // we cannot shift the full amount so we have something like 123.456e2
       // we need to multiply the whole number by exponent
       auto multiplier = std::pow(10, exponent);
-      auto divider = std::pow(10, number_of_digit_fraction - exponent);
+      auto divider = std::pow(10, fraction_exponent - exponent);
       auto shifted_unsigned_whole_number = unsigned_whole_number * multiplier;
       // devide the fraction by fraction_digits - exponent
       auto number_to_add = static_cast<unsigned long long>(unsigned_fraction / divider);
@@ -423,9 +426,39 @@ namespace TinyJSON
       // finally we need to convert the fraction to just what we have not used.
       auto shifted_unsigned_fraction = (unsigned_fraction)-(number_to_add * divider);
 
-      return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, is_negative);
+      // we know it is a float.
+      return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, (fraction_exponent - exponent), is_negative);
     }
-    return nullptr;
+
+    // the exponent is negative, so we want to shift the whole number by the number of exponent,
+    auto positive_exponent = -1 * exponent;
+    auto multiplier = std::pow(10, number_of_digit_whole - positive_exponent);
+    auto divider = std::pow(10, positive_exponent);
+
+    // shift the while number
+    auto shifted_unsigned_whole_number = static_cast<unsigned long long>(unsigned_whole_number / divider);
+
+    // finally we need to convert the fraction to just what we have not used.
+    auto shifted_unsigned_fraction = 0;
+    if (unsigned_fraction > 0)
+    {
+      auto shifted_unsigned_fraction = static_cast<unsigned long long>(unsigned_fraction / divider);
+    }
+    const auto number_to_add = unsigned_whole_number - (shifted_unsigned_whole_number * divider);
+    shifted_unsigned_fraction += number_to_add;
+    if (shifted_unsigned_fraction == 0)
+    {
+      // it is an intiger
+      return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
+    }
+
+    // caluclate the fraction
+    // if we have something like 1200012e-3 then the whole number is 12 and the fraction is 0.00012
+    // but the while fraction number is '12' so we are shifting number of exponent + len of whole_fraction -1
+    const unsigned int shifted_fraction_exponent = positive_exponent;
+
+    // we know it is a float.
+    return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_fraction_exponent, is_negative);
   }
 
   int TJMember::get_number_of_digits(const unsigned long long& number )
@@ -857,10 +890,11 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue float Number
-  TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long fraction, bool is_negative) :
+  TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative) :
     TJValueNumber(is_negative),
     _number(number),
-    _fraction(fraction)
+    _fraction(fraction),
+    _fraction_exponent(fraction_exponent)
   {
   }
 
@@ -870,17 +904,11 @@ namespace TinyJSON
       return static_cast<const long double>(_number);
     }
 
-    short digits = 0;
-    long long copy = _fraction;
-    while (copy != 0) {
-      copy /= 10;
-      digits++;
-    }
-
     // Convert b to its fractional form
-    long double fraction = _fraction / std::pow(10, digits);
+    const long double& pow = std::powl(10, _fraction_exponent);
+    const auto& whole_number = _number * pow + _fraction;
 
     // Combine the number and the fraction
-    return _is_negative ? -1*(_number + fraction) : _number + fraction;
+    return (_is_negative ? -1 : 1) * (whole_number / pow);
   }
 } // TinyJSON

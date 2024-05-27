@@ -26,7 +26,7 @@ bool IsDerivedFrom() {
 }
 
 TEST(TestBasic, MakeSureThatEmptyStringIsKinkOfValueObject) {
-  auto json = TinyJSON::TinyJSON::Parse("{}");
+  auto json = TinyJSON::TinyJSON::parse("{}");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValueObject*>(json));
@@ -35,19 +35,19 @@ TEST(TestBasic, MakeSureThatEmptyStringIsKinkOfValueObject) {
 }
 
 TEST(TestBasic, InvalidJsonObjectReturnNull) {
-  auto json = TinyJSON::TinyJSON::Parse("{");
+  auto json = TinyJSON::TinyJSON::parse("{");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, InvalidJsonObject2ReturnNull) {
-  auto json = TinyJSON::TinyJSON::Parse( R"({
+  auto json = TinyJSON::TinyJSON::parse( R"({
     "a" : "b"
     )");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, TheObjectInsideTheObjectDoesNotCloseProperly) {
-  auto json = TinyJSON::TinyJSON::Parse(R"({
+  auto json = TinyJSON::TinyJSON::parse(R"({
      "a" : { 
       "a" : "b"
     }
@@ -55,7 +55,7 @@ TEST(TestBasic, TheObjectInsideTheObjectDoesNotCloseProperly) {
   ASSERT_EQ(nullptr, json);
 }
 TEST(TestBasic, HaveEnEmptyObjectWithNothing) {
-  auto json = TinyJSON::TinyJSON::Parse("{}");
+  auto json = TinyJSON::TinyJSON::parse("{}");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValueObject*>(json));
 
@@ -63,7 +63,7 @@ TEST(TestBasic, HaveEnEmptyObjectWithNothing) {
 }
 
 TEST(TestBasic, SpacesAreIgnored) {
-  auto json = TinyJSON::TinyJSON::Parse(" {  }  ");
+  auto json = TinyJSON::TinyJSON::parse(" {  }  ");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValueObject*>(json));
 
@@ -71,17 +71,17 @@ TEST(TestBasic, SpacesAreIgnored) {
 }
 
 TEST(TestBasic, InvalidCommaAfterTheClosedObject) {
-  auto json = TinyJSON::TinyJSON::Parse("{},");
+  auto json = TinyJSON::TinyJSON::parse("{},");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, ClosedObjectTwice) {
-  auto json = TinyJSON::TinyJSON::Parse("{}}");
+  auto json = TinyJSON::TinyJSON::parse("{}}");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, TheStringNameValueIsSaved) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "Hello" : "World"
 }
@@ -98,7 +98,7 @@ TEST(TestBasic, TheStringNameValueIsSaved) {
 }
 
 TEST(TestBasic, TheStringNameValueIsSavedMultiLine) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "Hello" 
     : 
@@ -116,7 +116,7 @@ TEST(TestBasic, TheStringNameValueIsSavedMultiLine) {
 }
 
 TEST(TestBasic, TheStringNameValueIsSavedNultiplItems) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a name" : "a value",
   "b name" : "b value",
@@ -136,7 +136,7 @@ TEST(TestBasic, TheStringNameValueIsSavedNultiplItems) {
 }
 
 TEST(TestBasic, CommaBeforeTheString) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   ,"a" : "a"
 }
@@ -148,7 +148,7 @@ TEST(TestBasic, CommaBeforeTheString) {
 }
 
 TEST(TestBasic, CommaAfterTheLastString) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : "a",
 }
@@ -160,7 +160,7 @@ TEST(TestBasic, CommaAfterTheLastString) {
 }
 
 TEST(TestBasic, CheckForTrue) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : true
 }
@@ -178,7 +178,7 @@ TEST(TestBasic, CheckForTrue) {
 }
 
 TEST(TestBasic, CheckForFalse) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : false
 }
@@ -196,7 +196,7 @@ TEST(TestBasic, CheckForFalse) {
 }
 
 TEST(TestBasic, CheckForNull) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : null
 }
@@ -214,7 +214,7 @@ TEST(TestBasic, CheckForNull) {
 }
 
 TEST(TestBasic, WeRequireACommaBetweenStringValues) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : "a",
   "b" : "b"
@@ -228,7 +228,7 @@ TEST(TestBasic, WeRequireACommaBetweenStringValues) {
 TEST(TestBasic, WeRequireACommaBetweenValuesOfNumbersAndObjects) {
 
   // missing a comma after the number
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : 12,
   "b" : {}
@@ -242,7 +242,7 @@ TEST(TestBasic, WeRequireACommaBetweenValuesOfNumbersAndObjects) {
 TEST(TestBasic, TwoCommaBetweenElementsIsNotValid) {
 
   // missing a comma after the number
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : 12,,
   "b" : 13
@@ -253,7 +253,7 @@ TEST(TestBasic, TwoCommaBetweenElementsIsNotValid) {
 }
 
 TEST(TestBasic, CheckForDifferentValueTypes) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : null,
   "b" : true,
@@ -286,7 +286,7 @@ TEST(TestBasic, CheckForDifferentValueTypes) {
 }
 
 TEST(TestBasic, ObjectInsideAnObject) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : {
     "b" : true
@@ -313,7 +313,7 @@ TEST(TestBasic, ObjectInsideAnObject) {
 }
 
 TEST(TestBasic, ObjectMultipleDepth) {
-  auto json = TinyJSON::TinyJSON::Parse(R"(
+  auto json = TinyJSON::TinyJSON::parse(R"(
 {
   "a" : true,
   "b" : {
