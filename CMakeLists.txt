@@ -16,7 +16,14 @@ enable_testing()
 # BUILD_TESTING variable is created by include(CTest)
 # It is set to ON by default
 if (BUILD_TESTING)
-    add_executable(tinyjsontest "tests/testtinyjson.cpp" "tests/testtinyjsonnumber.cpp" "src/TinyJSON.cpp")
+    add_executable(
+      tinyjsontest 
+      "tests/testtinyjson.cpp"
+      "tests/testtinyjsonbooleans.cpp"
+      "tests/testtinyjsonexponents.cpp"
+      "tests/testtinyjsonnumbers.cpp"
+      "tests/testtinyjsonstrings.cpp"
+      "src/TinyJSON.cpp")
     target_link_libraries(tinyjsontest PRIVATE GTest::gtest_main)
 
     include(GoogleTest)
