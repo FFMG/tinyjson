@@ -213,12 +213,39 @@ TEST(TestBasic, CheckForNull) {
   delete json;
 }
 
-TEST(TestBasic, WeRequireACommaBetweenValues) {
+TEST(TestBasic, WeRequireACommaBetweenStringValues) {
   auto json = TinyJSON::TinyJSON::Parse(R"(
 {
   "a" : "a",
   "b" : "b"
   "c" : "c"
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBasic, WeRequireACommaBetweenValuesOfNumbersAndObjects) {
+
+  // missing a comma after the number
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12,
+  "b" : {}
+  "c" : "c"
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBasic, TwoCommaBetweenElementsIsNotValid) {
+
+  // missing a comma after the number
+  auto json = TinyJSON::TinyJSON::Parse(R"(
+{
+  "a" : 12,,
+  "b" : 13
 }
 )"
 );
