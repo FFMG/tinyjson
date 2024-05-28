@@ -65,6 +65,7 @@ namespace TinyJSON
     static int get_number_of_digits(const unsigned long long& number);
     static char* try_read_whole_number(const char*& p);
     static char* try_read_whole_number_as_fraction(const char*& p);
+    static unsigned long long fast_string_to_long_long(const char* p);
 
     /// <summary>
     /// Try and read a complete object {}

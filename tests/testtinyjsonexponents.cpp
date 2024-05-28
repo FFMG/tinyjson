@@ -235,7 +235,8 @@ TEST(TestExponents, NumberShiftsEnoughToBecomeANumberAgain) {
 {
   "a" : 0.00001e+24,
   "b" : 0.00000000000000000001e+24,
-  "c" : 0.00000000000000000001e+18
+  "c" : 0.00000000000000000001e+18,
+  "d" : 0.00001000000000000001e+18
 }
 )"
 );
@@ -254,6 +255,10 @@ TEST(TestExponents, NumberShiftsEnoughToBecomeANumberAgain) {
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("c"));
   ASSERT_NE(nullptr, valuec);
   ASSERT_EQ(0.01, valuec->get_number());
+
+  auto valued = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("d"));
+  ASSERT_NE(nullptr, valued);
+  ASSERT_EQ(10000000000000.01, valued->get_number());
 
   delete json;
 }

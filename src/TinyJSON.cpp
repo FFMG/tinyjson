@@ -309,6 +309,87 @@ namespace TinyJSON
     return true;
   }
 
+  unsigned long long TJMember::fast_string_to_long_long(const char* p)
+  {
+    // then numbers are unsigned and should only contain digits.
+    unsigned long long result = 0;
+    while (*p != '\0')
+    {
+      char c = *p;
+      switch (c)
+      {
+      TJ_CASE_SPACE
+        p++;
+        break;
+
+      // it might sound silly to do it that way but it is faster
+      // than doing something like result += c - '0'
+      case '0':
+        result *= 10;
+        p++;
+        break;
+
+      case '1':
+        result *= 10;
+        result += 1;
+        p++;
+        break;
+
+      case '2':
+        result *= 10;
+        result += 2;
+        p++;
+        break;
+
+      case '3':
+        result *= 10;
+        result += 3;
+        p++;
+        break;
+
+      case '4':
+        result *= 10;
+        result += 4;
+        p++;
+        break;
+
+      case '5':
+        result *= 10;
+        result += 5;
+        p++;
+        break;
+
+      case '6':
+        result *= 10;
+        result += 6;
+        p++;
+        break;
+
+      case '7':
+        result *= 10;
+        result += 7;
+        p++;
+        break;
+
+      case '8':
+        result *= 10;
+        result += 8;
+        p++;
+        break;
+
+      case '9':
+        result *= 10;
+        result += 9;
+        p++;
+        break;
+
+      default:
+        return result;
+      }
+    }
+    return result;
+  }
+
   TJValue* TJMember::try_read_number(const char*& p)
   {
     bool is_negative = false;
@@ -327,7 +408,7 @@ namespace TinyJSON
     }
 
     // convert that number to an unsigned long, long
-    const auto& unsigned_whole_number = std::strtoull(possible_number, nullptr, 10);
+    const auto& unsigned_whole_number = fast_string_to_long_long(possible_number);
     delete[] possible_number;
 
     // read the faction if there is one.
@@ -345,7 +426,7 @@ namespace TinyJSON
 
       // so 001 become exponent = 3
       fraction_exponent = std::strlen(possible_fraction_number);
-      unsigned_fraction = std::strtoull(possible_fraction_number, nullptr, 10);
+      unsigned_fraction = fast_string_to_long_long(possible_fraction_number);
       delete [] possible_fraction_number;
     }
 
@@ -373,7 +454,7 @@ namespace TinyJSON
         return nullptr;
       }
 
-      const auto& unsigned_exponent = std::strtoull(possible_exponent, nullptr, 10);
+      const auto& unsigned_exponent = fast_string_to_long_long(possible_exponent);
       delete[] possible_exponent;
 
       if (0 == unsigned_exponent)
