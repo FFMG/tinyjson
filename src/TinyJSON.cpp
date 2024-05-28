@@ -414,18 +414,27 @@ namespace TinyJSON
       auto divider = std::pow(10, number_of_digit_whole - 1);
       auto shifted_unsigned_whole_number = static_cast<unsigned long long>(unsigned_whole_number / divider);
 
-      // then if the number of decimals is less then 20-number_of_whole_digits then we can just shift it all down
-      if ((number_of_digit_whole + number_of_digit_fraction -1) > TJ_MAX_NUMBER_OF_DIGGITS)
-      {
-        return nullptr;
-      }
-
       // we need to multiply the remainder by the total number of fraction diggits
       const auto whole_number_remainder = static_cast<const unsigned long long>((unsigned_whole_number - (shifted_unsigned_whole_number * divider)) * std::pow(10, number_of_digit_fraction));
       const auto shitfted_unsigned_fraction = whole_number_remainder + unsigned_fraction;
       const auto shitfted_fraction_exponent = fraction_exponent + number_of_digit_whole - 1;
       const auto shitfted_exponent = exponent + number_of_digit_whole - 1;
+      if (shitfted_exponent - shitfted_fraction_exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+      {
+        if (shifted_unsigned_whole_number == 0)
+        {
+          if (shitfted_fraction_exponent > shitfted_exponent)
+          {
+            auto re_shitfted_fraction_exponent = shitfted_fraction_exponent - shitfted_exponent;
+            return new TJValueNumberFloat(0, shitfted_unsigned_fraction, re_shitfted_fraction_exponent, is_negative);
+          }
 
+          auto pow = std::pow(10, shitfted_exponent - shitfted_fraction_exponent);
+          auto re_shitfted_unsigned_whole_number = shitfted_unsigned_fraction * pow;
+          return new TJValueNumberInt(re_shitfted_unsigned_whole_number, is_negative);
+        }
+        
+      }
       return new TJValueNumberExponent(shifted_unsigned_whole_number, shitfted_unsigned_fraction, shitfted_fraction_exponent, shitfted_exponent, is_negative);
     }
 
