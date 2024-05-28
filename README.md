@@ -4,7 +4,7 @@ TinyJSON is a fast and small C++ JSON parser
 
 ## Simple example
 
-In versy simple terms 
+In versy simple terms
 
 ```cpp
   auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
@@ -23,6 +23,12 @@ All you need is to include the .h and .cpp file to your project and you are read
 - Clone this repository
 - init the submodules
   `git submodule --init --recursive`
+
+## Data Range
+
+### Numbers
+
+The whole number ranges are +9223372036854775807 and -9223372036854775806
 
 ## TODO
 

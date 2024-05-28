@@ -147,6 +147,29 @@ TEST(TestNumbers, FractionNUmbers) {
   delete json;
 }
 
+TEST(TestNumbers, MaxPositiveNumber) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 9223372036854775807,
+  "b" : -9223372036854775806
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(9223372036854775807, valuea->get_number());
+
+  auto valueb = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("b"));
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(-9223372036854775806, valueb->get_number());
+
+  delete json;
+}
+
 TEST(TestNumbers, InvalidWholeNumber) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 {

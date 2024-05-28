@@ -256,4 +256,20 @@ namespace TinyJSON
     const unsigned long long _fraction;
     const unsigned int _fraction_exponent;
   };
+
+  // A number JSon, float or int
+  class TJValueNumberExponent : public TJValueNumber
+  {
+  public:
+    TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const unsigned int& exponent,bool is_negative);
+    virtual ~TJValueNumberExponent();
+
+    const char* to_string() const;
+  private:
+    char* _string;
+    const unsigned long long _number;
+    const unsigned long long _fraction;
+    const unsigned int _fraction_exponent;
+    const unsigned int _exponent;
+  };
 } // TinyJSON

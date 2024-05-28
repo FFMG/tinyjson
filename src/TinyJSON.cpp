@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cmath> 
 
+#define TJ_MAX_NUMBER_OF_DIGGITS 19
+
 #define TJ_CASE_SIGN          case '-': \
                               case '+': 
 
@@ -359,6 +361,11 @@ namespace TinyJSON
         is_negative_exponent = true;
         p++;
       }
+      if (*p == '+')
+      {
+        is_negative_exponent = false;
+        p++;
+      }
       const auto& possible_exponent = try_read_whole_number(p);
       if (nullptr == possible_exponent)
       {
@@ -396,6 +403,31 @@ namespace TinyJSON
     // then the number will become 12345.6 e=0
     // so we need the number of digits.
     auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
+    auto number_of_digit_fraction = fraction_exponent;
+
+    // if the number of digits is more than (LLONG_MAX = 9 223 372 036 854 775 807)
+    // then we have to use exponent.
+    if (exponent + number_of_digit_whole + number_of_digit_fraction > TJ_MAX_NUMBER_OF_DIGGITS)
+    {
+      // whatever the number we have to convert it to a single digit whole
+      // and 19 numbers fraction and the rest is just the exponent.
+      auto divider = std::pow(10, number_of_digit_whole - 1);
+      auto shifted_unsigned_whole_number = static_cast<unsigned long long>(unsigned_whole_number / divider);
+
+      // then if the number of decimals is less then 20-number_of_whole_digits then we can just shift it all down
+      if ((number_of_digit_whole + number_of_digit_fraction -1) > TJ_MAX_NUMBER_OF_DIGGITS)
+      {
+        return nullptr;
+      }
+
+      // we need to multiply the remainder by the total number of fraction diggits
+      const auto whole_number_remainder = static_cast<const unsigned long long>((unsigned_whole_number - (shifted_unsigned_whole_number * divider)) * std::pow(10, number_of_digit_fraction));
+      const auto shitfted_unsigned_fraction = whole_number_remainder + unsigned_fraction;
+      const auto shitfted_fraction_exponent = fraction_exponent + number_of_digit_whole - 1;
+      const auto shitfted_exponent = exponent + number_of_digit_whole - 1;
+
+      return new TJValueNumberExponent(shifted_unsigned_whole_number, shitfted_unsigned_fraction, shitfted_fraction_exponent, shitfted_exponent, is_negative);
+    }
 
     // positive exponent.
     if (exponent > 0)
@@ -910,5 +942,43 @@ namespace TinyJSON
 
     // Combine the number and the fraction
     return (_is_negative ? -1 : 1) * (whole_number / pow);
+  }
+
+  ///////////////////////////////////////
+  /// TJValue float Number
+  TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const unsigned int& exponent, bool is_negative) :
+    TJValueNumber(is_negative),
+    _exponent(exponent),
+    _fraction(fraction),
+    _fraction_exponent(fraction_exponent),
+    _number(number),
+    _string(nullptr)
+  {
+    // we need space for the whole number + fraction + exponent
+    _string = new char[255];
+
+    // if we have no fraction, then just return it.
+    if (_fraction == 0) 
+    {
+      std::sprintf(_string, "%llde+%i", _number, _exponent);
+    }
+    else
+    {
+      // rebuild the buffer and make sure that we have all the zeros for the fractions.
+      std::sprintf(_string, "%lld.%0*llde+%i", _number, _fraction_exponent, _fraction, _exponent);
+    }
+  }
+
+  TJValueNumberExponent::~TJValueNumberExponent()
+  {
+    if (_string != nullptr)
+    {
+      delete[] _string;
+    }
+  }
+
+  const char* TJValueNumberExponent::to_string() const
+  {
+    return _string;
   }
 } // TinyJSON
