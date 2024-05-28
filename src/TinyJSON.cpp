@@ -311,7 +311,8 @@ namespace TinyJSON
 
   unsigned long long TJMember::fast_string_to_long_long(const char* p)
   {
-    // then numbers are unsigned and should only contain digits.
+    // the numbers are unsigned and should only contain digits.
+    // so we do not have signs or letters to worry about.
     unsigned long long result = 0;
     while (*p != '\0')
     {
@@ -1044,19 +1045,6 @@ namespace TinyJSON
     _number(number),
     _string(nullptr)
   {
-    // we need space for the whole number + fraction + exponent
-    _string = new char[255];
-
-    // if we have no fraction, then just return it.
-    if (_fraction == 0) 
-    {
-      std::sprintf(_string, "%llde+%i", _number, _exponent);
-    }
-    else
-    {
-      // rebuild the buffer and make sure that we have all the zeros for the fractions.
-      std::sprintf(_string, "%lld.%0*llde+%i", _number, _fraction_exponent, _fraction, _exponent);
-    }
   }
 
   TJValueNumberExponent::~TJValueNumberExponent()
@@ -1067,8 +1055,36 @@ namespace TinyJSON
     }
   }
 
+  void TJValueNumberExponent::make_string()
+  {
+    if (nullptr != _string)
+    {
+      return;
+    }
+
+    // we need space for the whole number + fraction + exponent
+    _string = new char[255];
+
+    // if we have no fraction, then just return it.
+    if (_fraction == 0)
+    {
+      std::sprintf(_string, "%llde+%i", _number, _exponent);
+    }
+    else
+    {
+      // rebuild the buffer and make sure that we have all the zeros for the fractions.
+      std::sprintf(_string, "%lld.%0*llde+%i", _number, _fraction_exponent, _fraction, _exponent);
+    }
+  }
+
   const char* TJValueNumberExponent::to_string() const
   {
+    if (nullptr == _string)
+    {
+      // we only create the string value when the caller asks for it.
+      // this is to make sure that we do not create it on parsing.
+      const_cast<TJValueNumberExponent*>(this)->make_string();
+    }
     return _string;
   }
 } // TinyJSON

@@ -267,6 +267,7 @@ namespace TinyJSON
 
     const char* to_string() const;
   private:
+    void make_string();
     char* _string;
     const unsigned long long _number;
     const unsigned long long _fraction;
