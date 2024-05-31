@@ -313,7 +313,7 @@ namespace TinyJSON
   {
     // the numbers are unsigned and should only contain digits.
     // so we do not have signs or letters to worry about.
-    unsigned long long result = 0;
+    register unsigned long long result = 0;
     while (*p != '\0')
     {
       char c = *p;
@@ -468,124 +468,349 @@ namespace TinyJSON
     return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent);
   }
 
+  TJValue* TJMember::try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent)
+  {
+    if (unsigned_fraction == 0)
+    {
+      // zero is a positive number
+      return new TJValueNumberInt(unsigned_whole_number, unsigned_whole_number == 0 ? false : is_negative);
+    }
+    return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, fraction_exponent, is_negative);
+  }
+
+  unsigned long long TJMember::shift_number_left(const unsigned long long source, const unsigned long long exponent)
+  {
+    if (exponent == 0)
+    {
+      return source;
+    }
+    const auto muliplier = std::pow(10, exponent);
+    return source * muliplier;
+  }
+
+  unsigned long long TJMember::shift_number_right(const unsigned long long source, const unsigned long long exponent, unsigned long long& shifted_source)
+  {
+    const auto divider = std::pow(10, exponent);
+    auto new_source = static_cast<unsigned long long>(source / divider);
+    shifted_source = source - new_source * divider;
+    return new_source;
+  }
+
+  unsigned long long TJMember::shift_fraction_left(const unsigned long long& fraction, const unsigned long long& fraction_exponent, const unsigned long long& exponent, unsigned long long& shifted_fraction, unsigned long long& shitfed_unsigned_fraction_exponent)
+  {
+    if (exponent > fraction_exponent)
+    {
+      // we are moving more to the left than we have fractions
+      // so we just need to move the extra fraction
+      shifted_fraction = 0;
+      shitfed_unsigned_fraction_exponent = 0;
+      return shift_number_left(fraction, exponent - fraction_exponent);
+    }
+
+    if (exponent == fraction_exponent)
+    {
+      // no shifting needed the number is already what we need.
+      shifted_fraction = 0;
+      shitfed_unsigned_fraction_exponent = 0;
+      return fraction;
+    }
+
+    shitfed_unsigned_fraction_exponent = fraction_exponent - exponent;
+
+    // we know that the fraction_exponent is bigger than the exponent.
+    // so we are not shifting the whole way but we have to be careful as the
+    // len of the fraction might actually be less than the fraction because of leading 0s
+    // for example 0.0012 and 0.12 have a len of 2 but a fraction_exponent of 2 and 4
+    // the lenght can never be more than the fraction exponent.
+    const auto& fraction_length = get_number_of_digits(fraction);
+
+    if (fraction_length == fraction_exponent)
+    {
+      auto divider = std::pow(10, shitfed_unsigned_fraction_exponent);
+      const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
+      shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
+      return shifted_unsigned_fraction;
+    }
+
+    if (fraction_exponent - fraction_length <= 0)
+    {
+      // the number is 0.0012 and we want to shift 2 or less
+      // so the new faction is 0.12 and the return number is zero
+      shifted_fraction = fraction;
+      return 0ll;
+    }
+
+    // the number is 0.0123 and we want to shift 3
+    //   the retrun number is 12, (0123 shifted leftx3)
+    //   the return fraction is 3, (0123 shifted leftx3 - 12)
+    //   the return fraction_exponent is 1, (0123 shifted leftx3 - 12)
+    // The number of leading zeros, (that we have to ignore), is the fraction_exponent - fraction_length
+    const auto& leading_zeros = fraction_exponent - fraction_length;
+    if (leading_zeros >= exponent)
+    {
+      // we have more leading zeros than the number of exponents we are trying to shift.
+      // so the fraction remains the same and the shitfed_unsigned_fraction_exponent has already been updated.
+      shifted_fraction = fraction;
+      return 0ll;
+    }
+
+    auto divider = std::pow(10, shitfed_unsigned_fraction_exponent);
+    const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
+    shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
+    return shifted_unsigned_fraction;
+  }
+
+  TJValue* TJMember::try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+  {
+    if (exponent >= fraction_exponent)
+    {
+      unsigned long long shifted_unsigned_fraction = 0;
+      unsigned long long shitfed_unsigned_fraction_exponent = 0;
+      const auto& fraction_length = get_number_of_digits(unsigned_fraction);
+      const auto& leading_zeros = fraction_exponent - fraction_length;
+      // we just want the first number so we are passing a 1x exponent only
+      // but we need to add the number of leading zeros to make sure that we shift properly.
+      const auto& shifted_unsigned_whole_number = shift_fraction_left(unsigned_fraction, fraction_exponent, leading_zeros+1, shifted_unsigned_fraction, shitfed_unsigned_fraction_exponent);
+
+      const auto& shifted_fraction_exponent = exponent - fraction_exponent;
+      if (shifted_fraction_exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+      {
+        if (shifted_unsigned_fraction == 0)
+        {
+          return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent), is_negative);
+        }
+
+        return new TJValueNumberFloat(
+          shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent),
+          shifted_unsigned_fraction,
+          shifted_fraction_exponent,
+          is_negative);
+      }
+
+      // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
+      return nullptr;
+    }
+
+
+    // the number is something like 0.00001e+3 the fraction_exponent is 4 and the exponent is 3
+    // so we can just move the fraction to the left the whole number will remain zero
+    const auto& shifted_fraction_exponent = fraction_exponent - exponent;
+    if (shifted_fraction_exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+    {
+      // the number cannot be an int as it would mean that both
+      // the whole number and the fraction are zer0
+      return new TJValueNumberFloat( 0ull, unsigned_fraction, shifted_fraction_exponent, is_negative);
+    }
+
+    // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
+    return nullptr;
+  }
+
+  TJValue* TJMember::try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+  {
+    //
+    // remember that this is a negative exponent ...
+    //
+
+    // if we have a fraction and no whole number then we can move the number to the right
+    unsigned long long shifted_unsigned_fraction_exponent = 0;
+    unsigned long long shifted_unsigned_fraction = 0;
+    const auto& fraction_length = get_number_of_digits(unsigned_fraction);
+    const auto& leading_zeros = fraction_exponent - fraction_length;
+    // we just want the first number so we are passing a 1x exponent only
+    // but we need to add the number of leading zeros to make sure that we shift properly.
+    const auto& shifted_unsigned_whole_number = shift_fraction_left(unsigned_fraction, fraction_exponent, leading_zeros+1, shifted_unsigned_fraction, shifted_unsigned_fraction_exponent);
+
+    const auto& actual_shifted_fraction_exponent = exponent + (fraction_exponent - shifted_unsigned_fraction_exponent);
+
+    if (actual_shifted_fraction_exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+    {
+      if (shifted_unsigned_fraction == 0)
+      {
+        return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent), is_negative);
+      }
+      return new TJValueNumberFloat(
+        shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent),
+        shifted_unsigned_fraction,
+        shifted_unsigned_fraction_exponent,
+        is_negative);
+    }
+
+    // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
+    return new TJValueNumberExponent(
+      shifted_unsigned_whole_number,
+      shifted_unsigned_fraction,
+      shifted_unsigned_fraction_exponent,
+      -1* actual_shifted_fraction_exponent,
+      is_negative);
+  }
+
+  TJValue* TJMember::try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+  {
+    auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
+    auto number_of_digit_fraction = get_number_of_digits(unsigned_fraction)+fraction_exponent -1;
+
+    // case 1:
+    //   The total number is less than TJ_MAX_NUMBER_OF_DIGGITS
+    //   so we can get rid of the exponent altogether.
+    if (fraction_exponent <= exponent && number_of_digit_whole+exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+    {
+      // we know that the fraction will disapear because it is smaller than the total fraction
+      // we want to first move the whole number by the number of fractions
+      auto shifted_unsigned_whole_number = shift_number_left(unsigned_whole_number, fraction_exponent);
+      // then add the fraction
+      shifted_unsigned_whole_number += unsigned_fraction;
+      // then shift it again with the rest of the exponent
+      shifted_unsigned_whole_number = shift_number_left(shifted_unsigned_whole_number, exponent - fraction_exponent);
+
+      return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
+    }
+
+    if (fraction_exponent > exponent && number_of_digit_whole + exponent <= TJ_MAX_NUMBER_OF_DIGGITS <= TJ_MAX_NUMBER_OF_DIGGITS)
+    {
+      // we now know that the fraction will not completely shift.
+      // so we must move the whole number by the number of expoent
+      auto shifted_unsigned_whole_number = shift_number_left(unsigned_whole_number, exponent);
+      
+      // we then want to shift the fraction by the number of exponent and add that to the list.
+      unsigned long long shifted_unsigned_fraction_exponent = 0;
+      unsigned long long shifted_unsigned_fraction = 0;
+      shifted_unsigned_whole_number += shift_fraction_left(unsigned_fraction, fraction_exponent, exponent, shifted_unsigned_fraction, shifted_unsigned_fraction_exponent);
+
+      // as we sifted the fraction by the number of exponent
+      // then the size of the fraction is smaller by the exponent.
+      return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_unsigned_fraction_exponent, is_negative);
+    }
+
+    // case 2:
+    //  The total number if more than TJ_MAX_NUMBER_OF_DIGGITS
+    //  So we have to move the whole number to be a single digit.
+    //  and the fraction to be shifted accordingly
+    //  and the exponent moved.
+
+    // case 2a:
+    //  The whole number if zero ... in that case we have to shift the fraction to the first whole number.
+    //  But we might not make it and in that case the whole number will remain to zero
+    //  But the fraction will shift one way or the other.
+    if (unsigned_whole_number == 0)
+    {
+      return try_create_number_from_parts_positive_exponent_no_whole_number(is_negative, unsigned_fraction, fraction_exponent, exponent);
+    }
+
+    // case 2b:
+    //   The whole number is more than zero _and_ the fraction is also non zero.
+    //   The total is, (currently), greater than TJ_MAX_NUMBER_OF_DIGGITS
+    const unsigned long long shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
+    unsigned long long shifted_unsigned_fraction = 0;
+    const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, shifted_unsigned_whole_number_exponent, shifted_unsigned_fraction);
+
+    // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
+    auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
+    shifted_unsigned_fraction = (shifted_unsigned_fraction *std::pow(10, shifted_fraction_exponent)) + unsigned_fraction;
+
+    // and the exponent also shitt byt the number we moved.
+    const unsigned long long shifted_exponent = exponent + shifted_unsigned_whole_number_exponent;
+
+    return new TJValueNumberExponent(
+      shifted_unsigned_whole_number, 
+      shifted_unsigned_fraction, 
+      (shifted_unsigned_whole_number_exponent + fraction_exponent), 
+      shifted_exponent, 
+      is_negative);
+  }
+
   TJValue* TJMember::try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const long long& exponent)
   {
     // no exponent number is int or float
     if (exponent == 0)
     {
-      if (unsigned_fraction == 0)
-      {
-        // zero is a positive number
-        return new TJValueNumberInt(unsigned_whole_number, unsigned_whole_number == 0 ? false : is_negative);
-      }
-      return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, fraction_exponent, is_negative);
-    }
-
-    // if the number is something like 123.456 with e=2
-    // then the number will become 12345.6 e=0
-    // so we need the number of digits.
-    auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
-    auto number_of_digit_fraction = fraction_exponent;
-
-    // if the number of digits is more than (LLONG_MAX = 9 223 372 036 854 775 807)
-    // then we have to use exponent.
-    if (exponent + number_of_digit_whole + number_of_digit_fraction > TJ_MAX_NUMBER_OF_DIGGITS)
-    {
-      // whatever the number we have to convert it to a single digit whole
-      // and 19 numbers fraction and the rest is just the exponent.
-      auto divider = std::pow(10, number_of_digit_whole - 1);
-      auto shifted_unsigned_whole_number = static_cast<unsigned long long>(unsigned_whole_number / divider);
-
-      // we need to multiply the remainder by the total number of fraction diggits
-      const auto whole_number_remainder = static_cast<const unsigned long long>((unsigned_whole_number - (shifted_unsigned_whole_number * divider)) * std::pow(10, number_of_digit_fraction));
-      const auto shitfted_unsigned_fraction = whole_number_remainder + unsigned_fraction;
-      const auto shitfted_fraction_exponent = fraction_exponent + number_of_digit_whole - 1;
-      const auto shitfted_exponent = exponent + number_of_digit_whole - 1;
-      if (shitfted_exponent - shitfted_fraction_exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
-      {
-        if (shifted_unsigned_whole_number == 0)
-        {
-          if (shitfted_fraction_exponent > shitfted_exponent)
-          {
-            auto re_shitfted_fraction_exponent = shitfted_fraction_exponent - shitfted_exponent;
-            return new TJValueNumberFloat(0, shitfted_unsigned_fraction, re_shitfted_fraction_exponent, is_negative);
-          }
-
-          auto pow = std::pow(10, shitfted_exponent - shitfted_fraction_exponent);
-          auto re_shitfted_unsigned_whole_number = shitfted_unsigned_fraction * pow;
-          return new TJValueNumberInt(re_shitfted_unsigned_whole_number, is_negative);
-        }
-        
-      }
-      return new TJValueNumberExponent(shifted_unsigned_whole_number, shitfted_unsigned_fraction, shitfted_fraction_exponent, shitfted_exponent, is_negative);
+      return try_create_number_from_parts_no_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent);
     }
 
     // positive exponent.
     if (exponent > 0)
     {
-      // more fractions than exponents so we can 
-      // move the fraction to the whole number, (and maybe add zeros)
-      if (fraction_exponent <= exponent)
+      return try_create_number_from_parts_positive_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent);
+    }
+
+    // the exponent is negative, so we need to either shift the whole number and the fraction
+    // but we have to be careful how it is shifted so we do not overflow one way or another.
+    const auto& positive_exponent = -1 * exponent;
+    return try_create_number_from_parts_negative_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, positive_exponent);
+  }
+
+  TJValue* TJMember::try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+  {
+    // if the number is something like 123.456 with e=2
+    // then the number will become 12345.6 e=0
+    // so we need the number of digits.
+    auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
+    auto number_of_digit_fraction = get_number_of_digits(unsigned_fraction);
+
+    // case 1:
+    //   The total number is less than TJ_MAX_NUMBER_OF_DIGGITS
+    //   so we can get rid of the exponent altogether.
+    if (number_of_digit_whole + number_of_digit_fraction + exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+    {
+      // we will shift the whole number to the left by the number of exponent
+      // then we wil shift the number of fraction to the lest by the number if exponent.
+      // we will then add the two together.
+      unsigned long long shifted_unsigned_fraction = 0;
+      const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, exponent, shifted_unsigned_fraction);
+
+      if (shifted_unsigned_fraction == 0)
       {
-        auto shifted_unsigned_whole_number = unsigned_whole_number * std::pow(10, fraction_exponent);
-        shifted_unsigned_whole_number += unsigned_fraction;
-        if (exponent - fraction_exponent > 0)
-        {
-          shifted_unsigned_whole_number = shifted_unsigned_whole_number * std::pow(10, exponent - fraction_exponent);
-        }
         return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
       }
 
-      // we cannot shift the full amount so we have something like 123.456e2
-      // we need to multiply the whole number by exponent
-      auto multiplier = std::pow(10, exponent);
-      auto divider = std::pow(10, fraction_exponent - exponent);
-      auto shifted_unsigned_whole_number = unsigned_whole_number * multiplier;
-      // devide the fraction by fraction_digits - exponent
-      auto number_to_add = static_cast<unsigned long long>(unsigned_fraction / divider);
-      // add it to the wholenuber
-      shifted_unsigned_whole_number += number_to_add;
-
-      // finally we need to convert the fraction to just what we have not used.
-      auto shifted_unsigned_fraction = (unsigned_fraction)-(number_to_add * divider);
-
-      // we know it is a float.
-      return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, (fraction_exponent - exponent), is_negative);
+      const auto& shifted_fraction_exponent = fraction_exponent + exponent;
+      return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_fraction_exponent, is_negative);
     }
 
-    // the exponent is negative, so we want to shift the whole number by the number of exponent,
-    auto positive_exponent = -1 * exponent;
-    auto multiplier = std::pow(10, number_of_digit_whole - positive_exponent);
-    auto divider = std::pow(10, positive_exponent);
+    // case 2:
+    //  The total number if more than TJ_MAX_NUMBER_OF_DIGGITS
+    //  So we have to move the whole number to be a single digit.
+    //  and the fraction to be shifted accordingly
+    //  and the exponent moved.
 
-    // shift the while number
-    auto shifted_unsigned_whole_number = static_cast<unsigned long long>(unsigned_whole_number / divider);
-
-    // finally we need to convert the fraction to just what we have not used.
-    auto shifted_unsigned_fraction = 0;
-    if (unsigned_fraction > 0)
+    // case 2a:
+    //  The whole number if zero ... in that case we have to shift the fraction to the first whole number.
+    //  But we might not make it and in that case the whole number will remain to zero
+    //  But the fraction will shift one way or the other.
+    if (unsigned_whole_number == 0)
     {
-      auto shifted_unsigned_fraction = static_cast<unsigned long long>(unsigned_fraction / divider);
-    }
-    const auto number_to_add = unsigned_whole_number - (shifted_unsigned_whole_number * divider);
-    shifted_unsigned_fraction += number_to_add;
-    if (shifted_unsigned_fraction == 0)
-    {
-      // it is an intiger
-      return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
+      return try_create_number_from_parts_negative_exponent_no_whole_number(is_negative, unsigned_fraction, fraction_exponent, exponent);
     }
 
-    // caluclate the fraction
-    // if we have something like 1200012e-3 then the whole number is 12 and the fraction is 0.00012
-    // but the while fraction number is '12' so we are shifting number of exponent + len of whole_fraction -1
-    const unsigned int shifted_fraction_exponent = positive_exponent;
+    // case 2b:
+    //   The whole number is more than zero _and_ the fraction is also non zero.
+    //   The total is, (currently), greater than TJ_MAX_NUMBER_OF_DIGGITS
+    const unsigned long long shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
+    unsigned long long shifted_unsigned_fraction = 0;
+    const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, shifted_unsigned_whole_number_exponent, shifted_unsigned_fraction);
 
-    // we know it is a float.
-    return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_fraction_exponent, is_negative);
+    // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
+    auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
+    shifted_unsigned_fraction = (shifted_unsigned_fraction * std::pow(10, shifted_fraction_exponent)) + unsigned_fraction;
+
+    // and the exponent also shitt by the number we moved.
+    // as it is a negative exponent we need to move to the left.
+    const unsigned long long shifted_exponent = exponent - shifted_unsigned_whole_number_exponent;
+
+    return new TJValueNumberExponent(
+      shifted_unsigned_whole_number,
+      shifted_unsigned_fraction,
+      (shifted_unsigned_whole_number_exponent + fraction_exponent),
+      -1 * shifted_exponent,
+      is_negative);
   }
 
   int TJMember::get_number_of_digits(const unsigned long long& number )
   {
+    if (number == 0)
+    {
+      return 0;
+    }
     unsigned long long truncated_number = number;
     int count = 0;
     do
@@ -1037,7 +1262,7 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue float Number
-  TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const unsigned int& exponent, bool is_negative) :
+  TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const int& exponent, bool is_negative) :
     TJValueNumber(is_negative),
     _exponent(exponent),
     _fraction(fraction),
@@ -1073,7 +1298,14 @@ namespace TinyJSON
     else
     {
       // rebuild the buffer and make sure that we have all the zeros for the fractions.
-      std::sprintf(_string, "%lld.%0*llde+%i", _number, _fraction_exponent, _fraction, _exponent);
+      if (_exponent < 0)
+      {
+        std::sprintf(_string, "%lld.%0*llde%i", _number, _fraction_exponent, _fraction, _exponent);
+      }
+      else
+      {
+        std::sprintf(_string, "%lld.%0*llde+%i", _number, _fraction_exponent, _fraction, _exponent);
+      }
     }
   }
 
