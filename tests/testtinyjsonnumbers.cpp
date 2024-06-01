@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include <gtest/gtest.h>
+#include <vector>
 #include "../src/TinyJSON.h"
 
 TEST(TestNumbers, WholeNumbers) {
@@ -178,4 +179,103 @@ TEST(TestNumbers, InvalidWholeNumber) {
 )"
 );
   ASSERT_EQ(nullptr, json);
+}
+
+
+TEST(TestNumbers, TestManyWholeNumbers) {
+  for (int i = 0; i < 19/*TJ_MAX_NUMBER_OF_DIGGITS*/;++i)
+  {
+    unsigned long long s = static_cast<unsigned long long>(std::pow(10, i));
+    std::string value = std::to_string(s);
+
+    std::string s_json = "{ \"a\" :" + value + "}";
+    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+
+    ASSERT_NE(nullptr, json);
+    auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+    ASSERT_NE(nullptr, jobject);
+
+    auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
+    ASSERT_NE(nullptr, valuea);
+    ASSERT_EQ(s, valuea->get_number());
+
+    delete json;
+
+  }
+}
+
+TEST(TestNumbers, TestManyFloatNumbers) {
+  struct Values
+  {
+    std::string given;
+    double expected;
+  };
+
+  std::vector<Values> values;
+  values.push_back({ "0.1", 0.1 });
+  values.push_back({ "0.01", 0.01 });
+  values.push_back({ "0.001", 0.001 });
+  values.push_back({ "0.0001", 0.0001 });
+  values.push_back({ "0.00001", 0.00001 });
+  values.push_back({ "0.000001", 0.000001 });
+  values.push_back({ "0.0000001", 0.0000001 });
+  values.push_back({ "0.00000001", 0.00000001 });
+  values.push_back({ "0.000000001", 0.000000001 });
+  values.push_back({ "0.0000000001", 0.0000000001 });
+  values.push_back({ "0.00000000001", 0.00000000001 });
+
+  for (auto value : values)
+  {
+    std::string s_json = "{ \"a\" : " + value.given + "}";
+    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+
+    ASSERT_NE(nullptr, json);
+    auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+    ASSERT_NE(nullptr, jobject);
+
+    auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
+    ASSERT_NE(nullptr, valuea);
+    ASSERT_EQ(value.expected, valuea->get_number());
+
+    delete json;
+
+  }
+}
+
+TEST(TestNumbers, TestManyComplexFloatNumbers) {
+  struct Values
+  {
+    std::string given;
+    double expected;
+  };
+
+  std::vector<Values> values;
+  values.push_back({ "0.123456", 0.123456 });
+  values.push_back({ "0.0123456", 0.0123456 });
+  values.push_back({ "0.00123456", 0.00123456 });
+  values.push_back({ "0.000123456", 0.000123456 });
+  values.push_back({ "0.0000123456", 0.0000123456 });
+  values.push_back({ "0.00000123456", 0.00000123456 });
+  values.push_back({ "0.000000123456", 0.000000123456 });
+  values.push_back({ "0.0000000123456", 0.0000000123456 });
+  values.push_back({ "0.00000000123456", 0.00000000123456 });
+  values.push_back({ "0.000000000123456", 0.000000000123456 });
+  values.push_back({ "0.0000000000123456", 0.0000000000123456 });
+
+  for (auto value : values)
+  {
+    std::string s_json = "{ \"a\" : " + value.given + "}";
+    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+
+    ASSERT_NE(nullptr, json);
+    auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+    ASSERT_NE(nullptr, jobject);
+
+    auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
+    ASSERT_NE(nullptr, valuea);
+    ASSERT_EQ(value.expected, valuea->get_number());
+
+    delete json;
+
+  }
 }
