@@ -1,36 +1,31 @@
 ﻿cmake_minimum_required (VERSION 3.28)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(Project TinyJSON)
 
-project ("TinyJSON"
+project (${Project}
   VERSION 0.0.1
   DESCRIPTION "Very fast JSON Parser"
-  LANGUAGES CXX )
+  LANGUAGES CXX C)
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
+  
+enable_testing()
+add_subdirectory(external)
 
 include(CTest)
 
-add_subdirectory(external)
-include(./cmake/updatesubmodules.cmake)  
-  
-enable_testing()
+set( Headers
+  "src/TinyJSON.h"
+)
 
-# BUILD_TESTING variable is created by include(CTest)
-# It is set to ON by default
-if (BUILD_TESTING)
-    add_executable(
-      tinyjsontest 
-      "tests/testtinyjson.cpp"
-      "tests/testtinyjsonbooleans.cpp"
-      "tests/testtinyjsonexponents.cpp"
-      "tests/testtinyjsonnumbers.cpp"
-      "tests/testtinyjsonstrings.cpp"
-      "src/TinyJSON.cpp")
-    target_link_libraries(tinyjsontest PRIVATE GTest::gtest_main)
+set( Sources
+  "src/TinyJSON.cpp"
+)
 
-    include(GoogleTest)
-    # Finds all the Google tests associated with the executable
-    gtest_discover_tests(tinyjsontest)
-endif()
-
+# the TinyJSON library
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-add_executable (TinyJSON "main.cpp"  "src/TinyJSON.cpp")
+add_library(${Project} STATIC ${Headers} ${Sources} )
 
+# include the tests
+add_subdirectory(tests)
