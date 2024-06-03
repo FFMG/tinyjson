@@ -49,3 +49,73 @@ TEST(TestBooleans, CheckForFalse) {
 
   delete json;
 }
+
+TEST(TestBooleans, TrueBooleanNotSpelledProperly1) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : t
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBooleans, TrueBooleanNotSpelledProperly2) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : tr
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBooleans, TrueBooleanNotSpelledProperly3) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : tru
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBooleans, FalseBooleanNotSpelledProperly1) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : f
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBooleans, FalseBooleanNotSpelledProperly2) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : fa
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBooleans, FalseBooleanNotSpelledProperly3) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : fal
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBooleans, FalseBooleanNotSpelledProperly4) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : fals
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}

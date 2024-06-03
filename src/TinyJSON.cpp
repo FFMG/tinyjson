@@ -233,40 +233,49 @@ namespace TinyJSON
       }
 
       case 't':
-        if (!try_read_true(p))
+      {
+        auto true_value = try_read_true(p);
+        if (nullptr == true_value)
         {
           //  ERROR could not read the word 'true'
           return nullptr;
         }
-        return new TJValueTrue();
+        return true_value;
+      }
 
       case 'f':
-        if (!try_read_false(p))
+      {
+        auto false_value = try_read_false(p);
+        if (nullptr == false_value)
         {
           //  ERROR could not read the word 'true'
           return nullptr;
         }
-        return new TJValueFalse();
+        return false_value;
+      }
 
       case 'n':
-        if (!try_read_null(p))
+      {
+        auto null_value = try_read_null(p);
+        if(nullptr == null_value)
         {
           //  ERROR could not read the word 'true'
           return nullptr;
         }
-        return new TJValueNull();
+        return null_value;
+      }
 
       TJ_CASE_DIGIT
       TJ_CASE_SIGN
+      {
+        auto number = try_read_number(p);
+        if (nullptr == number)
         {
-          auto number = try_read_number(p);
-          if (nullptr == number)
-          {
-            //  ERROR could not read the word 'true'
-            return nullptr;
-          }
-          return number;
+          //  ERROR could not read the word 'true'
+          return nullptr;
         }
+        return number;
+      }
 
       TJ_CASE_BEGIN_ARRAY
       {
@@ -281,16 +290,16 @@ namespace TinyJSON
       }
 
       TJ_CASE_BEGIN_OBJECT
+      {
+        // an object within the object
+        auto tjvalue_object = try_continue_read_object(++p);
+        if (tjvalue_object == nullptr)
         {
-          // an object within the object
-          auto tjvalue_object = try_continue_read_object(++p);
-          if (tjvalue_object == nullptr)
-          {
-            // Error:  something went wrong, the error was logged.
-            return nullptr;
-          }
-          return tjvalue_object;
+          // Error:  something went wrong, the error was logged.
+          return nullptr;
         }
+        return tjvalue_object;
+      }
 
       default:
         // ERROR: expected colon after the string
@@ -302,58 +311,58 @@ namespace TinyJSON
     return nullptr;
   }
 
-  bool TJMember::try_read_true(const char*& p)
+  TJValue* TJMember::try_read_true(const char*& p)
   {
     if (*p != 't')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 1) != 'r')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 2) != 'u')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 3) != 'e')
     {
-      return false;
+      return nullptr;
     }
 
     p += 4;
 
     // all good.
-    return true;
+    return new TJValueTrue();
   }
 
-  bool TJMember::try_read_false(const char*& p)
+  TJValue* TJMember::try_read_false(const char*& p)
   {
     if (*p != 'f')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 1) != 'a')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 2) != 'l')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 3) != 's')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 4) != 'e')
     {
-      return false;
+      return nullptr;
     }
 
     p += 5;
 
     // all good.
-    return true;
+    return new TJValueFalse();
   }
 
   unsigned long long TJMember::fast_string_to_long_long(const char* p)
@@ -868,29 +877,29 @@ namespace TinyJSON
     return count;
   }
 
-  bool TJMember::try_read_null(const char*& p)
+  TJValue* TJMember::try_read_null(const char*& p)
   {
     if (*p != 'n')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 1) != 'u')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 2) != 'l')
     {
-      return false;
+      return nullptr;
     }
     if (*(p + 3) != 'l')
     {
-      return false;
+      return nullptr;
     }
 
     p += 4;
 
     // all good.
-    return true;
+    return new TJValueNull();
   }
 
   char* TJMember::try_read_whole_number_as_fraction(const char*& p)
