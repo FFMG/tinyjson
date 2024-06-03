@@ -18,7 +18,7 @@ TEST(TestObjects, EmptyObjectHasNoItemsInIt) {
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
 
-  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json));
+  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
   ASSERT_EQ(0, jobject->number_of_items());
 
@@ -28,7 +28,7 @@ TEST(TestObjects, EmptyObjectHasNoItemsInIt) {
 TEST(TestObjects, EmptyObjectInSideObectHasNoItemsInIt) {
   auto json = TinyJSON::TinyJSON::parse(R"(
     {
-      "a" {
+      "a" : {
       }
     }
     )"
@@ -37,13 +37,41 @@ TEST(TestObjects, EmptyObjectInSideObectHasNoItemsInIt) {
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
 
-  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json));
+  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
   ASSERT_EQ(1, jobject->number_of_items());
 
-  const auto jobjecta = dynamic_cast<TinyJSON::TJValueObject*>(jobject->try_get_value("a"));
+  const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, jobjecta);
   ASSERT_EQ(0, jobjecta->number_of_items());
+
+  delete json;
+}
+
+TEST(TestObjects, GetItemByIndex) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : {
+        "aa" : {}
+      }
+    }
+    )"
+  );
+
+  ASSERT_NE(nullptr, json);
+  ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
+
+  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+  ASSERT_EQ(1, jobject->number_of_items());
+
+  const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>((*jobject)[0]->value());
+  ASSERT_NE(nullptr, jobjecta);
+  ASSERT_EQ(1, jobjecta->number_of_items());
+
+  const auto jobjectb = dynamic_cast<const TinyJSON::TJValueObject*>(jobjecta->at(0)->value());
+  ASSERT_NE(nullptr, jobjectb);
+  ASSERT_EQ(0, jobjectb->number_of_items());
 
   delete json;
 }

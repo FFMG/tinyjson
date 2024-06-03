@@ -90,3 +90,26 @@ TEST(TestArrays, ArrayOfNumbersHasCorrectNumberOfItems) {
   ASSERT_EQ(3, array_of_values->number_of_items());
   delete json;
 }
+
+TEST(TestArrays, EmptyArrayInSideArrayHasNoItemsInIt) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    [
+      [
+      ]
+    ]
+    )"
+  );
+
+  ASSERT_NE(nullptr, json);
+  ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
+
+  const auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+  ASSERT_EQ(1, jarray->number_of_items());
+
+  const auto jarraya = dynamic_cast<const TinyJSON::TJValueArray*>((*jarray)[0]);
+  ASSERT_NE(nullptr, jarraya);
+  ASSERT_EQ(0, jarraya->number_of_items());
+
+  delete json;
+}

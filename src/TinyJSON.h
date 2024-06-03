@@ -151,6 +151,9 @@ namespace TinyJSON
     /// <returns></returns>
     const char* to_string() const;
 
+    TJMember* operator [](int idx) const;
+    TJMember* at(int idx) const;
+
   protected:
     // protected contructor called internally so we can 
     // pass ownership of the member to this TJValue.
@@ -182,6 +185,9 @@ namespace TinyJSON
     /// </summary>
     /// <returns></returns>
     const char* to_string() const;
+
+    TJValue* operator [](int idx) const;
+    TJValue* at(int idx) const;
 
   protected:
     // protected contructor called internally so we can 
