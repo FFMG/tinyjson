@@ -37,6 +37,10 @@
 
 #define TJ_CASE_END_OBJECT    case '}':
 
+#define TJ_CASE_BEGIN_ARRAY   case '[':
+
+#define TJ_CASE_END_ARRAY     case ']':
+
 namespace TinyJSON
 {
   ///////////////////////////////////////
@@ -57,6 +61,7 @@ namespace TinyJSON
     // at the root we can only have an array or an object.
     // not both and not more than one
     TJValue* object_found = nullptr;
+    TJValue* array_found = nullptr;
     while (*p != '\0') 
     {
       char c = *p;
@@ -65,6 +70,18 @@ namespace TinyJSON
       TJ_CASE_SPACE
         p++;
         break;
+
+      TJ_CASE_BEGIN_ARRAY
+      {
+        auto tjvalue_array = TJMember::try_continue_read_array(++p);
+        if (nullptr == tjvalue_array)
+        {
+          // Error:  something went wrong, the error was logged.
+          return nullptr;
+        }
+        array_found = tjvalue_array;
+      }
+      break;
 
       TJ_CASE_BEGIN_OBJECT
       {
@@ -82,12 +99,13 @@ namespace TinyJSON
         //  no idea what this is.
         // clear our memory and return the error.
         delete object_found;
+        delete array_found;
         return nullptr;
       }
     }
 
     // return if we found anything.
-    return object_found;
+    return object_found == nullptr ? array_found : object_found;
   }
 
   ///////////////////////////////////////
@@ -148,7 +166,25 @@ namespace TinyJSON
 
     // then we look for the colon
     // only white spaces and the colon are allowed here.
-    const char* colon_location = nullptr;
+    if (!try_skip_colon(p))
+    {
+      delete[] string;
+      //  ERROR: Could not locate the expected colon
+      return nullptr;
+    }
+
+    const auto& value = try_read_Value(p);
+    if(nullptr == value)
+    {
+      delete[] string;
+      //  ERROR: Could not read the value, the error was logged.
+      return nullptr;
+    }
+    return new TJMember(string, value);
+  }
+
+  bool TJMember::try_skip_colon(const char*& p)
+  {
     while (*p != '\0')
     {
       char c = *p;
@@ -159,63 +195,66 @@ namespace TinyJSON
         break;
 
       TJ_CASE_COLON
-      if(colon_location != nullptr )
-      {
-        // ERROR: More than one colon located.
-        delete[] string;
-        return nullptr;
+        p++;
+        return true;
+
+      default:
+        // ERROR: could not find the expected colon
+        return false;
       }
-      p++;
-      colon_location = p;
-      break;
+    }
+    // ERROR: could not find the expected colon
+    return false;
+  }
+
+  TJValue* TJMember::try_read_Value(const char*& p)
+  {
+    while (*p != '\0')
+    {
+      char c = *p;
+      switch (c)
+      {
+      TJ_CASE_SPACE
+        p++;
+        break;
 
       TJ_CASE_START_STRING
       {
-        if (colon_location == nullptr)
-        {
-          // ERROR: Found a string before the colon
-          delete[] string;
-          return nullptr;
-        }
         auto value = try_read_string(p);
         if (nullptr == value)
         {
           //  ERROR could not read the string properly.
-          delete[] string;
           return nullptr;
         }
 
         // whave read the string
         // no need to try and move further forward.
-        return new TJMember(string, new TJValueString(value));
+        return new TJValueString(value);
       }
 
       case 't':
         if (!try_read_true(p))
         {
           //  ERROR could not read the word 'true'
-          delete[] string;
           return nullptr;
         }
-        return new TJMember(string, new TJValueTrue());
+        return new TJValueTrue();
 
       case 'f':
         if (!try_read_false(p))
         {
           //  ERROR could not read the word 'true'
-          delete[] string;
           return nullptr;
         }
-        return new TJMember(string, new TJValueFalse());
+        return new TJValueFalse();
 
       case 'n':
         if (!try_read_null(p))
         {
           //  ERROR could not read the word 'true'
-          delete[] string;
           return nullptr;
         }
-        return new TJMember(string, new TJValueNull());
+        return new TJValueNull();
 
       TJ_CASE_DIGIT
       TJ_CASE_SIGN
@@ -224,11 +263,22 @@ namespace TinyJSON
           if (nullptr == number)
           {
             //  ERROR could not read the word 'true'
-            delete[] string;
             return nullptr;
           }
-          return new TJMember(string, number);
+          return number;
         }
+
+      TJ_CASE_BEGIN_ARRAY
+      {
+        // an array within an array
+        auto tjvalue_array = try_continue_read_array(++p);
+        if (tjvalue_array == nullptr)
+        {
+          // Error:  something went wrong, the error was logged.
+          return nullptr;
+        }
+        return tjvalue_array;
+      }
 
       TJ_CASE_BEGIN_OBJECT
         {
@@ -237,21 +287,18 @@ namespace TinyJSON
           if (tjvalue_object == nullptr)
           {
             // Error:  something went wrong, the error was logged.
-            delete tjvalue_object;
             return nullptr;
           }
-          return new TJMember(string, tjvalue_object);
+          return tjvalue_object;
         }
 
       default:
         // ERROR: expected colon after the string
-        delete[] string;
         return nullptr;
       }
     }
 
     // ERROR: Unable to read a string and/or value
-    delete[] string;
     return nullptr;
   }
 
@@ -313,7 +360,7 @@ namespace TinyJSON
   {
     // the numbers are unsigned and should only contain digits.
     // so we do not have signs or letters to worry about.
-    register unsigned long long result = 0;
+    long long result = 0;
     while (*p != '\0')
     {
       char c = *p;
@@ -666,7 +713,7 @@ namespace TinyJSON
       return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
     }
 
-    if (fraction_exponent > exponent && number_of_digit_whole + exponent <= TJ_MAX_NUMBER_OF_DIGGITS <= TJ_MAX_NUMBER_OF_DIGGITS)
+    if (fraction_exponent > exponent && (number_of_digit_whole + exponent) <= TJ_MAX_NUMBER_OF_DIGGITS <= TJ_MAX_NUMBER_OF_DIGGITS)
     {
       // we now know that the fraction will not completely shift.
       // so we must move the whole number by the number of expoent
@@ -960,14 +1007,19 @@ namespace TinyJSON
     return nullptr;
   }
 
-  TJValue* TJMember::try_read_object(const char*& p)
+  static void free_values(std::vector<TJValue*>* values)
   {
-    if (*p != '{')
+    if (values == nullptr)
     {
-      return nullptr;
+      return;
     }
-    ++p;
-    return try_continue_read_object(p);
+
+    for each (auto var in *values)
+    {
+      delete var;
+    }
+    delete values;
+    values = nullptr;
   }
 
   void TJMember::free_members(std::vector<TJMember*>* members)
@@ -983,6 +1035,87 @@ namespace TinyJSON
     }
     delete members;
     members = nullptr;
+  }
+
+  void TJMember::free_values(std::vector<TJValue*>* values)
+  {
+    if (values == nullptr)
+    {
+      return;
+    }
+
+    for each (auto var in *values)
+    {
+      delete var;
+    }
+    delete values;
+    values = nullptr;
+  }
+
+  TJValue* TJMember::try_continue_read_array(const char*& p)
+  {
+    //  assume no values in that array
+    std::vector<TJValue*>* values = nullptr;
+    bool waiting_for_a_value = true;
+    bool found_comma = false;
+    while (*p != '\0')
+    {
+      char c = *p;
+      switch (c)
+      {
+      TJ_CASE_SPACE
+        p++;
+        break;
+
+      TJ_CASE_END_ARRAY
+        if (found_comma && waiting_for_a_value)
+        {
+          // ERROR: unexpected end of array, there was a "," after
+          //        the last value and we expected a value now, not a close "]"
+          free_values(values);
+          return false;
+        }
+        p++;
+
+        // we are done, we found it.
+        // we give the ownership of the members over.
+        return new TJValueArray(values);
+
+      TJ_CASE_COMMA
+        if (waiting_for_a_value)
+        {
+          // ERROR: found a comma out of order, (2 commas)
+          free_values(values);
+          return nullptr;
+        }
+        // we are now waiting for a value
+        waiting_for_a_value = true;
+        found_comma = true;
+        p++;
+        break;
+
+      default:
+        const auto& value = try_read_Value(p);
+        if (value == nullptr)
+        {
+          // ERROR: unknown character
+          free_values(values);
+          return nullptr;
+        }
+        if (nullptr == values)
+        {
+          values = new std::vector<TJValue*>();
+        }
+        values->push_back(value);
+        waiting_for_a_value = false;
+        found_comma = false;
+        break;
+      }
+    }
+
+    // ERROR end of the string was found and we didn't find what we needed.
+    free_values(values);
+    return nullptr;
   }
 
   TJValue* TJMember::try_continue_read_object(const char*& p)
@@ -1167,6 +1300,11 @@ namespace TinyJSON
     free_members();
   }
 
+  int TJValueObject::number_of_items() const
+  {
+    return _members == nullptr ? 0 : _members->size();
+  }
+
   const char* TJValueObject::to_string() const
   {
     return "TJValueObject";
@@ -1209,6 +1347,48 @@ namespace TinyJSON
   {
     auto value = try_get_value(name);
     return (value == nullptr) ? nullptr : value->to_string();
+  }
+
+  ///////////////////////////////////////
+  /// TJValueArray
+  TJValueArray::TJValueArray() :
+    _values(nullptr)
+  {
+  }
+
+  TJValueArray::TJValueArray(std::vector<TJValue*>* values) :
+    _values(values)
+  {
+  }
+
+  TJValueArray::~TJValueArray()
+  {
+    free_values();
+  }
+
+  int TJValueArray::number_of_items() const
+  {
+    return _values == nullptr ? 0 : _values->size();
+  }
+
+  const char* TJValueArray::to_string() const
+  {
+    return "TJValueArray";
+  }
+
+  void TJValueArray::free_values()
+  {
+    if (_values == nullptr)
+    {
+      return;
+    }
+
+    for each (auto var in *_values)
+    {
+      delete var;
+    }
+    delete _values;
+    _values = nullptr;
   }
 
   ///////////////////////////////////////

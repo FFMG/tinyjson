@@ -4,6 +4,16 @@
 #include <gtest/gtest.h>
 #include "../src/TinyJSON.h"
 
+TEST(TestStrings, StringIsAfterMissingColon) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" "b"
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
 TEST(TestStrings, TheStringNameValueIsSaved) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 {

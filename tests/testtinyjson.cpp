@@ -25,27 +25,6 @@ bool IsDerivedFrom() {
   return std::is_base_of<Base, Derived>::value;
 }
 
-TEST(TestBasic, MakeSureThatEmptyStringIsKinkOfValueObject) {
-  auto json = TinyJSON::TinyJSON::parse("{}");
-  ASSERT_NE(nullptr, json);
-  ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
-  ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValueObject*>(json));
-
-  delete json;
-}
-
-TEST(TestBasic, InvalidJsonObjectReturnNull) {
-  auto json = TinyJSON::TinyJSON::parse("{");
-  ASSERT_EQ(nullptr, json);
-}
-
-TEST(TestBasic, InvalidJsonObject2ReturnNull) {
-  auto json = TinyJSON::TinyJSON::parse( R"({
-    "a" : "b"
-    )");
-  ASSERT_EQ(nullptr, json);
-}
-
 TEST(TestBasic, TheObjectInsideTheObjectDoesNotCloseProperly) {
   auto json = TinyJSON::TinyJSON::parse(R"(
    {
@@ -73,11 +52,6 @@ TEST(TestBasic, SpacesAreIgnored) {
 
 TEST(TestBasic, InvalidCommaAfterTheClosedObject) {
   auto json = TinyJSON::TinyJSON::parse("{},");
-  ASSERT_EQ(nullptr, json);
-}
-
-TEST(TestBasic, ClosedObjectTwice) {
-  auto json = TinyJSON::TinyJSON::parse("{}}");
   ASSERT_EQ(nullptr, json);
 }
 

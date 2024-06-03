@@ -24,7 +24,6 @@ set( Sources
 )
 
 # the TinyJSON library
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_library(${Project} STATIC ${Headers} ${Sources} )
 
 # include the tests

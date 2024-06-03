@@ -7,9 +7,23 @@
 
 namespace TinyJSON
 {
-  class TJMember;
-  class TJValue;
-  class TJValueString;
+  // A simple JSON value, the base of all items in a json
+  class TJValue
+  {
+  public:
+    virtual ~TJValue() = default;
+
+    /// <summary>
+    /// Try and get a string representation of the value.
+    /// </summary>
+    /// <returns></returns>
+    virtual const char* to_string() const = 0;
+
+  protected:
+    TJValue();
+  };
+
+  // The parser class
   class TinyJSON
   {
   public:
@@ -30,7 +44,7 @@ namespace TinyJSON
   // A TJMember is a key value pair, (name/value), that belong to an object.
   class TJMember
   {
-  friend TinyJSON;
+    friend TinyJSON;
   public:
     TJMember(const char* string, const TJValue* value);
     virtual ~TJMember();
@@ -57,9 +71,11 @@ namespace TinyJSON
 
     static TJMember* try_read_string_and_value(const char*& p);
     static char* try_read_string(const char*& p);
+    static bool try_skip_colon(const char*& p);
     static bool try_read_true(const char*& p);
     static bool try_read_false(const char*& p);
     static bool try_read_null(const char*& p);
+    static TJValue* try_read_Value(const char*& p);
     static TJValue* try_read_number(const char*& p);
     static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const long long& exponent);
     static TJValue* try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent);
@@ -71,16 +87,9 @@ namespace TinyJSON
     static char* try_read_whole_number(const char*& p);
     static char* try_read_whole_number_as_fraction(const char*& p);
     static unsigned long long fast_string_to_long_long(const char* p);
-    static unsigned long long shift_number_left(const unsigned long long source, const unsigned long long exponent );
+    static unsigned long long shift_number_left(const unsigned long long source, const unsigned long long exponent);
     static unsigned long long shift_number_right(const unsigned long long source, const unsigned long long exponent, unsigned long long& shifted_source);
     static unsigned long long shift_fraction_left(const unsigned long long& fraction, const unsigned long long& fraction_exponent, const unsigned long long& exponent, unsigned long long& shifted_fraction, unsigned long long& shitfed_unsigned_fraction_exponent);
-
-    /// <summary>
-    /// Try and read a complete object {}
-    /// </summary>
-    /// <param name="p"></param>
-    /// <returns></returns>
-    static TJValue* try_read_object(const char*& p);
 
     /// <summary>
     /// Try and read an object after we have read the openning bracket
@@ -90,7 +99,16 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_continue_read_object(const char*& p);
 
+    /// <summary>
+    /// Try and read an array after we have read the opening bracket.
+    /// This is to prevent having to read the same char more than once.
+    /// </summary>
+    /// <param name="p"></param>
+    /// <returns></returns>
+    static TJValue* try_continue_read_array(const char*& p);
+
     static void free_members(std::vector<TJMember*>* members);
+    static void free_values(std::vector<TJValue*>* values);
 
   private:
     char* _string;
@@ -99,20 +117,82 @@ namespace TinyJSON
     void free_value();
   };
 
-  // A simple JSON value
-  class TJValue
+  // A Json object that contain an array of key/value pairs.
+  class TJValueObject : public TJValue
   {
+    friend TJMember;
   public:
-    virtual ~TJValue() = default;
+    TJValueObject();
+    virtual ~TJValueObject();
+
+    /// <summary>
+    /// Get the number of items in this array
+    /// </summary>
+    /// <returns></returns>
+    int number_of_items() const;
+
+    /// <summary>
+    /// Try and get a string value, if it does not exist, then we return null.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    const char* try_get_string(const char* name) const;
+
+    /// <summary>
+    /// Try and get the value of this member if it exists.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    virtual const TJValue* try_get_value(const char* name) const;
 
     /// <summary>
     /// Try and get a string representation of the value.
     /// </summary>
     /// <returns></returns>
-    virtual const char* to_string() const = 0;
+    const char* to_string() const;
 
   protected:
-    TJValue();
+    // protected contructor called internally so we can 
+    // pass ownership of the member to this TJValue.
+    TJValueObject(std::vector<TJMember*>* members);
+
+  private:
+    // All the key value pairs in this object.
+    std::vector<TJMember*>* _members;
+
+    void free_members();
+  };
+
+  // A Json object that contain an array of key/value pairs.
+  class TJValueArray : public TJValue
+  {
+    friend TJMember;
+  public:
+    TJValueArray();
+    virtual ~TJValueArray();
+
+    /// <summary>
+    /// Get the number of items in this array
+    /// </summary>
+    /// <returns></returns>
+    int number_of_items() const;
+
+    /// <summary>
+    /// Try and get a string representation of the value.
+    /// </summary>
+    /// <returns></returns>
+    const char* to_string() const;
+
+  protected:
+    // protected contructor called internally so we can 
+    // pass ownership of the member to this TJValue.
+    TJValueArray(std::vector<TJValue*>* values);
+
+  private:
+    // All the key value pairs in this object.
+    std::vector<TJValue*>* _values;
+
+    void free_values();
   };
 
   // A string JSon
@@ -178,46 +258,6 @@ namespace TinyJSON
     /// </summary>
     /// <returns></returns>
     const char* to_string() const;
-  };
-
-  // A null JSon
-  class TJValueObject : public TJValue
-  {
-  friend TJMember;
-  public:
-    TJValueObject();
-    virtual ~TJValueObject();
-
-    /// <summary>
-    /// Try and get a string value, if it does not exist, then we return null.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    const char* try_get_string(const char* name) const;
-
-    /// <summary>
-    /// Try and get the value of this member if it exists.
-    /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    virtual const TJValue* try_get_value(const char* name) const;
-
-    /// <summary>
-    /// Try and get a string representation of the value.
-    /// </summary>
-    /// <returns></returns>
-    const char* to_string() const;
-
-  protected:
-    // protected contructor called internally so we can 
-    // pass ownership of the member to this TJValue.
-    TJValueObject(std::vector<TJMember*>* members);
-
-  private:
-    // All the key value pairs in this object.
-    std::vector<TJMember*>* _members;
-
-    void free_members();
   };
 
   // A number JSon, float or int

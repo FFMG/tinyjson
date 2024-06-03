@@ -5,6 +5,16 @@
 #include <vector>
 #include "../src/TinyJSON.h"
 
+TEST(TestNumbers, NumberIsAfterMissingColon) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" 42
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
 TEST(TestNumbers, WholeNumbers) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 {
