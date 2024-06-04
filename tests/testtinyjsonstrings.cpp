@@ -26,7 +26,7 @@ TEST(TestStrings, TheStringNameValueIsSaved) {
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
 
-  EXPECT_STREQ(jobject->try_get_string("Hello"), "World");
+  ASSERT_STREQ(jobject->try_get_string("Hello"), "World");
 
   delete json;
 }
@@ -44,7 +44,7 @@ TEST(TestStrings, TheStringNameValueIsSavedMultiLine) {
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
 
-  EXPECT_STREQ(jobject->try_get_string("Hello"), "World");
+  ASSERT_STREQ(jobject->try_get_string("Hello"), "World");
 
   delete json;
 }
@@ -62,9 +62,28 @@ TEST(TestStrings, TheStringNameValueIsSavedNultiplItems) {
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
 
-  EXPECT_STREQ(jobject->try_get_string("a name"), "a value");
-  EXPECT_STREQ(jobject->try_get_string("b name"), "b value");
-  EXPECT_STREQ(jobject->try_get_string("c name"), "c value");
+  ASSERT_STREQ(jobject->try_get_string("a name"), "a value");
+  ASSERT_STREQ(jobject->try_get_string("b name"), "b value");
+  ASSERT_STREQ(jobject->try_get_string("c name"), "c value");
+
+  delete json;
+}
+
+TEST(TestStrings, ArrayOfString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "Hello" , "World"
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_EQ(2, jarray->number_of_items());
+  ASSERT_STREQ("Hello", jarray->at(0)->to_string());
+  ASSERT_STREQ("World", jarray->at(1)->to_string());
 
   delete json;
 }

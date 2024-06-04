@@ -27,7 +27,10 @@ TEST(TestBooleans, CheckForTrue) {
 
   EXPECT_STREQ(jobject->try_get_string("a"), "true");
   ASSERT_NE(nullptr, jobject->try_get_value("a"));
-  ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueTrue*>(jobject->try_get_value("a")));
+
+  auto boolean = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject->try_get_value("a"));
+  ASSERT_NE(nullptr, boolean);
+  ASSERT_TRUE(boolean->is_true());
 
   delete json;
 }
@@ -45,7 +48,10 @@ TEST(TestBooleans, CheckForFalse) {
 
   EXPECT_STREQ(jobject->try_get_string("a"), "false");
   ASSERT_NE(nullptr, jobject->try_get_value("a"));
-  ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueFalse*>(jobject->try_get_value("a")));
+
+  auto boolean = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject->try_get_value("a"));
+  ASSERT_NE(nullptr, boolean);
+  ASSERT_FALSE(boolean->is_true());
 
   delete json;
 }

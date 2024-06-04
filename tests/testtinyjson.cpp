@@ -156,11 +156,18 @@ TEST(TestBasic, CheckForDifferentValueTypes) {
 
   EXPECT_STREQ(jobject->try_get_string("b"), "true");
   ASSERT_NE(nullptr, jobject->try_get_value("b"));
-  ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueTrue*>(jobject->try_get_value("b")));
+  
+  auto boolean = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject->try_get_value("b"));
+  ASSERT_NE(nullptr, boolean);
+  ASSERT_TRUE(boolean->is_true());
+
 
   EXPECT_STREQ(jobject->try_get_string("c"), "false");
   ASSERT_NE(nullptr, jobject->try_get_value("c"));
-  ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueFalse*>(jobject->try_get_value("c")));
+  auto boolean2 = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject->try_get_value("c"));
+  ASSERT_NE(nullptr, boolean2);
+  ASSERT_FALSE(boolean2->is_true());
+
 
   EXPECT_STREQ(jobject->try_get_string("d"), "world");
   ASSERT_NE(nullptr, jobject->try_get_value("d"));
@@ -191,7 +198,10 @@ TEST(TestBasic, ObjectInsideAnObject) {
   // finally check that the value are correct.
   EXPECT_STREQ(jobject2->try_get_string("b"), "true");
   ASSERT_NE(nullptr, jobject2->try_get_value("b"));
-  ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueTrue*>(jobject2->try_get_value("b")));
+
+  auto boolean = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject2->try_get_value("b"));
+  ASSERT_NE(nullptr, boolean);
+  ASSERT_TRUE(boolean->is_true());
 
   delete json;
 }
@@ -226,9 +236,9 @@ TEST(TestBasic, ObjectMultipleDepth) {
   ASSERT_NE(nullptr, valuebbb);
 
   // finally check that the value are correct.
-  EXPECT_STREQ(valuebbb->try_get_string("aaaa"), "true");
-  ASSERT_NE(nullptr, valuebbb->try_get_value("aaaa"));
-  ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueTrue*>(valuebbb->try_get_value("aaaa")));
+  auto boolean = dynamic_cast<const TinyJSON::TJValueBoolean*>(valuebbb->try_get_value("aaaa"));
+  ASSERT_NE(nullptr, boolean);
+  ASSERT_TRUE(boolean->is_true());
 
   delete json;
 }

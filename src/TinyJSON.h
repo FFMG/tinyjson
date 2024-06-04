@@ -72,9 +72,9 @@ namespace TinyJSON
     static TJMember* try_read_string_and_value(const char*& p);
     static char* try_read_string(const char*& p);
     static bool try_skip_colon(const char*& p);
-    static TJValue* try_read_true(const char*& p);
-    static TJValue* try_read_false(const char*& p);
-    static TJValue* try_read_null(const char*& p);
+    static TJValue* try_continue_read_true(const char*& p);
+    static TJValue* try_continue_read_false(const char*& p);
+    static TJValue* try_continue_read_null(const char*& p);
     static TJValue* try_read_Value(const char*& p);
     static TJValue* try_read_number(const char*& p);
     static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const long long& exponent);
@@ -224,32 +224,25 @@ namespace TinyJSON
     void free_value();
   };
 
-  // A true bolean JSon
-  class TJValueTrue : public TJValue
+  // A bolean JSon
+  class TJValueBoolean : public TJValue
   {
   public:
-    TJValueTrue();
-    virtual ~TJValueTrue() = default;
+    TJValueBoolean(bool is_true);
+    virtual ~TJValueBoolean() = default;
 
     /// <summary>
     /// Try and get a string representation of the value.
     /// </summary>
     /// <returns></returns>
     const char* to_string() const;
-  };
 
-  // A true bolean JSon
-  class TJValueFalse : public TJValue
-  {
-  public:
-    TJValueFalse();
-    virtual ~TJValueFalse() = default;
+    bool is_true() const {
+      return _is_true;
+    }
 
-    /// <summary>
-    /// Try and get a string representation of the value.
-    /// </summary>
-    /// <returns></returns>
-    const char* to_string() const;
+  private:
+    const bool _is_true;
   };
 
   // A null JSon

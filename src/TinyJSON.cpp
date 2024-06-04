@@ -234,7 +234,7 @@ namespace TinyJSON
 
       case 't':
       {
-        auto true_value = try_read_true(p);
+        auto true_value = try_continue_read_true(++p);
         if (nullptr == true_value)
         {
           //  ERROR could not read the word 'true'
@@ -245,7 +245,7 @@ namespace TinyJSON
 
       case 'f':
       {
-        auto false_value = try_read_false(p);
+        auto false_value = try_continue_read_false(++p);
         if (nullptr == false_value)
         {
           //  ERROR could not read the word 'true'
@@ -256,7 +256,7 @@ namespace TinyJSON
 
       case 'n':
       {
-        auto null_value = try_read_null(p);
+        auto null_value = try_continue_read_null(++p);
         if(nullptr == null_value)
         {
           //  ERROR could not read the word 'true'
@@ -311,17 +311,59 @@ namespace TinyJSON
     return nullptr;
   }
 
-  TJValue* TJMember::try_read_true(const char*& p)
+  TJValue* TJMember::try_continue_read_null(const char*& p)
   {
-    if (*p != 't')
+    if (*(p) != 'u')
     {
       return nullptr;
     }
-    if (*(p + 1) != 'r')
+    if (*(p + 1) != 'l')
     {
       return nullptr;
     }
-    if (*(p + 2) != 'u')
+    if (*(p + 2) != 'l')
+    {
+      return nullptr;
+    }
+
+    p += 3;
+
+    // all good.
+    return new TJValueNull();
+  }
+
+  TJValue* TJMember::try_continue_read_true(const char*& p)
+  {
+    if (*(p) != 'r')
+    {
+      return nullptr;
+    }
+    if (*(p + 1) != 'u')
+    {
+      return nullptr;
+    }
+    if (*(p + 2) != 'e')
+    {
+      return nullptr;
+    }
+
+    p += 3;
+
+    // all good.
+    return new TJValueBoolean(true);
+  }
+
+  TJValue* TJMember::try_continue_read_false(const char*& p)
+  {
+    if (*(p) != 'a')
+    {
+      return nullptr;
+    }
+    if (*(p + 1) != 'l')
+    {
+      return nullptr;
+    }
+    if (*(p + 2) != 's')
     {
       return nullptr;
     }
@@ -333,36 +375,7 @@ namespace TinyJSON
     p += 4;
 
     // all good.
-    return new TJValueTrue();
-  }
-
-  TJValue* TJMember::try_read_false(const char*& p)
-  {
-    if (*p != 'f')
-    {
-      return nullptr;
-    }
-    if (*(p + 1) != 'a')
-    {
-      return nullptr;
-    }
-    if (*(p + 2) != 'l')
-    {
-      return nullptr;
-    }
-    if (*(p + 3) != 's')
-    {
-      return nullptr;
-    }
-    if (*(p + 4) != 'e')
-    {
-      return nullptr;
-    }
-
-    p += 5;
-
-    // all good.
-    return new TJValueFalse();
+    return new TJValueBoolean(false);
   }
 
   unsigned long long TJMember::fast_string_to_long_long(const char* p)
@@ -877,31 +890,6 @@ namespace TinyJSON
     return count;
   }
 
-  TJValue* TJMember::try_read_null(const char*& p)
-  {
-    if (*p != 'n')
-    {
-      return nullptr;
-    }
-    if (*(p + 1) != 'u')
-    {
-      return nullptr;
-    }
-    if (*(p + 2) != 'l')
-    {
-      return nullptr;
-    }
-    if (*(p + 3) != 'l')
-    {
-      return nullptr;
-    }
-
-    p += 4;
-
-    // all good.
-    return new TJValueNull();
-  }
-
   char* TJMember::try_read_whole_number_as_fraction(const char*& p)
   {
     // try read the number
@@ -1261,24 +1249,14 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue true
-  TJValueTrue::TJValueTrue()
+  TJValueBoolean::TJValueBoolean(bool is_true) :
+    _is_true(is_true)
   {
   }
 
-  const char* TJValueTrue::to_string() const
+  const char* TJValueBoolean::to_string() const
   {
-    return "true";
-  }
-
-  ///////////////////////////////////////
-  /// TJValue false
-  TJValueFalse::TJValueFalse()
-  {
-  }
-
-  const char* TJValueFalse::to_string() const
-  {
-    return "false";
+    return is_true() ? "true" : "false";
   }
 
   ///////////////////////////////////////
