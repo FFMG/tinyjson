@@ -45,10 +45,6 @@ namespace TinyJSON
 {
   ///////////////////////////////////////
   /// TinyJSON
-  TinyJSON::TinyJSON()
-  {
-  }
-
   TJValue* TinyJSON::parse(const char* src)
   {
     const char* p = src;
@@ -388,10 +384,6 @@ namespace TinyJSON
       char c = *p;
       switch (c)
       {
-      TJ_CASE_SPACE
-        p++;
-        break;
-
       // it might sound silly to do it that way but it is faster
       // than doing something like result += c - '0'
       case '0':
@@ -910,6 +902,11 @@ namespace TinyJSON
     return whole_number;
   }
 
+  /// <summary>
+  /// The function looks for a whole number and stops as soon as we find decimal and/or exponent.
+  /// </summary>
+  /// <param name="p">The current string pointer.</param>
+  /// <returns></returns>
   char* TJMember::try_read_whole_number(const char*& p)
   {
     const char* start = nullptr;
@@ -919,32 +916,32 @@ namespace TinyJSON
       char c = *p;
       switch (c)
       {
-      TJ_CASE_DIGIT
-        if (nullptr == start)
-        {
-          start = p; // this is the start
-        }
+        TJ_CASE_DIGIT
+          if (nullptr == start)
+          {
+            start = p; // this is the start
+          }
         p++;
         break;
 
-        break;
-
       default:
-        // if we are still in the string, then we are good.
-        if (nullptr == start)
         {
-          // ERROR: unknown character
-          return nullptr;
+          // if we are still in the string, then we are good.
+          if (nullptr == start)
+          {
+            // ERROR: unknown character
+            return nullptr;
+          }
+
+          // Calculate the length of the text inside the quotes
+          const auto& length = p - start;
+
+          // Allocate memory for the result string
+          char* result = new char[length + 1];
+          std::strncpy(result, start, length);
+          result[length] = '\0'; // Null-terminate the string
+          return result;
         }
-
-        // Calculate the length of the text inside the quotes
-        const auto& length = p - start;
-
-        // Allocate memory for the result string
-        char* result = new char[length + 1];
-        std::strncpy(result, start, length);
-        result[length] = '\0'; // Null-terminate the string
-        return result;
       }
     }
 

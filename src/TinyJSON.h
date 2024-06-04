@@ -35,7 +35,6 @@ namespace TinyJSON
   class TinyJSON
   {
   public:
-    TinyJSON();
     virtual ~TinyJSON() = default;
 
     /// <summary>
@@ -46,6 +45,8 @@ namespace TinyJSON
     static TJValue* parse(const char* src);
 
   protected:
+    TinyJSON() = default;
+
     static TJValue* start(const char*& p);
   };
 

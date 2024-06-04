@@ -191,7 +191,6 @@ TEST(TestNumbers, InvalidWholeNumber) {
   ASSERT_EQ(nullptr, json);
 }
 
-
 TEST(TestNumbers, TestManyWholeNumbers) {
   for (int i = 0; i < 19/*TJ_MAX_NUMBER_OF_DIGGITS*/;++i)
   {
@@ -338,4 +337,14 @@ TEST(TestNumbers, CheckThatValueIsNumberInArray) {
   ASSERT_FALSE(number_value->is_null());
 
   delete json;
+}
+
+TEST(TestNumbers, InvalidWholeNumber2) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 12as
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
 }
