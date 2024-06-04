@@ -735,7 +735,7 @@ namespace TinyJSON
       return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
     }
 
-    if (fraction_exponent > exponent && (number_of_digit_whole + exponent) <= TJ_MAX_NUMBER_OF_DIGGITS <= TJ_MAX_NUMBER_OF_DIGGITS)
+    if (fraction_exponent > exponent && (number_of_digit_whole + exponent) <= TJ_MAX_NUMBER_OF_DIGGITS)
     {
       // we now know that the fraction will not completely shift.
       // so we must move the whole number by the number of expoent
@@ -1216,6 +1216,42 @@ namespace TinyJSON
   {
   }
 
+  bool TJValue::is_object() const
+  {
+    return false;
+  }
+
+  bool TJValue::is_array() const
+  {
+    return false;
+  }
+
+  bool TJValue::is_string() const
+  {
+    return false;
+  }
+
+  bool TJValue::is_number() const
+  {
+    return false;
+  }
+
+  bool TJValue::is_true() const
+  {
+    return false;
+  }
+
+  bool TJValue::is_false() const
+  {
+    return false;
+  }
+
+  bool TJValue::is_null() const
+  {
+    return false;
+  }
+
+
   ///////////////////////////////////////
   /// TJValue string
   TJValueString::TJValueString(const char* value) :
@@ -1231,6 +1267,11 @@ namespace TinyJSON
   TJValueString::~TJValueString()
   {
     free_value();
+  }
+
+  bool TJValueString::is_string() const
+  {
+    return true;
   }
 
   void TJValueString::free_value()
@@ -1259,6 +1300,16 @@ namespace TinyJSON
     return is_true() ? "true" : "false";
   }
 
+  bool TJValueBoolean::is_true() const
+  {
+    return _is_true;
+  }
+
+  bool TJValueBoolean::is_false() const
+  {
+    return !_is_true;
+  }
+
   ///////////////////////////////////////
   /// TJValue null
   TJValueNull::TJValueNull()
@@ -1268,6 +1319,11 @@ namespace TinyJSON
   const char* TJValueNull::to_string() const
   {
     return "null";
+  }
+
+  bool TJValueNull::is_null() const
+  {
+    return true;
   }
 
   ///////////////////////////////////////
@@ -1285,6 +1341,11 @@ namespace TinyJSON
   TJValueObject::~TJValueObject()
   {
     free_members();
+  }
+
+  bool TJValueObject::is_object() const
+  {
+    return true;
   }
 
   int TJValueObject::number_of_items() const
@@ -1367,6 +1428,11 @@ namespace TinyJSON
     free_values();
   }
 
+  bool TJValueArray::is_array() const
+  {
+    return true;
+  }
+
   int TJValueArray::number_of_items() const
   {
     return _values == nullptr ? 0 : _values->size();
@@ -1416,6 +1482,11 @@ namespace TinyJSON
   const char* TJValueNumber::to_string() const
   {
     return "number";
+  }
+
+  bool TJValueNumber::is_number() const
+  {
+    return true;
   }
 
   ///////////////////////////////////////

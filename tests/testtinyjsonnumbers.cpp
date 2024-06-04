@@ -289,3 +289,53 @@ TEST(TestNumbers, TestManyComplexFloatNumbers) {
 
   }
 }
+
+TEST(TestNumbers, CheckThatValueIsNumber) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 123
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto number_value = jobject->try_get_value("a");
+
+  ASSERT_FALSE(number_value->is_object());
+  ASSERT_FALSE(number_value->is_array());
+  ASSERT_FALSE(number_value->is_string());
+  ASSERT_TRUE(number_value->is_number());
+  ASSERT_FALSE(number_value->is_true());
+  ASSERT_FALSE(number_value->is_false());
+  ASSERT_FALSE(number_value->is_null());
+
+  delete json;
+}
+
+TEST(TestNumbers, CheckThatValueIsNumberInArray) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  42
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto tjarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, tjarray);
+
+  auto number_value = tjarray->at(0);
+
+  ASSERT_FALSE(number_value->is_object());
+  ASSERT_FALSE(number_value->is_array());
+  ASSERT_FALSE(number_value->is_string());
+  ASSERT_TRUE(number_value->is_number());
+  ASSERT_FALSE(number_value->is_true());
+  ASSERT_FALSE(number_value->is_false());
+  ASSERT_FALSE(number_value->is_null());
+
+  delete json;
+}

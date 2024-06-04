@@ -125,3 +125,79 @@ TEST(TestBooleans, FalseBooleanNotSpelledProperly4) {
   );
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestBooleans, CheckThatValueIsBooleanAndCorrectValue) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : false,
+      "b" : true
+    }
+    )"
+  );
+
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto booleana = jobject->try_get_value("a");
+  ASSERT_NE(nullptr, booleana);
+
+  ASSERT_FALSE(booleana->is_object());
+  ASSERT_FALSE(booleana->is_array());
+  ASSERT_FALSE(booleana->is_string());
+  ASSERT_FALSE(booleana->is_number());
+  ASSERT_FALSE(booleana->is_true());
+  ASSERT_TRUE(booleana->is_false());
+  ASSERT_FALSE(booleana->is_null());
+
+  auto booleanb = jobject->try_get_value("b");
+  ASSERT_NE(nullptr, booleanb);
+
+  ASSERT_FALSE(booleanb->is_object());
+  ASSERT_FALSE(booleanb->is_array());
+  ASSERT_FALSE(booleanb->is_string());
+  ASSERT_FALSE(booleanb->is_number());
+  ASSERT_TRUE(booleanb->is_true());
+  ASSERT_FALSE(booleanb->is_false());
+  ASSERT_FALSE(booleanb->is_null());
+
+  delete json;
+}
+
+TEST(TestBooleans, CheckThatValueIsBooleanAndCorrectValueInArray) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    [
+      false,
+      true
+    ]
+    )"
+  );
+
+  ASSERT_NE(nullptr, json);
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  auto booleana = jarray->at(0);
+  ASSERT_NE(nullptr, booleana);
+
+  ASSERT_FALSE(booleana->is_object());
+  ASSERT_FALSE(booleana->is_array());
+  ASSERT_FALSE(booleana->is_string());
+  ASSERT_FALSE(booleana->is_number());
+  ASSERT_FALSE(booleana->is_true());
+  ASSERT_TRUE(booleana->is_false());
+  ASSERT_FALSE(booleana->is_null());
+
+  auto booleanb = jarray->at(1);
+  ASSERT_NE(nullptr, booleanb);
+
+  ASSERT_FALSE(booleanb->is_object());
+  ASSERT_FALSE(booleanb->is_array());
+  ASSERT_FALSE(booleanb->is_string());
+  ASSERT_FALSE(booleanb->is_number());
+  ASSERT_TRUE(booleanb->is_true());
+  ASSERT_FALSE(booleanb->is_false());
+  ASSERT_FALSE(booleanb->is_null());
+
+  delete json;
+}

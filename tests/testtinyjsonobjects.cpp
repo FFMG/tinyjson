@@ -104,3 +104,17 @@ TEST(TestObjects, ObjectOpensAndHasValuesButNeverCloses) {
     )");
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestObjects, CheckThatValueIsObject) {
+  auto json = TinyJSON::TinyJSON::parse("{}");
+  ASSERT_NE(nullptr, json);
+
+  ASSERT_TRUE(json->is_object());
+  ASSERT_FALSE(json->is_array());
+  ASSERT_FALSE(json->is_string());
+  ASSERT_FALSE(json->is_number());
+  ASSERT_FALSE(json->is_true());
+  ASSERT_FALSE(json->is_false());
+  ASSERT_FALSE(json->is_null());
+  delete json;
+}

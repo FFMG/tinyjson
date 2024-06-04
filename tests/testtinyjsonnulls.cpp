@@ -106,3 +106,56 @@ TEST(TestNulls, NullWordIsNotNull) {
 
   delete json;
 }
+
+
+TEST(TestNulls, CheckThatValueIsNullValue) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" : null
+    }
+    )"
+  );
+
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto nullvalue = jobject->try_get_value("a");
+  ASSERT_NE(nullptr, nullvalue);
+
+  ASSERT_FALSE(nullvalue->is_object());
+  ASSERT_FALSE(nullvalue->is_array());
+  ASSERT_FALSE(nullvalue->is_string());
+  ASSERT_FALSE(nullvalue->is_number());
+  ASSERT_FALSE(nullvalue->is_true());
+  ASSERT_FALSE(nullvalue->is_false());
+  ASSERT_TRUE(nullvalue->is_null());
+
+  delete json;
+}
+
+TEST(TestNulls, CheckThatValueIsNullValueInArray) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    [
+      null
+    ]
+    )"
+  );
+
+  ASSERT_NE(nullptr, json);
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  auto nullvalue =jarray->at(0);
+  ASSERT_NE(nullptr, nullvalue);
+
+  ASSERT_FALSE(nullvalue->is_object());
+  ASSERT_FALSE(nullvalue->is_array());
+  ASSERT_FALSE(nullvalue->is_string());
+  ASSERT_FALSE(nullvalue->is_number());
+  ASSERT_FALSE(nullvalue->is_true());
+  ASSERT_FALSE(nullvalue->is_false());
+  ASSERT_TRUE(nullvalue->is_null());
+
+  delete json;
+}

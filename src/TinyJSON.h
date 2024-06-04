@@ -19,6 +19,14 @@ namespace TinyJSON
     /// <returns></returns>
     virtual const char* to_string() const = 0;
 
+    virtual bool is_object() const;
+    virtual bool is_array() const;
+    virtual bool is_string() const;
+    virtual bool is_number() const;
+    virtual bool is_true() const;
+    virtual bool is_false() const;
+    virtual bool is_null() const;
+
   protected:
     TJValue();
   };
@@ -154,6 +162,8 @@ namespace TinyJSON
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
 
+    bool is_object() const;
+
   protected:
     // protected contructor called internally so we can 
     // pass ownership of the member to this TJValue.
@@ -189,6 +199,8 @@ namespace TinyJSON
     TJValue* operator [](int idx) const;
     TJValue* at(int idx) const;
 
+    bool is_array() const;
+
   protected:
     // protected contructor called internally so we can 
     // pass ownership of the member to this TJValue.
@@ -215,6 +227,7 @@ namespace TinyJSON
     /// <returns></returns>
     const char* to_string() const;
 
+    bool is_string() const;
   protected:
     // create while passing the ownership of the memory.
     TJValueString(char* value);
@@ -237,9 +250,8 @@ namespace TinyJSON
     /// <returns></returns>
     const char* to_string() const;
 
-    bool is_true() const {
-      return _is_true;
-    }
+    bool is_true() const;
+    bool is_false() const;
 
   private:
     const bool _is_true;
@@ -257,6 +269,8 @@ namespace TinyJSON
     /// </summary>
     /// <returns></returns>
     const char* to_string() const;
+
+    bool is_null() const;
   };
 
   // A number JSon, float or int
@@ -272,6 +286,8 @@ namespace TinyJSON
     /// </summary>
     /// <returns></returns>
     const char* to_string() const;
+
+    bool is_number() const;
 
   protected:
     const bool _is_negative;
