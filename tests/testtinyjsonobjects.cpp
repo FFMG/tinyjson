@@ -118,3 +118,36 @@ TEST(TestObjects, CheckThatValueIsObject) {
   ASSERT_FALSE(json->is_null());
   delete json;
 }
+
+TEST(TestObjects, TryingToGetAnItemThatDoesNotExitReturnsNull) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 12, "b" : 13, "b" : 14
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto object_of_values = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_EQ(3, object_of_values->number_of_items());
+
+  ASSERT_NE(nullptr, object_of_values->at(0));
+  ASSERT_EQ(nullptr, object_of_values->at(3));
+  delete json;
+}
+
+TEST(TestObjects, TryingToGetANegativeItemReturnsNull) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 12, "b" : 13, "b" : 14
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto object_of_values = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_EQ(3, object_of_values->number_of_items());
+
+  ASSERT_NE(nullptr, object_of_values->at(0));
+  ASSERT_EQ(nullptr, object_of_values->at(-1));
+  ASSERT_EQ(nullptr, object_of_values->at(-42));
+  delete json;
+}

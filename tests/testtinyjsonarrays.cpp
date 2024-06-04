@@ -127,3 +127,36 @@ TEST(TestArrays, CheckThatValueIsArray) {
   ASSERT_FALSE(json->is_null());
   delete json;
 }
+
+TEST(TestArrays, TryingToGetAnItemThatDoesNotExitReturnsNull) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  12, 13, 14
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto array_of_values = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_EQ(3, array_of_values->number_of_items());
+
+  ASSERT_NE(nullptr, array_of_values->at(0));
+  ASSERT_EQ(nullptr, array_of_values->at(3));
+  delete json;
+}
+
+TEST(TestArrays, TryingToGetANegativeItemReturnsNull) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  12, 13, 14
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto array_of_values = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_EQ(3, array_of_values->number_of_items());
+
+  ASSERT_NE(nullptr, array_of_values->at(0));
+  ASSERT_EQ(nullptr, array_of_values->at(-1));
+  ASSERT_EQ(nullptr, array_of_values->at(-42));
+  delete json;
+}

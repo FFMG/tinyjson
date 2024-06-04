@@ -96,6 +96,7 @@ namespace TinyJSON
     static char* try_read_whole_number(const char*& p);
     static char* try_read_whole_number_as_fraction(const char*& p);
     static unsigned long long fast_string_to_long_long(const char* p);
+
     static unsigned long long shift_number_left(const unsigned long long source, const unsigned long long exponent);
     static unsigned long long shift_number_right(const unsigned long long source, const unsigned long long exponent, unsigned long long& shifted_source);
     static unsigned long long shift_fraction_left(const unsigned long long& fraction, const unsigned long long& fraction_exponent, const unsigned long long& exponent, unsigned long long& shifted_fraction, unsigned long long& shitfed_unsigned_fraction_exponent);

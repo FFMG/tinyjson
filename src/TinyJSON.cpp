@@ -446,7 +446,8 @@ namespace TinyJSON
         break;
 
       default:
-        return result;
+        // ERROR: only numbers are expected.
+        return 0ull;
       }
     }
     return result;
@@ -465,7 +466,7 @@ namespace TinyJSON
     auto possible_number = try_read_whole_number(p);
     if (nullptr == possible_number)
     {
-      // ERROR: Could not locate he number.
+      // ERROR: Could not locate the number.
       return nullptr;
     }
 
