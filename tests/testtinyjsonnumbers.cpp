@@ -175,7 +175,7 @@ TEST(TestNumbers, MaxPositiveNumber) {
   ASSERT_EQ(9223372036854775807, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("b"));
-  ASSERT_NE(nullptr, valuea);
+  ASSERT_NE(nullptr, valueb);
   ASSERT_EQ(-9223372036854775806, valueb->get_number());
 
   delete json;
@@ -344,6 +344,16 @@ TEST(TestNumbers, InvalidWholeNumber2) {
 {
   "a" : 12as
 }
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, UnexpectedSpaceInTheNumbers) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  12,14,1 5
+]
 )"
 );
   ASSERT_EQ(nullptr, json);

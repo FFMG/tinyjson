@@ -199,7 +199,8 @@ namespace TinyJSON
         return false;
       }
     }
-    // ERROR: could not find the expected colon
+
+    // ERROR: This should never be reached, unless the string does not contain a '\0'
     return false;
   }
 
@@ -912,16 +913,30 @@ namespace TinyJSON
   {
     const char* start = nullptr;
     const char* end = nullptr;
+    int found_spaces = 0;
     while (*p != '\0')
     {
       char c = *p;
       switch (c)
       {
-        TJ_CASE_DIGIT
-          if (nullptr == start)
-          {
-            start = p; // this is the start
-          }
+      TJ_CASE_SPACE
+        if (nullptr != start)
+        {
+          ++found_spaces;
+        }
+        p++;
+        break;
+
+      TJ_CASE_DIGIT
+        if (nullptr == start)
+        {
+          start = p; // this is the start
+        }
+        if(found_spaces > 0 )
+        {
+          // ERROR: Number has a space between it.
+          return nullptr;
+        }
         p++;
         break;
 
@@ -935,7 +950,7 @@ namespace TinyJSON
           }
 
           // Calculate the length of the text inside the quotes
-          const auto& length = p - start;
+          const auto& length = p - start - found_spaces;
 
           // Allocate memory for the result string
           char* result = new char[length + 1];

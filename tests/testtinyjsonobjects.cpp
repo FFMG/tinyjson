@@ -151,3 +151,13 @@ TEST(TestObjects, TryingToGetANegativeItemReturnsNull) {
   ASSERT_EQ(nullptr, object_of_values->at(-42));
   delete json;
 }
+
+TEST(TestObjects, ObjectHasAValidStringJustNoColon) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    {
+      "a" 
+    }
+    )"
+  );
+  ASSERT_EQ(nullptr, json);
+}
