@@ -92,7 +92,7 @@ namespace TinyJSON
     static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent);
     static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent);
     static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent);
-    static int get_number_of_digits(const unsigned long long& number);
+    static unsigned long long get_number_of_digits(const unsigned long long& number);
     static char* try_read_whole_number(const char*& p);
     static char* try_read_whole_number_as_fraction(const char*& p);
     static unsigned long long fast_string_to_long_long(const char* p);

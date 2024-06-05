@@ -4,7 +4,9 @@
 #include "TinyJSON.h"
 
 #include <algorithm>
-#include <cmath> 
+#include <cmath>
+#include <cstring> 
+#include <cstdio>
 
 #define TJ_MAX_NUMBER_OF_DIGGITS 19
 
@@ -130,7 +132,7 @@ namespace TinyJSON
   {
     if (nullptr == _value)
     {
-      return false;
+      return nullptr;
     }
     return _value->to_string();
   }
@@ -711,7 +713,6 @@ namespace TinyJSON
   TJValue* TJMember::try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
   {
     auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
-    auto number_of_digit_fraction = get_number_of_digits(unsigned_fraction)+fraction_exponent -1;
 
     // case 1:
     //   The total number is less than TJ_MAX_NUMBER_OF_DIGGITS
@@ -868,14 +869,14 @@ namespace TinyJSON
       is_negative);
   }
 
-  int TJMember::get_number_of_digits(const unsigned long long& number )
+  unsigned long long TJMember::get_number_of_digits(const unsigned long long& number )
   {
     if (number == 0)
     {
-      return 0;
+      return 0ull;
     }
     unsigned long long truncated_number = number;
-    int count = 0;
+    unsigned long long count = 0;
     do
     {
       truncated_number /= 10;
@@ -912,7 +913,6 @@ namespace TinyJSON
   char* TJMember::try_read_whole_number(const char*& p)
   {
     const char* start = nullptr;
-    const char* end = nullptr;
     int found_spaces = 0;
     while (*p != '\0')
     {
@@ -1017,21 +1017,6 @@ namespace TinyJSON
     return nullptr;
   }
 
-  static void free_values(std::vector<TJValue*>* values)
-  {
-    if (values == nullptr)
-    {
-      return;
-    }
-
-    for each (auto var in *values)
-    {
-      delete var;
-    }
-    delete values;
-    values = nullptr;
-  }
-
   void TJMember::free_members(std::vector<TJMember*>* members)
   {
     if (members == nullptr)
@@ -1039,7 +1024,7 @@ namespace TinyJSON
       return;
     }
 
-    for each (auto var in *members)
+    for (auto var : *members)
     {
       delete var;
     }
@@ -1054,7 +1039,7 @@ namespace TinyJSON
       return;
     }
 
-    for each (auto var in *values)
+    for (auto var : *values)
     {
       delete var;
     }
@@ -1083,7 +1068,7 @@ namespace TinyJSON
           // ERROR: unexpected end of array, there was a "," after
           //        the last value and we expected a value now, not a close "]"
           free_values(values);
-          return false;
+          return nullptr;
         }
         p++;
 
@@ -1151,7 +1136,7 @@ namespace TinyJSON
           // ERROR: unexpected end of object, there was a "," after
           //        the last string and we expected a string now, not a close "}"
           free_members(members);
-          return false;
+          return nullptr;
         }
         p++;
 
@@ -1392,7 +1377,7 @@ namespace TinyJSON
       return;
     }
 
-    for each (auto var in *_members)
+    for (auto var : *_members)
     {
       delete var;
     }
@@ -1477,7 +1462,7 @@ namespace TinyJSON
       return;
     }
 
-    for each (auto var in *_values)
+    for (auto var : *_values)
     {
       delete var;
     }
@@ -1532,7 +1517,7 @@ namespace TinyJSON
     }
 
     // Convert b to its fractional form
-    const long double& pow = std::powl(10, _fraction_exponent);
+    const auto& pow = std::powl(10, _fraction_exponent);
     const auto& whole_number = _number * pow + _fraction;
 
     // Combine the number and the fraction
@@ -1543,11 +1528,11 @@ namespace TinyJSON
   /// TJValue float Number
   TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const int& exponent, bool is_negative) :
     TJValueNumber(is_negative),
-    _exponent(exponent),
+    _string(nullptr),
+    _number(number),
     _fraction(fraction),
     _fraction_exponent(fraction_exponent),
-    _number(number),
-    _string(nullptr)
+    _exponent(exponent)    
   {
   }
 
