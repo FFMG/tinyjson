@@ -193,3 +193,14 @@ TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithNumbersAndStrings) {
 );
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestArrays, ArrayHasACommaButThenTheArrayEnds) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  12,
+  "B",
+]
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}

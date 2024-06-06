@@ -296,3 +296,13 @@ TEST(TestStrings, EscapeQuoteInStringKeyValuePair) {
   ASSERT_STREQ(R"("World")", tjobject->try_get_string(R"(\"Hello\")"));
   delete json;
 }
+
+TEST(TestStrings, TheLastItemInOurBrokenJsonIsAnEscape) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+"test1"
+"tes2\)"
+);
+  ASSERT_EQ(nullptr, json);
+  delete json;
+}

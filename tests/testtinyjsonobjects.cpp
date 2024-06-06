@@ -194,3 +194,24 @@ TEST(TestObjects, ItemsInArrayMustBeSeparatedByCommaWithNumberAndStrings) {
 );
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestObjects, ObjectHasACommaButThenTheObjectEnds) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "a" : 12,
+  "b" : "B",
+]
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestObjects, TheLastItemInOurBrokenJsonIsAnEscape) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+ "a" : "test1"
+ "b" : "tes2\)"
+);
+  ASSERT_EQ(nullptr, json);
+  delete json;
+}
