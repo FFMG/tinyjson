@@ -160,7 +160,8 @@ TEST(TestStrings, CheckThatValueIsStringInArray) {
 TEST(TestStrings, DifferentEscapeTypes) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 [
-  "\\\"Hello\\\""
+  "\\\"Hello\\\"",
+  "\/\"Hello\/\""
 ]
 )"
 );
@@ -170,6 +171,7 @@ TEST(TestStrings, DifferentEscapeTypes) {
   ASSERT_NE(nullptr, jarray);
 
   ASSERT_STREQ(R"(\"Hello\")", jarray->at(0)->to_string());
+  ASSERT_STREQ(R"(/"Hello/")", jarray->at(1)->to_string());
 
   delete json;
 }
@@ -189,6 +191,91 @@ TEST(TestStrings, EscapeQuoteInString) {
 
   ASSERT_STREQ(R"(\"Escape Then quote\")", jarray->at(0)->to_string());
   ASSERT_STREQ(R"("Quote")", jarray->at(1)->to_string());
+
+  delete json;
+}
+
+TEST(TestStrings, EscapeFormFeedInString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "This is a \fA Form feed"
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_STREQ("This is a \fA Form feed", jarray->at(0)->to_string());
+
+  delete json;
+}
+
+TEST(TestStrings, EscapeBackSpaceInString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "This is a \bA backspace"
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_STREQ("This is a \bA backspace", jarray->at(0)->to_string());
+
+  delete json;
+}
+
+TEST(TestStrings, EscapeNewLineInString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "This is a \nNew Line"
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_STREQ("This is a \nNew Line", jarray->at(0)->to_string());
+
+  delete json;
+}
+
+TEST(TestStrings, EscapeCarriageReturnInString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "This is a \rCarriage return"
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_STREQ("This is a \rCarriage return", jarray->at(0)->to_string());
+
+  delete json;
+}
+
+TEST(TestStrings, EscapeTabInString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "This is a \tTab"
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_STREQ("This is a \tTab", jarray->at(0)->to_string());
 
   delete json;
 }

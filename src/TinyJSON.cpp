@@ -1024,13 +1024,40 @@ namespace TinyJSON
       return;
     }
 
+    // as per RFC8259
     switch (next_char)
     {
-    case '"':
-    case '\\':
-      // skip the escpape
+    case '"': // "    quotation mark  U+0022
+    case '/': // \    reverse solidus U+005C
+    case '\\':// /    solidus         U+002F 
+      // skip the escpape and keep the character
       source++;
       break;
+
+    case'f':  // f    form feed       U+000C
+      source++;
+      add_char_to_string('\f', result, result_pos, result_max_length);
+      return;
+
+    case 'b': // b    backspace       U+0008
+      source++;
+      add_char_to_string('\b', result, result_pos, result_max_length);
+      return;
+
+    case 'n': // n    line feed       U+000A
+      source++;
+      add_char_to_string('\n', result, result_pos, result_max_length);
+      return;
+
+    case 'r': // r    carriage return U+000D
+      source++;
+      add_char_to_string('\r', result, result_pos, result_max_length);
+      return;
+
+    case 't': // t    tab             U+0009
+      source++;
+      add_char_to_string('\t', result, result_pos, result_max_length);
+      return;
 
     default:
       break;

@@ -242,3 +242,54 @@ TEST(TestBasic, ObjectMultipleDepth) {
 
   delete json;
 }
+
+// this is the test data take from https://github.com/stephenberry/json_performance/blob/main/README.md
+// we have to be able to read this ...
+TEST(TestBasic, ReadPerformanceBlob) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+   "fixed_object": {
+      "int_array": [0, 1, 2, 3, 4, 5, 6],
+      "float_array": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+      "double_array": [3288398.238, 233e22, 289e-1, 0.928759872, 0.22222848, 0.1, 0.2, 0.3, 0.4]
+   },
+   "fixed_name_object": {
+      "name0": "James",
+      "name1": "Abraham",
+      "name2": "Susan",
+      "name3": "Frank",
+      "name4": "Alicia"
+   },
+   "another_object": {
+      "string": "here is some text",
+      "another_string": "Hello World",
+      "escaped_text": "{\"some key\":\"some string value\"}",
+      "boolean": false,
+      "nested_object": {
+         "v3s": [[0.12345, 0.23456, 0.001345],
+                  [0.3894675, 97.39827, 297.92387],
+                  [18.18, 87.289, 2988.298]],
+         "id": "298728949872"
+      }
+   },
+   "string_array": ["Cat", "Dog", "Elephant", "Tiger"],
+   "string": "Hello world",
+   "number": 3.14,
+   "boolean": true,
+   "another_bool": false
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  // then check some values
+  auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, tjobject);
+  auto fixed_name_object = tjobject->try_get_value("fixed_name_object");
+  ASSERT_NE(nullptr, tjobject);
+  ASSERT_TRUE(fixed_name_object->is_object());
+  auto actual_fixed_name_object = dynamic_cast<const TinyJSON::TJValueObject*>(fixed_name_object);
+  ASSERT_EQ(5, actual_fixed_name_object->number_of_items());
+
+  delete json;
+}
