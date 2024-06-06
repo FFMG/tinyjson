@@ -120,6 +120,8 @@ namespace TinyJSON
     _string(string),
     _value(value)
   {
+    value = nullptr;
+    string = nullptr;
   }
 
   TJMember::~TJMember()
@@ -712,7 +714,7 @@ namespace TinyJSON
 
   TJValue* TJMember::try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
   {
-    auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
+    const auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
 
     // case 1:
     //   The total number is less than TJ_MAX_NUMBER_OF_DIGGITS
@@ -808,8 +810,8 @@ namespace TinyJSON
     // if the number is something like 123.456 with e=2
     // then the number will become 12345.6 e=0
     // so we need the number of digits.
-    auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
-    auto number_of_digit_fraction = get_number_of_digits(unsigned_fraction);
+    const auto& number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
+    const auto& number_of_digit_fraction = get_number_of_digits(unsigned_fraction);
 
     // case 1:
     //   The total number is less than TJ_MAX_NUMBER_OF_DIGGITS
@@ -1255,6 +1257,12 @@ namespace TinyJSON
   TJValueString::TJValueString(const char* value) :
     _value(nullptr)
   {
+    if (value != nullptr)
+    {
+      size_t length = std::strlen(value) + 1;
+      _value = new char[length];
+      std::strcpy(_value, value);
+    }
   }
 
   TJValueString::TJValueString(char* value) :
@@ -1495,7 +1503,7 @@ namespace TinyJSON
   {
   }
 
-  const long long TJValueNumberInt::get_number() const
+  long long TJValueNumberInt::get_number() const
   {
     return _is_negative ? -1* _number : _number;
   }
@@ -1510,10 +1518,10 @@ namespace TinyJSON
   {
   }
 
-  const long double TJValueNumberFloat::get_number() const
+  long double TJValueNumberFloat::get_number() const
   {
     if (_fraction == 0) {
-      return static_cast<const long double>(_number);
+      return static_cast<long double>(_number);
     }
 
     // Convert b to its fractional form

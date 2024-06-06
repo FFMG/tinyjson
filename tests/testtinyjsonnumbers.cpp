@@ -302,7 +302,7 @@ TEST(TestNumbers, CheckThatValueIsNumber) {
   ASSERT_NE(nullptr, jobject);
 
   auto number_value = jobject->try_get_value("a");
-
+  ASSERT_NE(nullptr, number_value);
   ASSERT_FALSE(number_value->is_object());
   ASSERT_FALSE(number_value->is_array());
   ASSERT_FALSE(number_value->is_string());

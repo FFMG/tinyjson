@@ -302,7 +302,7 @@ namespace TinyJSON
     TJValueNumberInt(const unsigned long long& number, const bool is_negative);
     virtual ~TJValueNumberInt() = default;
 
-    const long long get_number() const;
+    long long get_number() const;
 
   private:
     const long long _number;
@@ -315,7 +315,7 @@ namespace TinyJSON
     TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative);
     virtual ~TJValueNumberFloat() = default;
 
-    const long double get_number() const;
+    long double get_number() const;
 
   private:
     const unsigned long long _number;
