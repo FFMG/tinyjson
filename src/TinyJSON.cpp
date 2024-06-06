@@ -112,8 +112,11 @@ namespace TinyJSON
     _string(nullptr),
     _value(nullptr)
   {
-    _string = new char[std::strlen(string)+1];
-    std::strcpy(_string, string);
+    if (string != nullptr)
+    {
+      _string = new char[std::strlen(string) + 1];
+      std::strcpy(_string, string);
+    }
   }
 
   TJMember::TJMember(char* string, TJValue* value) :
@@ -129,6 +132,17 @@ namespace TinyJSON
     free_string();
     free_value();
   }
+
+  const char* TJMember::name() const
+  {
+    return _string;
+  }
+
+  const TJValue* TJMember::value() const
+  {
+    return _value;
+  }
+
 
   const char* TJMember::to_string() const
   {

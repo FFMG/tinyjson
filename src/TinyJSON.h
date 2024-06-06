@@ -58,15 +58,8 @@ namespace TinyJSON
     TJMember(const char* string, const TJValue* value);
     virtual ~TJMember();
 
-    const char* name() const
-    {
-      return _string;
-    }
-
-    const TJValue* value() const
-    {
-      return _value;
-    }
+    const char* name() const;
+    const TJValue* value() const;
 
     /// <summary>
     /// Try and get a string representation of the value.
