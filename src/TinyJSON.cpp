@@ -9,6 +9,9 @@
 #include <cstdio>
 
 #define TJ_MAX_NUMBER_OF_DIGGITS 19
+static const int TJ_DEFAULT_STRING_READ_SIZE = 10;
+
+#define TJ_CASE_NULL_TERMINATOR '\0'
 
 #define TJ_CASE_SIGN          case '-': \
                               case '+': 
@@ -43,6 +46,8 @@
 
 #define TJ_CASE_END_ARRAY     case ']':
 
+#define TJ_CASE_MAYBE_ESCAPE  case '\\':
+
 namespace TinyJSON
 {
   ///////////////////////////////////////
@@ -60,7 +65,7 @@ namespace TinyJSON
     // not both and not more than one
     TJValue* object_found = nullptr;
     TJValue* array_found = nullptr;
-    while (*p != '\0') 
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)
@@ -199,7 +204,7 @@ namespace TinyJSON
 
   bool TJMember::try_skip_colon(const char*& p)
   {
-    while (*p != '\0')
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)
@@ -224,7 +229,7 @@ namespace TinyJSON
 
   TJValue* TJMember::try_read_Value(const char*& p)
   {
-    while (*p != '\0')
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)
@@ -398,7 +403,7 @@ namespace TinyJSON
     // the numbers are unsigned and should only contain digits.
     // so we do not have signs or letters to worry about.
     long long result = 0;
-    while (*p != '\0')
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)
@@ -915,7 +920,7 @@ namespace TinyJSON
     auto len = std::strlen(whole_number);
     while (len > 1 && whole_number[len - 1] == '0')
     {
-      whole_number[len - 1] = '\0';
+      whole_number[len - 1] = TJ_CASE_NULL_TERMINATOR;
       --len;
     }
     return whole_number;
@@ -930,7 +935,7 @@ namespace TinyJSON
   {
     const char* start = nullptr;
     int found_spaces = 0;
-    while (*p != '\0')
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)
@@ -971,7 +976,7 @@ namespace TinyJSON
           // Allocate memory for the result string
           char* result = new char[length + 1];
           std::strncpy(result, start, length);
-          result[length] = '\0'; // Null-terminate the string
+          result[length] = TJ_CASE_NULL_TERMINATOR; // Null-terminate the string
           return result;
         }
       }
@@ -981,16 +986,79 @@ namespace TinyJSON
     return nullptr;
   }
 
+  char* TJMember::resize_string(char*& source, int length, int resize_length)
+  {
+    char* new_string = new char[resize_length];
+    memset(new_string, TJ_CASE_NULL_TERMINATOR, sizeof(char) * resize_length);
+    if (source == nullptr)
+    {
+      return new_string;
+    }
+
+    auto actual_length = length < resize_length ? length : resize_length;
+    for (auto i = 0; i < actual_length; ++i)
+    {
+      new_string[i] = source[i];
+    }
+    delete[] source;
+    source = nullptr;
+    return new_string;
+  }
+
+  void TJMember::add_char_to_string(const char& char_to_add, char*& result, int& result_pos, int& result_max_length)
+  {
+    if (result_pos + 1 >= result_max_length)
+    {
+      result = resize_string(result, result_max_length, result_max_length + TJ_DEFAULT_STRING_READ_SIZE);
+      result_max_length += TJ_DEFAULT_STRING_READ_SIZE;
+    }
+    result[result_pos] = char_to_add;
+    ++result_pos;
+  }
+
+  void TJMember::try_add_char_to_string_after_escape(const char*& source, char*& result, int& result_pos, int& result_max_length)
+  {
+    const auto& next_char = *(source + 1);
+    if (next_char == TJ_CASE_NULL_TERMINATOR)
+    {
+      return;
+    }
+
+    switch (next_char)
+    {
+    case '"':
+    case '\\':
+      // skip the escpape
+      source++;
+      break;
+
+    default:
+      break;
+    }
+
+    // if we escaped or not it does not matter.
+    // just add the character now.
+    add_char_to_string(*source, result, result_pos, result_max_length);
+  }
+
   char* TJMember::try_read_string(const char*& p)
   {
+    int result_pos = 0;
+    int result_max_length = 0;
+    char* result = nullptr;
     const char* firstQuote = nullptr;
-    const char* secondQuote = nullptr;
-    while (*p != '\0')
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)
       {
         TJ_CASE_SPACE
+          add_char_to_string(*p, result, result_pos, result_max_length);
+          p++;
+          break;
+
+          TJ_CASE_MAYBE_ESCAPE
+          try_add_char_to_string_after_escape(p, result, result_pos, result_max_length);
           p++;
           break;
 
@@ -1002,17 +1070,10 @@ namespace TinyJSON
           }
           else
           {
-            secondQuote = p; //  we need to remove one as we do not want the quote.
-
             p++;
 
-            // Calculate the length of the text inside the quotes
-            const auto& length = secondQuote - firstQuote;
-
             // Allocate memory for the result string
-            char* result = new char[length + 1];
-            std::strncpy(result, firstQuote, length);
-            result[length] = '\0'; // Null-terminate the string
+            result[result_pos] = TJ_CASE_NULL_TERMINATOR; // Null-terminate the string
             return result;
           }
         break;
@@ -1021,15 +1082,19 @@ namespace TinyJSON
         // if we are still in the string, then we are good.
         if (nullptr == firstQuote)
         {
+          delete[] result;
           // ERROR: unknown character
           return nullptr;
         }
+
+        add_char_to_string(*p, result, result_pos, result_max_length);
         p++;
         break;
       }
     }
 
     // // ERROR: we could not close the object.
+    delete[] result;
     return nullptr;
   }
 
@@ -1069,7 +1134,7 @@ namespace TinyJSON
     std::vector<TJValue*>* values = nullptr;
     bool waiting_for_a_value = true;
     bool found_comma = false;
-    while (*p != '\0')
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)
@@ -1136,7 +1201,7 @@ namespace TinyJSON
     std::vector<TJMember*>* members = nullptr;
     bool after_string = false;
     bool waiting_for_a_string = false;
-    while (*p != '\0')
+    while (*p != TJ_CASE_NULL_TERMINATOR)
     {
       char c = *p;
       switch (c)

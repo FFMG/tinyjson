@@ -88,6 +88,25 @@ TEST(TestStrings, ArrayOfString) {
   delete json;
 }
 
+TEST(TestStrings, CheckThatValueWithAVeryLongKeyValuePair) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "ThisIsALongStringThatIsNormallyLongerThanTheDefault" : "The longest word is Pneumonoultramicroscopicsilicovolcanoconiosis"
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto string_value = jobject->try_get_value("ThisIsALongStringThatIsNormallyLongerThanTheDefault");
+  ASSERT_STREQ("The longest word is Pneumonoultramicroscopicsilicovolcanoconiosis", string_value->to_string());
+  ASSERT_TRUE(string_value->is_string());
+
+  delete json;
+}
+
 TEST(TestStrings, CheckThatValueIsString) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 {
@@ -135,5 +154,58 @@ TEST(TestStrings, CheckThatValueIsStringInArray) {
   ASSERT_FALSE(string_value->is_false());
   ASSERT_FALSE(string_value->is_null());
 
+  delete json;
+}
+
+TEST(TestStrings, DifferentEscapeTypes) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "\\\"Hello\\\""
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_STREQ(R"(\"Hello\")", jarray->at(0)->to_string());
+
+  delete json;
+}
+
+TEST(TestStrings, EscapeQuoteInString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "\\\"Escape Then quote\\\"",
+  "\"Quote\""
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_STREQ(R"(\"Escape Then quote\")", jarray->at(0)->to_string());
+  ASSERT_STREQ(R"("Quote")", jarray->at(1)->to_string());
+
+  delete json;
+}
+
+TEST(TestStrings, EscapeQuoteInStringKeyValuePair) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "\\\"Hello\\\"" : "\"World\""
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, tjobject);
+
+  // the name should be escaped.
+  ASSERT_STREQ(R"("World")", tjobject->try_get_string(R"(\"Hello\")"));
   delete json;
 }
