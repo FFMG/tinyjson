@@ -161,3 +161,36 @@ TEST(TestObjects, ObjectHasAValidStringJustNoColon) {
   );
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestObjects, ItemsInArrayMustBeSeparatedByComma) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 12
+  "b" : 13
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestObjects, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : "A"
+  "b" : "B"
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestObjects, ItemsInArrayMustBeSeparatedByCommaWithNumberAndStrings) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 12
+  "b" : "B"
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}

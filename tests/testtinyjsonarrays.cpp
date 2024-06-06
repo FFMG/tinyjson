@@ -160,3 +160,36 @@ TEST(TestArrays, TryingToGetANegativeItemReturnsNull) {
   ASSERT_EQ(nullptr, array_of_values->at(-42));
   delete json;
 }
+
+TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaNumbers) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  12
+  13
+]
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "A"
+  "B"
+]
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithNumbersAndStrings) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  12
+  "B"
+]
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}

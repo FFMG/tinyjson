@@ -1209,6 +1209,13 @@ namespace TinyJSON
         {
           values = new std::vector<TJValue*>();
         }
+        else if (found_comma == false && values->size() > 0)
+        {
+          // ERROR: We found a value but we expected a comma.
+          delete value;
+          free_values(values);
+          return nullptr;
+        }
         values->push_back(value);
         waiting_for_a_value = false;
         found_comma = false;
