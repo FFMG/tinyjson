@@ -24,6 +24,7 @@ set( Sources
   "testtinyjsonnumbers.cpp"
   "testtinyjsonobjects.cpp"
   "testtinyjsonstrings.cpp"
+  "testtinyjsonversion.cpp"
 )
 
 add_executable(

@@ -3,6 +3,16 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// https://semver.org/
+// Semantic Versioning 2.0.0
+//   MAJOR version when you make incompatible API changes
+//   MINOR version when you add functionality in a backward compatible manner
+//   PATCH version when you make backward compatible bug fixes
+static const short TJ_VERSION_MAJOR = 0;
+static const short TJ_VERSION_MINOR = 0;
+static const short TJ_VERSION_PATCH = 1;
+static const char TJ_VERSION_STRING[] = "0.0.1";
+
 #include <vector>
 
 namespace TinyJSON

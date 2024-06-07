@@ -4,6 +4,23 @@ TinyJSON is a fast and small C++ JSON parser
 
 ## Simple examples
 
+### Version Control
+
+We follow Semantic Versioning 2.0.0, (https://semver.org/)
+
+- MAJOR version when you make incompatible API changes
+- MINOR version when you add functionality in a backward compatible manner
+- PATCH version when you make backward compatible bug fixes
+
+The version is set in the `TinyJSON.h` file.
+
+```cpp
+static const short TJ_VERSION_MAJOR = 0;
+static const short TJ_VERSION_MINOR = 0;
+static const short TJ_VERSION_PATCH = 1;
+static const char TJ_VERSION_STRING[] = "0.0.1";
+```
+
 ### Objects
 
 Each objects are read into `TJValue*` classes of type `TJValueObject`.
@@ -86,7 +103,7 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 - [x] Objects
 - [x] Values
 - [] More tests!
-- [] Add version number
+- [x] Add version number (started at version 0.0.1)
 - [x] Copyright
 - [] Add 2 kinds of error handling, either throw or return an error structure.
 - [] Automated build
