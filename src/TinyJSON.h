@@ -67,7 +67,6 @@ namespace TinyJSON
   class TJMember
   {
     friend TJHelper;
-    friend TinyJSON;
   public:
     TJMember(const char* string, const TJValue* value);
     virtual ~TJMember();
@@ -96,7 +95,6 @@ namespace TinyJSON
   class TJValueObject : public TJValue
   {
     friend TJHelper;
-    friend TJMember;
   public:
     TJValueObject();
     virtual ~TJValueObject();
@@ -148,7 +146,6 @@ namespace TinyJSON
   class TJValueArray : public TJValue
   {
     friend TJHelper;
-    friend TJMember;
   public:
     TJValueArray();
     virtual ~TJValueArray();
@@ -186,7 +183,6 @@ namespace TinyJSON
   class TJValueString : public TJValue
   {
     friend TJHelper;
-    friend TJMember;
   public:
     TJValueString(const char* value);
     virtual ~TJValueString();
