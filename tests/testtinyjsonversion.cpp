@@ -13,7 +13,7 @@ TEST(TestVersion, CheckVersionMinor) {
 }
 
 TEST(TestVersion, CheckVersionPatch) {
-  ASSERT_EQ(0, TJ_VERSION_PATCH);
+  ASSERT_EQ(1, TJ_VERSION_PATCH);
 }
 
 TEST(TestVersion, CheckVersionString) {

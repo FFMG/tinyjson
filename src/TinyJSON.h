@@ -17,6 +17,9 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 
 namespace TinyJSON
 {
+  class TJValue;
+  class TJHelper;
+
   // A simple JSON value, the base of all items in a json
   class TJValue
   {
@@ -63,6 +66,7 @@ namespace TinyJSON
   // A TJMember is a key value pair, (name/value), that belong to an object.
   class TJMember
   {
+    friend TJHelper;
     friend TinyJSON;
   public:
     TJMember(const char* string, const TJValue* value);
@@ -81,51 +85,6 @@ namespace TinyJSON
     // create while passing the ownership of the memory.
     TJMember(char* string, TJValue* value);
 
-    static TJMember* try_read_string_and_value(const char*& p);
-    static char* try_read_string(const char*& p);
-    static bool try_skip_colon(const char*& p);
-    static TJValue* try_continue_read_true(const char*& p);
-    static TJValue* try_continue_read_false(const char*& p);
-    static TJValue* try_continue_read_null(const char*& p);
-    static TJValue* try_read_Value(const char*& p);
-    static TJValue* try_read_number(const char*& p);
-    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const long long& exponent);
-    static TJValue* try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent);
-    static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent);
-    static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent);
-    static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent);
-    static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent);
-    static unsigned long long get_number_of_digits(const unsigned long long& number);
-    static char* try_read_whole_number(const char*& p);
-    static char* try_read_whole_number_as_fraction(const char*& p);
-    static unsigned long long fast_string_to_long_long(const char* p);
-    static char* resize_string(char*& source, int length, int resize_length);
-    static void add_char_to_string(const char& char_to_add, char*& result, int& result_pos, int& result_max_length);
-    static void try_add_char_to_string_after_escape(const char*& source, char*& result, int& result_pos, int& result_max_length);
-
-    static unsigned long long shift_number_left(const unsigned long long source, const unsigned long long exponent);
-    static unsigned long long shift_number_right(const unsigned long long source, const unsigned long long exponent, unsigned long long& shifted_source);
-    static unsigned long long shift_fraction_left(const unsigned long long& fraction, const unsigned long long& fraction_exponent, const unsigned long long& exponent, unsigned long long& shifted_fraction, unsigned long long& shitfed_unsigned_fraction_exponent);
-
-    /// <summary>
-    /// Try and read an object after we have read the openning bracket
-    /// This is to prevent having to read the same char more than once.
-    /// </summary>
-    /// <param name="p"></param>
-    /// <returns></returns>
-    static TJValue* try_continue_read_object(const char*& p);
-
-    /// <summary>
-    /// Try and read an array after we have read the opening bracket.
-    /// This is to prevent having to read the same char more than once.
-    /// </summary>
-    /// <param name="p"></param>
-    /// <returns></returns>
-    static TJValue* try_continue_read_array(const char*& p);
-
-    static void free_members(std::vector<TJMember*>* members);
-    static void free_values(std::vector<TJValue*>* values);
-
   private:
     char* _string;
     TJValue* _value;
@@ -136,6 +95,7 @@ namespace TinyJSON
   // A Json object that contain an array of key/value pairs.
   class TJValueObject : public TJValue
   {
+    friend TJHelper;
     friend TJMember;
   public:
     TJValueObject();
@@ -187,6 +147,7 @@ namespace TinyJSON
   // A Json object that contain an array of key/value pairs.
   class TJValueArray : public TJValue
   {
+    friend TJHelper;
     friend TJMember;
   public:
     TJValueArray();
@@ -224,7 +185,8 @@ namespace TinyJSON
   // A string JSon
   class TJValueString : public TJValue
   {
-  friend TJMember;
+    friend TJHelper;
+    friend TJMember;
   public:
     TJValueString(const char* value);
     virtual ~TJValueString();
