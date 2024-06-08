@@ -17,7 +17,6 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 
 namespace TinyJSON
 {
-  class TJValue;
   class TJHelper;
 
   // A simple JSON value, the base of all items in a json
@@ -42,6 +41,11 @@ namespace TinyJSON
 
   protected:
     TJValue();
+  private:
+    TJValue(const TJValue&) = delete;
+    TJValue(TJValue&&) = delete;
+    TJValue& operator=(TJValue&&) = delete;
+    TJValue& operator=(const TJValue&) = delete;
   };
 
   // The parser class
@@ -53,9 +57,9 @@ namespace TinyJSON
     /// <summary>
     /// Parse a json string
     /// </summary>
-    /// <param name="src">The source we are trying to parse.</param>
+    /// <param name="source">The source we are trying to parse.</param>
     /// <returns></returns>
-    static TJValue* parse(const char* src);
+    static TJValue* parse(const char* source);
 
   private:
     TinyJSON() = delete;
@@ -63,8 +67,6 @@ namespace TinyJSON
     TinyJSON(const TinyJSON&) = delete;
     TinyJSON& operator=(const TinyJSON&) = delete;
     TinyJSON& operator=(TinyJSON&&) = delete;
-
-    static TJValue* start(const char*& p);
   };
 
   // A TJMember is a key value pair, (name/value), that belong to an object.
@@ -85,8 +87,14 @@ namespace TinyJSON
     const char* to_string() const;
 
   protected:
-    // create while passing the ownership of the memory.
-    TJMember(char* string, TJValue* value);
+    /// <summary>
+    /// Move the value ownership to the member.
+    /// The caller will _not_ delete!
+    /// </summary>
+    /// <param name="string"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    static TJMember* move(char*& string, TJValue*& value);
 
   private:
     char* _string;
@@ -135,9 +143,13 @@ namespace TinyJSON
     bool is_object() const;
 
   protected:
-    // protected contructor called internally so we can 
-    // pass ownership of the member to this TJValue.
-    TJValueObject(std::vector<TJMember*>* members);
+    /// <summary>
+    /// Move the value ownership to the members.
+    /// The caller will _not_ delete!
+    /// </summary>
+    /// <param name="members"></param>
+    /// <returns></returns>
+    static TJValueObject* move(std::vector<TJMember*>*& members);
 
   private:
     // All the key value pairs in this object.
@@ -172,9 +184,13 @@ namespace TinyJSON
     bool is_array() const;
 
   protected:
-    // protected contructor called internally so we can 
-    // pass ownership of the member to this TJValue.
-    TJValueArray(std::vector<TJValue*>* values);
+    /// <summary>
+    /// Move the value ownership to the values.
+    /// The caller will _not_ delete!
+    /// </summary>
+    /// <param name="values"></param>
+    /// <returns></returns>
+    static TJValueArray* move(std::vector<TJValue*>*& values);
 
   private:
     // All the key value pairs in this object.
@@ -199,8 +215,13 @@ namespace TinyJSON
 
     bool is_string() const;
   protected:
-    // create while passing the ownership of the memory.
-    TJValueString(char* value);
+    /// <summary>
+    /// Move the value ownership of the string.
+    /// The caller will _not_ delete!
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    static TJValueString* move(char*& value);
 
   private:
     char* _value;

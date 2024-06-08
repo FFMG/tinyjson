@@ -101,6 +101,7 @@ TEST(TestStrings, CheckThatValueWithAVeryLongKeyValuePair) {
   ASSERT_NE(nullptr, jobject);
 
   auto string_value = jobject->try_get_value("ThisIsALongStringThatIsNormallyLongerThanTheDefault");
+  ASSERT_NE(nullptr, string_value);
   ASSERT_STREQ("The longest word is Pneumonoultramicroscopicsilicovolcanoconiosis", string_value->to_string());
   ASSERT_TRUE(string_value->is_string());
 
@@ -120,6 +121,7 @@ TEST(TestStrings, CheckThatValueIsString) {
   ASSERT_NE(nullptr, jobject);
 
   auto string_value = jobject->try_get_value("Hello");
+  ASSERT_NE(nullptr, string_value);
 
   ASSERT_FALSE(string_value->is_object());
   ASSERT_FALSE(string_value->is_array());
@@ -145,6 +147,7 @@ TEST(TestStrings, CheckThatValueIsStringInArray) {
   ASSERT_NE(nullptr, tjarray);
 
   auto string_value = tjarray->at(0);
+  ASSERT_NE(nullptr, string_value);
 
   ASSERT_FALSE(string_value->is_object());
   ASSERT_FALSE(string_value->is_array());

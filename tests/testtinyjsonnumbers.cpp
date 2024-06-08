@@ -327,6 +327,7 @@ TEST(TestNumbers, CheckThatValueIsNumberInArray) {
   ASSERT_NE(nullptr, tjarray);
 
   auto number_value = tjarray->at(0);
+  ASSERT_NE(nullptr, number_value);
 
   ASSERT_FALSE(number_value->is_object());
   ASSERT_FALSE(number_value->is_array());

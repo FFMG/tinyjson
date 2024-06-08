@@ -940,7 +940,7 @@ namespace TinyJSON
 
           // we are done, we found it.
           // we give the ownership of the members over.
-          return new TJValueObject(members);
+          return TJValueObject::move(members);
 
           TJ_CASE_START_STRING
           {
@@ -1039,7 +1039,7 @@ namespace TinyJSON
 
           // we are done, we found it.
           // we give the ownership of the members over.
-          return new TJValueArray(values);
+          return TJValueArray::move(values);
 
           TJ_CASE_COMMA
             if (waiting_for_a_value)
@@ -1107,7 +1107,7 @@ namespace TinyJSON
 
             // whave read the string
             // no need to try and move further forward.
-            return new TJValueString(value);
+            return TJValueString::move(value);
           }
 
         case 't':
@@ -1192,7 +1192,7 @@ namespace TinyJSON
     static TJMember* try_read_string_and_value(const char*& p)
     {
       // first we look for the string, all the elements are supposed to have one.
-      const auto& string = try_read_string(p);
+      auto string = try_read_string(p);
       if (string == nullptr)
       {
         //  ERROR: could not read the string.
@@ -1208,42 +1208,36 @@ namespace TinyJSON
         return nullptr;
       }
 
-      const auto& value = try_read_Value(p);
+      auto value = try_read_Value(p);
       if (nullptr == value)
       {
         delete[] string;
         //  ERROR: Could not read the value, the error was logged.
         return nullptr;
       }
-      return new TJMember(string, value);
+      return TJMember::move(string, value);
     }
   };  // Helper class
 
   ///////////////////////////////////////
   /// TinyJSON
-  TJValue* TinyJSON::parse(const char* src)
-  {
-    return start(src);
-  }
-
-  TJValue* TinyJSON::start(const char*& p)
+  TJValue* TinyJSON::parse(const char* source)
   {
     // at the root we can only have an array or an object.
     // not both and not more than one
     TJValue* object_found = nullptr;
     TJValue* array_found = nullptr;
-    while (*p != TJ_CASE_NULL_TERMINATOR)
+    while (*source != TJ_CASE_NULL_TERMINATOR)
     {
-      char c = *p;
-      switch (c)
+      switch (*source)
       {
       TJ_CASE_SPACE
-        p++;
+        source++;
         break;
 
       TJ_CASE_BEGIN_ARRAY
       {
-        auto tjvalue_array = TJHelper::try_continue_read_array(++p);
+        auto tjvalue_array = TJHelper::try_continue_read_array(++source);
         if (nullptr == tjvalue_array)
         {
           // Error:  something went wrong, the error was logged.
@@ -1255,7 +1249,7 @@ namespace TinyJSON
 
       TJ_CASE_BEGIN_OBJECT
       {
-        auto tjvalue_object = TJHelper::try_continue_read_object(++p);
+        auto tjvalue_object = TJHelper::try_continue_read_object(++source);
         if (nullptr == tjvalue_object)
         {
           // Error:  something went wrong, the error was logged.
@@ -1289,14 +1283,21 @@ namespace TinyJSON
       _string = new char[std::strlen(string) + 1];
       std::strcpy(_string, string);
     }
+    if (value != nullptr)
+    {
+      throw std::exception();
+    }
   }
 
-  TJMember::TJMember(char* string, TJValue* value) :
-    _string(string),
-    _value(value)
+  TJMember* TJMember::move(char*& string, TJValue*& value)
   {
+    auto member = new TJMember(nullptr, nullptr);
+    member->_string = string;
+    member->_value = value;
+
     value = nullptr;
     string = nullptr;
+    return member;
   }
 
   TJMember::~TJMember()
@@ -1381,7 +1382,6 @@ namespace TinyJSON
     return false;
   }
 
-
   ///////////////////////////////////////
   /// TJValue string
   TJValueString::TJValueString(const char* value) :
@@ -1395,14 +1395,17 @@ namespace TinyJSON
     }
   }
 
-  TJValueString::TJValueString(char* value) :
-    _value(value)
-  {
-  }
-
   TJValueString::~TJValueString()
   {
     free_value();
+  }
+
+  TJValueString* TJValueString::move(char*& value)
+  {
+    auto string = new TJValueString(nullptr);
+    string->_value = value;
+    value = nullptr;
+    return string;
   }
 
   bool TJValueString::is_string() const
@@ -1469,14 +1472,17 @@ namespace TinyJSON
   {
   }
 
-  TJValueObject::TJValueObject(std::vector<TJMember*>* members) :
-    _members(members)
-  {
-  }
-
   TJValueObject::~TJValueObject()
   {
     free_members();
+  }
+
+  TJValueObject* TJValueObject::move(std::vector<TJMember*>*& members)
+  {
+    auto object = new TJValueObject();
+    object->_members = members;
+    members = nullptr;
+    return object;
   }
 
   bool TJValueObject::is_object() const
@@ -1554,14 +1560,17 @@ namespace TinyJSON
   {
   }
 
-  TJValueArray::TJValueArray(std::vector<TJValue*>* values) :
-    _values(values)
-  {
-  }
-
   TJValueArray::~TJValueArray()
   {
     free_values();
+  }
+
+  TJValueArray* TJValueArray::move(std::vector<TJValue*>*& values)
+  {
+    auto value = new TJValueArray();
+    value->_values = values;
+    values = nullptr;
+    return value;
   }
 
   bool TJValueArray::is_array() const

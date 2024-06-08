@@ -286,7 +286,7 @@ TEST(TestBasic, ReadPerformanceBlob) {
   auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, tjobject);
   auto fixed_name_object = tjobject->try_get_value("fixed_name_object");
-  ASSERT_NE(nullptr, tjobject);
+  ASSERT_NE(nullptr, fixed_name_object);
   ASSERT_TRUE(fixed_name_object->is_object());
   auto actual_fixed_name_object = dynamic_cast<const TinyJSON::TJValueObject*>(fixed_name_object);
   ASSERT_EQ(5, actual_fixed_name_object->number_of_items());
