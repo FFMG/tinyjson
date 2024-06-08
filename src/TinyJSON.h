@@ -57,8 +57,12 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* parse(const char* src);
 
-  protected:
-    TinyJSON() = default;
+  private:
+    TinyJSON() = delete;
+    TinyJSON(TinyJSON&&) = delete;
+    TinyJSON(const TinyJSON&) = delete;
+    TinyJSON& operator=(const TinyJSON&) = delete;
+    TinyJSON& operator=(TinyJSON&&) = delete;
 
     static TJValue* start(const char*& p);
   };

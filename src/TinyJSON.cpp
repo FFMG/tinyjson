@@ -1223,9 +1223,7 @@ namespace TinyJSON
   /// TinyJSON
   TJValue* TinyJSON::parse(const char* src)
   {
-    const char* p = src;
-
-    return start(p);
+    return start(src);
   }
 
   TJValue* TinyJSON::start(const char*& p)
