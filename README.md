@@ -21,6 +21,18 @@ static const short TJ_VERSION_PATCH = 1;
 static const char TJ_VERSION_STRING[] = "0.0.1";
 ```
 
+### Data types
+
+| JSON   | c++/TinyJSON                                      |
+| ------ | ------------------------------------------------- |
+| object | TJValueObject                                     |
+| array  | TJValueArray                                      |
+| string | TJValueString                                     |
+| number | TJValueNumber (longl long, long double, exponent) |
+| true   | TJValueBoolean (true)                             |
+| false  | TJValueBoolean (false)                            |
+| null   | TJValueNull (nullptr)                             |
+
 ### Objects
 
 Each objects are read into `TJValue*` classes of type `TJValueObject`.
