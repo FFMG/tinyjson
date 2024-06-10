@@ -34,6 +34,7 @@ TEST(TestBasic, TheObjectInsideTheObjectDoesNotCloseProperly) {
    )");
   ASSERT_EQ(nullptr, json);
 }
+
 TEST(TestBasic, HaveEnEmptyObjectWithNothing) {
   auto json = TinyJSON::TinyJSON::parse("{}");
   ASSERT_NE(nullptr, json);
@@ -290,6 +291,101 @@ TEST(TestBasic, ReadPerformanceBlob) {
   ASSERT_TRUE(fixed_name_object->is_object());
   auto actual_fixed_name_object = dynamic_cast<const TinyJSON::TJValueObject*>(fixed_name_object);
   ASSERT_EQ(5, actual_fixed_name_object->number_of_items());
+
+  delete json;
+}
+
+TEST(TestBasic, TrueBooleanInStringIsValid) {
+  auto json = TinyJSON::TinyJSON::parse("true");
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_true());
+
+  delete json;
+}
+
+TEST(TestBasic, IntNumberInStringIsValid) {
+
+  std::vector<std::string> values;
+  values.push_back("42");
+  values.push_back("-42");
+  values.push_back("0");
+  values.push_back("-1");
+  for (auto& number : values)
+  {
+    std::string s_json = " " + number + " ";
+    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+    ASSERT_NE(nullptr, json);
+    ASSERT_TRUE(json->is_number());
+
+    auto value = dynamic_cast<const TinyJSON::TJValueNumberInt*>(json);
+    ASSERT_NE(nullptr, value);
+    ASSERT_EQ(value->get_number(), std::atoi(number.c_str()));
+    delete json;
+  }
+}
+
+TEST(TestBasic, FalseBooleanInStringIsValid) {
+  auto json = TinyJSON::TinyJSON::parse("false");
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_false());
+
+  delete json;
+}
+
+TEST(TestBasic, NullInStringIsValid) {
+  auto json = TinyJSON::TinyJSON::parse("null");
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_null());
+
+  delete json;
+}
+
+TEST(TestBasic, NothingIsJustAnEmptyString) {
+  auto json = TinyJSON::TinyJSON::parse("");
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_string());
+  ASSERT_STREQ("", json->to_string());
+
+  delete json;
+}
+
+TEST(TestBasic, NothingIsJustAnEmptyStringWithSpaces) {
+  auto json = TinyJSON::TinyJSON::parse(R"(   
+
+
+
+
+
+
+)");
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_string());
+  ASSERT_STREQ("", json->to_string());
+
+  delete json;
+}
+
+TEST(TestBasic, StringValueIsValid) {
+  auto json = TinyJSON::TinyJSON::parse(R"("Hello")");
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_string());
+  ASSERT_STREQ("Hello", json->to_string());
+
+  delete json;
+}
+
+TEST(TestBasic, StringValueIsValidWithSpaces) {
+  auto json = TinyJSON::TinyJSON::parse(R"(   
+
+
+
+"Hello"
+
+
+)");
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_string());
+  ASSERT_STREQ("Hello", json->to_string());
 
   delete json;
 }
