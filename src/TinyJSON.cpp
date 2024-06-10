@@ -680,53 +680,51 @@ namespace TinyJSON
       int found_spaces = 0;
       while (*p != TJ_CASE_NULL_TERMINATOR)
       {
-        char c = *p;
-        switch (c)
+        switch (*p)
         {
           TJ_CASE_SPACE
             if (nullptr != start)
             {
               ++found_spaces;
             }
-          p++;
-          break;
+            p++;
+            break;
 
           TJ_CASE_DIGIT
             if (nullptr == start)
             {
               start = p; // this is the start
             }
-          if (found_spaces > 0)
-          {
-            // ERROR: Number has a space between it.
-            return nullptr;
-          }
-          p++;
-          break;
+            if (found_spaces > 0)
+            {
+              // ERROR: Number has a space between it.
+              return nullptr;
+            }
+            p++;
+            break;
 
         default:
-        {
-          // if we are still in the string, then we are good.
-          if (nullptr == start)
-          {
-            // ERROR: unknown character
-            return nullptr;
-          }
-
-          // Calculate the length of the text inside the quotes
-          const auto& length = p - start - found_spaces;
-
-          // Allocate memory for the result string
-          char* result = new char[length + 1];
-          std::strncpy(result, start, length);
-          result[length] = TJ_CASE_NULL_TERMINATOR; // Null-terminate the string
-          return result;
-        }
+          return read_string( start, p, found_spaces);
         }
       }
 
-      // // ERROR: we could not close the object.
-      return nullptr;
+      return read_string(start, p, found_spaces);
+    }
+
+    static char* read_string(const char* start, const char* end, int spaces)
+    {
+      if (nullptr == start)
+      {
+        // ERROR: unknown character
+        return nullptr;
+      }
+      // Calculate the length of the text inside the quotes
+      const auto& length = end - start - spaces;
+      // Allocate memory for the result string
+      char* result = new char[length + 1];
+      std::strncpy(result, start, length);
+      result[length] = TJ_CASE_NULL_TERMINATOR; // Null-terminate the string
+      return result;
     }
 
     static char* try_read_whole_number_as_fraction(const char*& p)
@@ -1223,10 +1221,8 @@ namespace TinyJSON
   /// TinyJSON
   TJValue* TinyJSON::parse(const char* source)
   {
-    // at the root we can only have an array or an object.
-    // not both and not more than one
-    TJValue* object_found = nullptr;
-    TJValue* array_found = nullptr;
+    // we can only have one value and nothing else
+    TJValue* value_found = nullptr;
     while (*source != TJ_CASE_NULL_TERMINATOR)
     {
       switch (*source)
@@ -1235,41 +1231,30 @@ namespace TinyJSON
         source++;
         break;
 
-      TJ_CASE_BEGIN_ARRAY
-      {
-        auto tjvalue_array = TJHelper::try_continue_read_array(++source);
-        if (nullptr == tjvalue_array)
-        {
-          // Error:  something went wrong, the error was logged.
-          return nullptr;
-        }
-        array_found = tjvalue_array;
-      }
-      break;
-
-      TJ_CASE_BEGIN_OBJECT
-      {
-        auto tjvalue_object = TJHelper::try_continue_read_object(++source);
-        if (nullptr == tjvalue_object)
-        {
-          // Error:  something went wrong, the error was logged.
-          return nullptr;
-        }
-        object_found = tjvalue_object;
-      }
-      break;
-
       default:
-        //  no idea what this is.
-        // clear our memory and return the error.
-        delete object_found;
-        delete array_found;
-        return nullptr;
+        if (nullptr != value_found)
+        {
+          // we cannot find anything else, we already found our value.
+          delete value_found;
+          value_found = nullptr;
+          return nullptr;
+        }
+
+        // try and look for the value
+        value_found = TJHelper::try_read_Value(source);
+        if (nullptr == value_found)
+        {
+          // there was an issue trying to parse.
+          return nullptr;
+        }
+        break;
       }
     }
 
     // return if we found anything.
-    return object_found == nullptr ? array_found : object_found;
+    // if we found nothing ... then it is not an error, 
+    // just an empty string
+    return value_found != nullptr ? value_found : new TJValueString("");
   }
 
   ///////////////////////////////////////
