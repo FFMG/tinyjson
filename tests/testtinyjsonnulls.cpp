@@ -107,7 +107,6 @@ TEST(TestNulls, NullWordIsNotNull) {
   delete json;
 }
 
-
 TEST(TestNulls, CheckThatValueIsNullValue) {
   auto json = TinyJSON::TinyJSON::parse(R"(
     {
@@ -158,4 +157,16 @@ TEST(TestNulls, CheckThatValueIsNullValueInArray) {
   ASSERT_TRUE(nullvalue->is_null());
 
   delete json;
+}
+
+TEST(TestNulls, CloneNull) {
+  auto null1 = new TinyJSON::TJValueNull();
+  auto null2 = null1->clone();
+  ASSERT_NE(null1, null2);
+  ASSERT_NE(nullptr, null2);
+
+  ASSERT_TRUE(null2->is_null());
+
+  delete null1;
+  delete null2;
 }

@@ -359,3 +359,19 @@ TEST(TestNumbers, UnexpectedSpaceInTheNumbers) {
 );
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestBooleans, CloneInt) {
+  auto number1 = new TinyJSON::TJValueNumberInt(42, false);
+  auto number2 = number1->clone();
+  ASSERT_NE(number1, number2);
+  ASSERT_NE(nullptr, number2);
+
+  ASSERT_TRUE(number2->is_number());
+ 
+  auto value1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(number1);
+  auto value2 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(number2);
+  ASSERT_EQ(value1->get_number(), value2->get_number());
+
+  delete number1;
+  delete number2;
+}

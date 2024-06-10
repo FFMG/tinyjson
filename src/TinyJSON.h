@@ -23,6 +23,7 @@ namespace TinyJSON
   class TJValue
   {
   public:
+    TJValue();
     virtual ~TJValue() = default;
 
     /// <summary>
@@ -30,6 +31,12 @@ namespace TinyJSON
     /// </summary>
     /// <returns></returns>
     virtual const char* to_string() const = 0;
+
+    /// <summary>
+    /// Allow each derived class to create a copy of itself.
+    /// </summary>
+    /// <returns></returns>
+    virtual TJValue* clone() const = 0;
 
     virtual bool is_object() const;
     virtual bool is_array() const;
@@ -40,7 +47,6 @@ namespace TinyJSON
     virtual bool is_null() const;
 
   protected:
-    TJValue();
   private:
     TJValue(const TJValue&) = delete;
     TJValue(TJValue&&) = delete;
@@ -137,6 +143,8 @@ namespace TinyJSON
     /// <returns></returns>
     const char* to_string() const;
 
+    TJValue* clone() const;
+
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
 
@@ -178,6 +186,8 @@ namespace TinyJSON
     /// <returns></returns>
     const char* to_string() const;
 
+    TJValue* clone() const;
+
     TJValue* operator [](int idx) const;
     TJValue* at(int idx) const;
 
@@ -213,6 +223,8 @@ namespace TinyJSON
     /// <returns></returns>
     const char* to_string() const;
 
+    TJValue* clone() const;
+
     bool is_string() const;
   protected:
     /// <summary>
@@ -244,6 +256,8 @@ namespace TinyJSON
     bool is_true() const;
     bool is_false() const;
 
+    TJValue* clone() const;
+
   private:
     const bool _is_true;
   };
@@ -260,6 +274,8 @@ namespace TinyJSON
     /// </summary>
     /// <returns></returns>
     const char* to_string() const;
+
+    TJValue* clone() const;
 
     bool is_null() const;
   };
@@ -293,6 +309,8 @@ namespace TinyJSON
 
     long long get_number() const;
 
+    TJValue* clone() const;
+
   private:
     const long long _number;
   };
@@ -305,6 +323,8 @@ namespace TinyJSON
     virtual ~TJValueNumberFloat() = default;
 
     long double get_number() const;
+
+    TJValue* clone() const;
 
   private:
     const unsigned long long _number;
@@ -320,6 +340,8 @@ namespace TinyJSON
     virtual ~TJValueNumberExponent();
 
     const char* to_string() const;
+
+    TJValue* clone() const;
   private:
     void make_string();
     char* _string;

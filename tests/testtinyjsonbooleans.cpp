@@ -201,3 +201,27 @@ TEST(TestBooleans, CheckThatValueIsBooleanAndCorrectValueInArray) {
 
   delete json;
 }
+
+TEST(TestBooleans, CloneTrue) {
+  auto bool1 = new TinyJSON::TJValueBoolean(true);
+  auto bool2 = bool1->clone();
+  ASSERT_NE(bool1, bool2);
+  ASSERT_NE(nullptr, bool2);
+
+  ASSERT_TRUE(bool2->is_true());
+
+  delete bool1;
+  delete bool2;
+}
+
+TEST(TestBooleans, CloneFalse) {
+  auto bool1 = new TinyJSON::TJValueBoolean(false);
+  auto bool2 = bool1->clone();
+  ASSERT_NE(bool1, bool2);
+  ASSERT_NE(nullptr, bool2);
+
+  ASSERT_TRUE(bool2->is_false());
+
+  delete bool1;
+  delete bool2;
+}

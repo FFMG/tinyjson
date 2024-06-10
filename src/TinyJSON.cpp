@@ -1285,7 +1285,7 @@ namespace TinyJSON
     }
     if (value != nullptr)
     {
-      throw std::exception();
+      _value = value->clone();
     }
   }
 
@@ -1408,6 +1408,11 @@ namespace TinyJSON
     return string;
   }
 
+  TJValue* TJValueString::clone() const
+  {
+    return new TJValueString(_value);
+  }
+
   bool TJValueString::is_string() const
   {
     return true;
@@ -1434,6 +1439,11 @@ namespace TinyJSON
   {
   }
 
+  TJValue* TJValueBoolean::clone() const
+  {
+    return new TJValueBoolean(_is_true);
+  }
+
   const char* TJValueBoolean::to_string() const
   {
     return is_true() ? "true" : "false";
@@ -1453,6 +1463,11 @@ namespace TinyJSON
   /// TJValue null
   TJValueNull::TJValueNull()
   {
+  }
+
+  TJValue* TJValueNull::clone() const
+  {
+    return new TJValueNull();
   }
 
   const char* TJValueNull::to_string() const
@@ -1482,6 +1497,21 @@ namespace TinyJSON
     auto object = new TJValueObject();
     object->_members = members;
     members = nullptr;
+    return object;
+  }
+
+  TJValue* TJValueObject::clone() const
+  {
+    auto object = new TJValueObject();
+    if (_members != nullptr)
+    {
+      auto members = new std::vector<TJMember*>();
+      for (auto& member : *_members)
+      {
+        members->push_back(new TJMember(member->name(), member->value()->clone()));
+      }
+      object->_members = members;
+    }
     return object;
   }
 
@@ -1573,6 +1603,21 @@ namespace TinyJSON
     return value;
   }
 
+  TJValue* TJValueArray::clone() const
+  {
+    auto array = new TJValueArray();
+    if (_values != nullptr)
+    {
+      auto values = new std::vector<TJValue*>();
+      for (auto& value : *_values)
+      {
+        values->push_back(value->clone());
+      }
+      array->_values = values;
+    }
+    return array;
+  }
+
   bool TJValueArray::is_array() const
   {
     return true;
@@ -1642,6 +1687,11 @@ namespace TinyJSON
   {
   }
 
+  TJValue* TJValueNumberInt::clone() const
+  {
+    return new TJValueNumberInt(_number, _is_negative);
+  }
+
   long long TJValueNumberInt::get_number() const
   {
     return _is_negative ? -1* _number : _number;
@@ -1655,6 +1705,11 @@ namespace TinyJSON
     _fraction(fraction),
     _fraction_exponent(fraction_exponent)
   {
+  }
+
+  TJValue* TJValueNumberFloat::clone() const
+  {
+    return new TJValueNumberFloat(_number, _fraction, _fraction_exponent, _is_negative);
   }
 
   long double TJValueNumberFloat::get_number() const
@@ -1689,6 +1744,11 @@ namespace TinyJSON
     {
       delete[] _string;
     }
+  }
+
+  TJValue* TJValueNumberExponent::clone() const
+  {
+    return new TJValueNumberExponent(_number, _fraction, _fraction_exponent, _exponent, _is_negative);
   }
 
   void TJValueNumberExponent::make_string()
