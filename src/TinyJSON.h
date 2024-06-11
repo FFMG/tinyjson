@@ -26,21 +26,13 @@ namespace TinyJSON
 
   class TJHelper;
   class TJValueArray;
-  class TJValueBoolean;
-  class TJValueNull;
-  class TJValueNumberInt;
   class TJValueObject;
-  class TJValueString;
 
   // A simple JSON value, the base of all items in a json
   class TJValue
   {
     friend TJValueArray;
-    friend TJValueBoolean;
-    friend TJValueNull;
-    friend TJValueNumberInt;
     friend TJValueObject;
-    friend TJValueString;
   public:
     TJValue();
     virtual ~TJValue();
@@ -68,7 +60,7 @@ namespace TinyJSON
     const char* dump(formating formating = formating::indented, const char* indent = "  ") const;
 
   protected:
-    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const = 0;
 
   private:
     TJValue(const TJValue&) = delete;
@@ -315,7 +307,7 @@ namespace TinyJSON
     bool is_null() const;
 
   protected:
-    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
   };
 
   // A number JSon, float or int
@@ -368,6 +360,9 @@ namespace TinyJSON
 
     TJValue* clone() const;
 
+  protected:
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
     const unsigned long long _number;
     const unsigned long long _fraction;
@@ -384,6 +379,10 @@ namespace TinyJSON
     const char* to_string() const;
 
     TJValue* clone() const;
+
+  protected:
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
     void make_string();
     char* _string;

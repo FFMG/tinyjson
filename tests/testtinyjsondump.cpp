@@ -248,7 +248,7 @@ TEST(TestDump, ThreeDeepArrayWithNumbersAndString) {
   [13,
   [14,15,"Hello"]
   ],
-  "World"
+  "World",3.1416
 ])");
   ASSERT_NE(nullptr, json);
 
@@ -265,8 +265,26 @@ TEST(TestDump, ThreeDeepArrayWithNumbersAndString) {
       "Hello"
     ]
   ],
-  "World"
+  "World",
+  3.1416
 ])", text);
+  delete json;
+}
+
+TEST(TestDump, ThreeDeepArrayWithNumbersAndStringNotIndented) {
+  auto json = TinyJSON::TinyJSON::parse(R"([
+  12,
+  [13,
+  [14,15,"Hello"]
+  ],
+  "World",3.1416
+])");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::none);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([12,[13,[14,15,"Hello"]],"World",3.1416])", text);
   delete json;
 }
 
@@ -307,6 +325,28 @@ TEST(TestDump, StringByItSelf) {
     auto json = TinyJSON::TinyJSON::parse(value.c_str());
     ASSERT_NE(nullptr, json);
 
+    const auto& text = json->dump(TinyJSON::formating::indented);
+    ASSERT_NE(nullptr, text);
+
+    ASSERT_STREQ(value.c_str(), text);
+    delete json;
+  }
+}
+
+TEST(TestDump, AFloatNumberByItSelf) {
+  std::vector<std::string> values;
+  values.push_back("3.1415926535897932384");
+  values.push_back("1.00001");
+  values.push_back("3.0141592653589793238");
+  values.push_back("12.34");
+  values.push_back("42.1254");
+  values.push_back("0.1234");
+  values.push_back("-42.789");
+  values.push_back("-0.1234");
+  for (auto& value : values)
+  {
+    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    ASSERT_NE(nullptr, json);
     const auto& text = json->dump(TinyJSON::formating::indented);
     ASSERT_NE(nullptr, text);
 

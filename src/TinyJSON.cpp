@@ -58,7 +58,9 @@ namespace TinyJSON
     friend TJValue;
     friend TJValueArray;
     friend TJValueBoolean;
+    friend TJValueNumberExponent;
     friend TJValueNull;
+    friend TJValueNumberFloat;
     friend TJValueNumberInt;
     friend TJValueObject;
     friend TJValueString;
@@ -1422,17 +1424,6 @@ namespace TinyJSON
     return _last_dump;
   }
 
-  void TJValue::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
-  {
-    // to be removed once it is a pure virtual
-    (void)buffer;
-    (void)formating;
-    (void)current_indent;
-    (void)indent;
-    (void)buffer_pos;
-    (void)buffer_max_length;
-  }
-
   ///////////////////////////////////////
   /// TJValue string
   TJValueString::TJValueString(const char* value) :
@@ -1915,6 +1906,28 @@ namespace TinyJSON
     return new TJValueNumberFloat(_number, _fraction, _fraction_exponent, _is_negative);
   }
 
+
+  void TJValueNumberFloat::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  {
+    // formating and indent are unused.
+    (void)formating;
+    (void)indent;
+
+    auto string = new char[1024];
+    auto format_string = new char[1024];
+
+    // if we have no fraction, then just return it.
+    auto zeros = static_cast<unsigned long long>(_fraction_exponent);
+    std::sprintf(format_string, "%s%%llu.%%0%ullu", _is_negative?"-":"", _fraction_exponent);
+    std::sprintf(string, format_string, _number, _fraction);
+
+    // then the number
+    TJHelper::add_string_to_string(string, buffer, buffer_pos, buffer_max_length);
+
+    delete[] string;
+    delete[] format_string;
+  }
+
   long double TJValueNumberFloat::get_number() const
   {
     if (_fraction == 0) {
@@ -1952,6 +1965,18 @@ namespace TinyJSON
   TJValue* TJValueNumberExponent::clone() const
   {
     return new TJValueNumberExponent(_number, _fraction, _fraction_exponent, _exponent, _is_negative);
+  }
+
+  void TJValueNumberExponent::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  {
+    if (nullptr == _string)
+    {
+      // we only create the string value when the caller asks for it.
+      // this is to make sure that we do not create it on parsing.
+      const_cast<TJValueNumberExponent*>(this)->make_string();
+    }
+    // then the number
+    TJHelper::add_string_to_string(_string, buffer, buffer_pos, buffer_max_length);
   }
 
   void TJValueNumberExponent::make_string()
