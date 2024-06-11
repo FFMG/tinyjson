@@ -20,7 +20,7 @@ TEST(TestObjects, EmptyObjectHasNoItemsInIt) {
 
   const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
-  ASSERT_EQ(0, jobject->number_of_items());
+  ASSERT_EQ(0, jobject->get_number_of_items());
 
   delete json;
 }
@@ -39,11 +39,11 @@ TEST(TestObjects, EmptyObjectInSideObectHasNoItemsInIt) {
 
   const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
-  ASSERT_EQ(1, jobject->number_of_items());
+  ASSERT_EQ(1, jobject->get_number_of_items());
 
   const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, jobjecta);
-  ASSERT_EQ(0, jobjecta->number_of_items());
+  ASSERT_EQ(0, jobjecta->get_number_of_items());
 
   delete json;
 }
@@ -63,15 +63,15 @@ TEST(TestObjects, GetItemByIndex) {
 
   const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
-  ASSERT_EQ(1, jobject->number_of_items());
+  ASSERT_EQ(1, jobject->get_number_of_items());
 
   const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>((*jobject)[0]->value());
   ASSERT_NE(nullptr, jobjecta);
-  ASSERT_EQ(1, jobjecta->number_of_items());
+  ASSERT_EQ(1, jobjecta->get_number_of_items());
 
   const auto jobjectb = dynamic_cast<const TinyJSON::TJValueObject*>(jobjecta->at(0)->value());
   ASSERT_NE(nullptr, jobjectb);
-  ASSERT_EQ(0, jobjectb->number_of_items());
+  ASSERT_EQ(0, jobjectb->get_number_of_items());
 
   delete json;
 }
@@ -128,7 +128,7 @@ TEST(TestObjects, TryingToGetAnItemThatDoesNotExitReturnsNull) {
 );
   ASSERT_NE(nullptr, json);
   auto object_of_values = dynamic_cast<TinyJSON::TJValueObject*>(json);
-  ASSERT_EQ(3, object_of_values->number_of_items());
+  ASSERT_EQ(3, object_of_values->get_number_of_items());
 
   ASSERT_NE(nullptr, object_of_values->at(0));
   ASSERT_EQ(nullptr, object_of_values->at(3));
@@ -144,7 +144,7 @@ TEST(TestObjects, TryingToGetANegativeItemReturnsNull) {
 );
   ASSERT_NE(nullptr, json);
   auto object_of_values = dynamic_cast<TinyJSON::TJValueObject*>(json);
-  ASSERT_EQ(3, object_of_values->number_of_items());
+  ASSERT_EQ(3, object_of_values->get_number_of_items());
 
   ASSERT_NE(nullptr, object_of_values->at(0));
   ASSERT_EQ(nullptr, object_of_values->at(-1));

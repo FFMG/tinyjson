@@ -325,6 +325,24 @@ TEST(TestExponents, PositiveExponentNumberCannotBeConvertedToWholeNumber) {
   delete json;
 }
 
+TEST(TestExponents, PositiveExponentOfNegativeNumberNumberCannotBeConvertedToWholeNumber) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : -2.00001e+24
+}
+)"
+);
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("a"));
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_STREQ("-2.00001e+24", valuea->to_string());
+
+  delete json;
+}
+
 TEST(TestExponents, NegativeExponentNumberCannotBeConvertedToWholeNumber) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 {

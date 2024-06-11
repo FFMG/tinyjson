@@ -17,14 +17,25 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 
 namespace TinyJSON
 {
+  // the various types of formating.
+  enum class formating
+  {
+    none,
+    indented
+  };
+
   class TJHelper;
+  class TJValueArray;
+  class TJValueObject;
 
   // A simple JSON value, the base of all items in a json
   class TJValue
   {
+    friend TJValueArray;
+    friend TJValueObject;
   public:
     TJValue();
-    virtual ~TJValue() = default;
+    virtual ~TJValue();
 
     /// <summary>
     /// Try and get a string representation of the value.
@@ -46,12 +57,19 @@ namespace TinyJSON
     virtual bool is_false() const;
     virtual bool is_null() const;
 
+    const char* dump(formating formating = formating::indented, const char* indent = "  ") const;
+
   protected:
+    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const = 0;
+
   private:
     TJValue(const TJValue&) = delete;
     TJValue(TJValue&&) = delete;
     TJValue& operator=(TJValue&&) = delete;
     TJValue& operator=(const TJValue&) = delete;
+
+    mutable char* _last_dump;
+    void free_last_dump() const;
   };
 
   // The parser class
@@ -121,7 +139,7 @@ namespace TinyJSON
     /// Get the number of items in this array
     /// </summary>
     /// <returns></returns>
-    int number_of_items() const;
+    int get_number_of_items() const;
 
     /// <summary>
     /// Try and get a string value, if it does not exist, then we return null.
@@ -159,6 +177,8 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValueObject* move(std::vector<TJMember*>*& members);
 
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
     // All the key value pairs in this object.
     std::vector<TJMember*>* _members;
@@ -178,7 +198,7 @@ namespace TinyJSON
     /// Get the number of items in this array
     /// </summary>
     /// <returns></returns>
-    int number_of_items() const;
+    int get_number_of_items() const;
 
     /// <summary>
     /// Try and get a string representation of the value.
@@ -201,6 +221,8 @@ namespace TinyJSON
     /// <param name="values"></param>
     /// <returns></returns>
     static TJValueArray* move(std::vector<TJValue*>*& values);
+
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
     // All the key value pairs in this object.
@@ -235,6 +257,8 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValueString* move(char*& value);
 
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
     char* _value;
     void free_value();
@@ -258,6 +282,9 @@ namespace TinyJSON
 
     TJValue* clone() const;
 
+  protected:
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
     const bool _is_true;
   };
@@ -278,6 +305,9 @@ namespace TinyJSON
     TJValue* clone() const;
 
     bool is_null() const;
+
+  protected:
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
   };
 
   // A number JSon, float or int
@@ -304,12 +334,16 @@ namespace TinyJSON
   class TJValueNumberInt : public TJValueNumber
   {
   public:
+    TJValueNumberInt(const long long& number);
     TJValueNumberInt(const unsigned long long& number, const bool is_negative);
     virtual ~TJValueNumberInt() = default;
 
     long long get_number() const;
 
     TJValue* clone() const;
+
+  protected:
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
     const long long _number;
@@ -320,13 +354,19 @@ namespace TinyJSON
   {
   public:
     TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative);
-    virtual ~TJValueNumberFloat() = default;
+    virtual ~TJValueNumberFloat();
 
     long double get_number() const;
 
     TJValue* clone() const;
 
+  protected:
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
+  private:
+    void make_string_if_needed() const;
+    mutable char* _string;
     const unsigned long long _number;
     const unsigned long long _fraction;
     const unsigned int _fraction_exponent;
@@ -342,9 +382,13 @@ namespace TinyJSON
     const char* to_string() const;
 
     TJValue* clone() const;
+
+  protected:
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
-    void make_string();
-    char* _string;
+    void make_string_if_needed() const;
+    mutable char* _string;
     const unsigned long long _number;
     const unsigned long long _fraction;
     const unsigned int _fraction_exponent;

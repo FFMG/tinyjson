@@ -81,7 +81,7 @@ TEST(TestStrings, ArrayOfString) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_EQ(2, jarray->number_of_items());
+  ASSERT_EQ(2, jarray->get_number_of_items());
   ASSERT_STREQ("Hello", jarray->at(0)->to_string());
   ASSERT_STREQ("World", jarray->at(1)->to_string());
 
