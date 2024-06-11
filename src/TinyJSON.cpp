@@ -57,6 +57,8 @@ namespace TinyJSON
     friend TinyJSON;
     friend TJValue;
     friend TJValueArray;
+    friend TJValueBoolean;
+    friend TJValueNull;
     friend TJValueNumberInt;
   protected:
     static void free_members(std::vector<TJMember*>* members)
@@ -1487,6 +1489,19 @@ namespace TinyJSON
     return new TJValueBoolean(_is_true);
   }
 
+  void TJValueBoolean::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  {
+    // formating and indent are unused.
+    (void)formating;
+    (void)indent;
+
+    // firs we add the indent
+    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+
+    // then the word we are after
+    TJHelper::add_string_to_string(_is_true ? "true":"false", buffer, buffer_pos, buffer_max_length);
+  }
+
   const char* TJValueBoolean::to_string() const
   {
     return is_true() ? "true" : "false";
@@ -1516,6 +1531,19 @@ namespace TinyJSON
   const char* TJValueNull::to_string() const
   {
     return "null";
+  }
+
+  void TJValueNull::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  {
+    // formating and indent are unused.
+    (void)formating;
+    (void)indent;
+
+    // firs we add the indent
+    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+
+    // then the word we are after
+    TJHelper::add_string_to_string("null", buffer, buffer_pos, buffer_max_length);
   }
 
   bool TJValueNull::is_null() const
@@ -1769,6 +1797,12 @@ namespace TinyJSON
   TJValueNumberInt::TJValueNumberInt(const unsigned long long& number, const bool is_negative) :
     TJValueNumber(is_negative),
     _number(number)
+  {
+  }
+
+  TJValueNumberInt::TJValueNumberInt(const long long& number) :
+    TJValueNumber(number<0),
+    _number(number < 0 ? -1*number : number)
   {
   }
 

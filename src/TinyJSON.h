@@ -26,12 +26,16 @@ namespace TinyJSON
 
   class TJHelper;
   class TJValueArray;
+  class TJValueBoolean;
+  class TJValueNull;
   class TJValueNumberInt;
 
   // A simple JSON value, the base of all items in a json
   class TJValue
   {
     friend TJValueArray;
+    friend TJValueBoolean;
+    friend TJValueNull;
     friend TJValueNumberInt;
   public:
     TJValue();
@@ -278,6 +282,9 @@ namespace TinyJSON
 
     TJValue* clone() const;
 
+  protected:
+    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
     const bool _is_true;
   };
@@ -298,6 +305,9 @@ namespace TinyJSON
     TJValue* clone() const;
 
     bool is_null() const;
+
+  protected:
+    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
   };
 
   // A number JSon, float or int
@@ -324,6 +334,7 @@ namespace TinyJSON
   class TJValueNumberInt : public TJValueNumber
   {
   public:
+    TJValueNumberInt(const long long& number);
     TJValueNumberInt(const unsigned long long& number, const bool is_negative);
     virtual ~TJValueNumberInt() = default;
 
