@@ -354,7 +354,7 @@ namespace TinyJSON
   {
   public:
     TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative);
-    virtual ~TJValueNumberFloat() = default;
+    virtual ~TJValueNumberFloat();
 
     long double get_number() const;
 
@@ -364,6 +364,9 @@ namespace TinyJSON
     void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
+  private:
+    void make_string_if_needed() const;
+    mutable char* _string;
     const unsigned long long _number;
     const unsigned long long _fraction;
     const unsigned int _fraction_exponent;
@@ -384,8 +387,8 @@ namespace TinyJSON
     void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
-    void make_string();
-    char* _string;
+    void make_string_if_needed() const;
+    mutable char* _string;
     const unsigned long long _number;
     const unsigned long long _fraction;
     const unsigned int _fraction_exponent;

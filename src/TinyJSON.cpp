@@ -1894,6 +1894,7 @@ namespace TinyJSON
   ///////////////////////////////////////
   /// TJValue float Number
   TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative) :
+    _string(nullptr),
     TJValueNumber(is_negative),
     _number(number),
     _fraction(fraction),
@@ -1901,11 +1902,36 @@ namespace TinyJSON
   {
   }
 
+  TJValueNumberFloat::~TJValueNumberFloat()
+  {
+    if (nullptr != _string)
+    {
+      delete[] _string;
+    }
+  }
+
+  void TJValueNumberFloat::make_string_if_needed() const
+  {
+    if (nullptr != _string)
+    {
+      return;
+    }
+
+    _string = new char[1024];
+    auto format_string = new char[1024];
+
+    // if we have no fraction, then just return it.
+    auto zeros = static_cast<unsigned long long>(_fraction_exponent);
+    std::sprintf(format_string, "%s%%llu.%%0%ullu", _is_negative ? "-" : "", _fraction_exponent);
+    std::sprintf(_string, format_string, _number, _fraction);
+
+    delete[] format_string;
+  }
+
   TJValue* TJValueNumberFloat::clone() const
   {
     return new TJValueNumberFloat(_number, _fraction, _fraction_exponent, _is_negative);
   }
-
 
   void TJValueNumberFloat::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
   {
@@ -1913,19 +1939,11 @@ namespace TinyJSON
     (void)formating;
     (void)indent;
 
-    auto string = new char[1024];
-    auto format_string = new char[1024];
-
-    // if we have no fraction, then just return it.
-    auto zeros = static_cast<unsigned long long>(_fraction_exponent);
-    std::sprintf(format_string, "%s%%llu.%%0%ullu", _is_negative?"-":"", _fraction_exponent);
-    std::sprintf(string, format_string, _number, _fraction);
+    // make sthe string is needed
+    make_string_if_needed();
 
     // then the number
-    TJHelper::add_string_to_string(string, buffer, buffer_pos, buffer_max_length);
-
-    delete[] string;
-    delete[] format_string;
+    TJHelper::add_string_to_string(_string, buffer, buffer_pos, buffer_max_length);
   }
 
   long double TJValueNumberFloat::get_number() const
@@ -1969,17 +1987,15 @@ namespace TinyJSON
 
   void TJValueNumberExponent::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
   {
-    if (nullptr == _string)
-    {
-      // we only create the string value when the caller asks for it.
-      // this is to make sure that we do not create it on parsing.
-      const_cast<TJValueNumberExponent*>(this)->make_string();
-    }
+    // we only create the string value when the caller asks for it.
+    // this is to make sure that we do not create it on parsing.
+    make_string_if_needed();
+
     // then the number
     TJHelper::add_string_to_string(_string, buffer, buffer_pos, buffer_max_length);
   }
 
-  void TJValueNumberExponent::make_string()
+  void TJValueNumberExponent::make_string_if_needed() const
   {
     if (nullptr != _string)
     {
@@ -1992,30 +2008,27 @@ namespace TinyJSON
     // if we have no fraction, then just return it.
     if (_fraction == 0)
     {
-      std::sprintf(_string, "%llde+%i", _number, _exponent);
+      std::sprintf(_string, "%llue+%i", _number, _exponent);
     }
     else
     {
       // rebuild the buffer and make sure that we have all the zeros for the fractions.
       if (_exponent < 0)
       {
-        std::sprintf(_string, "%lld.%0*llde%i", _number, _fraction_exponent, _fraction, _exponent);
+        std::sprintf(_string, "%llu.%0*llue%i", _number, _fraction_exponent, _fraction, _exponent);
       }
       else
       {
-        std::sprintf(_string, "%lld.%0*llde+%i", _number, _fraction_exponent, _fraction, _exponent);
+        std::sprintf(_string, "%llu.%0*llue+%i", _number, _fraction_exponent, _fraction, _exponent);
       }
     }
   }
 
   const char* TJValueNumberExponent::to_string() const
   {
-    if (nullptr == _string)
-    {
-      // we only create the string value when the caller asks for it.
-      // this is to make sure that we do not create it on parsing.
-      const_cast<TJValueNumberExponent*>(this)->make_string();
-    }
+    // we only create the string value when the caller asks for it.
+    // this is to make sure that we do not create it on parsing.
+    make_string_if_needed();
     return _string;
   }
 } // TinyJSON
