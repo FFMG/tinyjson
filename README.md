@@ -2,6 +2,18 @@
 
 TinyJSON is a fast and small C++ JSON parser
 
+## Data types
+
+| JSON   | c++/TinyJSON                                      |
+| ------ | ------------------------------------------------- |
+| object | TJValueObject                                     |
+| array  | TJValueArray                                      |
+| string | TJValueString                                     |
+| number | TJValueNumber (longl long, long double, exponent) |
+| true   | TJValueBoolean (true)                             |
+| false  | TJValueBoolean (false)                            |
+| null   | TJValueNull (nullptr)                             |
+
 ## Simple examples
 
 ### Version Control
@@ -21,17 +33,43 @@ static const short TJ_VERSION_PATCH = 1;
 static const char TJ_VERSION_STRING[] = "0.0.1";
 ```
 
-### Data types
+### Read a JSON string
 
-| JSON   | c++/TinyJSON                                      |
-| ------ | ------------------------------------------------- |
-| object | TJValueObject                                     |
-| array  | TJValueArray                                      |
-| string | TJValueString                                     |
-| number | TJValueNumber (longl long, long double, exponent) |
-| true   | TJValueBoolean (true)                             |
-| false  | TJValueBoolean (false)                            |
-| null   | TJValueNull (nullptr)                             |
+To read a JSON string you simply need to call the static method `parse`
+
+```cpp
+  auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
+  delete json;
+```
+
+This will then return an object that you can inspect.
+
+```cpp
+  ...
+  auto value = json->try_get_string("Hello"); //  "World"
+  auto no_value = json->try_get_string("Life"); //  null
+  ...
+```
+
+### Write a JSON string
+
+To read a JSON string you simply need to call the method `dump` on the JSON object returned.
+
+```cpp
+  auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
+  auto indented_json = json->dump(TinyJSON::formating::indented); 
+  auto notindented_json = json->dump(TinyJSON::formating::none); 
+  delete json;
+```
+
+This will then return an object that you can inspect.
+
+```cpp
+  ...
+  auto value = json->try_get_string("Hello"); //  "World"
+  auto no_value = json->try_get_string("Life"); //  null
+  ...
+```
 
 ### Objects
 

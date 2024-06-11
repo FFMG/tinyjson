@@ -2008,18 +2008,18 @@ namespace TinyJSON
     // if we have no fraction, then just return it.
     if (_fraction == 0)
     {
-      std::sprintf(_string, "%llue+%i", _number, _exponent);
+      std::sprintf(_string, _is_negative ? "-%llue+%i" : "%llue+%i", _number, _exponent);
     }
     else
     {
       // rebuild the buffer and make sure that we have all the zeros for the fractions.
       if (_exponent < 0)
       {
-        std::sprintf(_string, "%llu.%0*llue%i", _number, _fraction_exponent, _fraction, _exponent);
+        std::sprintf(_string, _is_negative ? "-%llu.%0*llue%i" : "%llu.%0*llue%i", _number, _fraction_exponent, _fraction, _exponent);
       }
       else
       {
-        std::sprintf(_string, "%llu.%0*llue+%i", _number, _fraction_exponent, _fraction, _exponent);
+        std::sprintf(_string, _is_negative ? "-%llu.%0*llue+%i" : "%llu.%0*llue+%i", _number, _fraction_exponent, _fraction, _exponent);
       }
     }
   }

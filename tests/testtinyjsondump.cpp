@@ -63,6 +63,32 @@ TEST(TestDump, EmptyArrayOfNumbersNoIndent) {
   delete json;
 }
 
+TEST(TestDump, EmptyArrayOfFloatNumbersNoIndent) {
+  auto json = TinyJSON::TinyJSON::parse("[  1.2,  1.03 , 0.14 ]");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::none);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("[1.2,1.03,0.14]", text);
+  delete json;
+}
+
+TEST(TestDump, EmptyArrayOfFloatNumbers) {
+  auto json = TinyJSON::TinyJSON::parse("[  1.2,  1.03 , 0.14 ]");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([
+  1.2,
+  1.03,
+  0.14
+])", text);
+  delete json;
+}
+
 TEST(TestDump, EmptyArrayOfNumbers) {
   auto json = TinyJSON::TinyJSON::parse("[12,13,14]");
   ASSERT_NE(nullptr, json);
@@ -343,6 +369,26 @@ TEST(TestDump, AFloatNumberByItSelf) {
   values.push_back("0.1234");
   values.push_back("-42.789");
   values.push_back("-0.1234");
+  for (auto& value : values)
+  {
+    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    ASSERT_NE(nullptr, json);
+    const auto& text = json->dump(TinyJSON::formating::indented);
+    ASSERT_NE(nullptr, text);
+
+    ASSERT_STREQ(value.c_str(), text);
+    delete json;
+  }
+}
+
+TEST(TestDump, AnExponentNumberByItSelf) {
+  std::vector<std::string> values;
+  values.push_back("1.23045e+27");
+  values.push_back("6.7809e+27");
+  values.push_back("1.0009e+27");
+  values.push_back("1.2345e+27");
+  values.push_back("2.00001e+24");
+  values.push_back("-2.00001e+24");
   for (auto& value : values)
   {
     auto json = TinyJSON::TinyJSON::parse(value.c_str());
