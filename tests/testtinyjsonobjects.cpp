@@ -122,7 +122,7 @@ TEST(TestObjects, CheckThatValueIsObject) {
 TEST(TestObjects, TryingToGetAnItemThatDoesNotExitReturnsNull) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 {
-  "a" : 12, "b" : 13, "b" : 14
+  "a" : 12, "b" : 13, "c" : 14
 }
 )"
 );
@@ -138,7 +138,7 @@ TEST(TestObjects, TryingToGetAnItemThatDoesNotExitReturnsNull) {
 TEST(TestObjects, TryingToGetANegativeItemReturnsNull) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 {
-  "a" : 12, "b" : 13, "b" : 14
+  "a" : 12, "b" : 13, "c" : 14
 }
 )"
 );

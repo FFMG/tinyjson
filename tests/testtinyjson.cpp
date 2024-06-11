@@ -389,3 +389,75 @@ TEST(TestBasic, StringValueIsValidWithSpaces) {
 
   delete json;
 }
+
+TEST(TestBasic, ValueInObjectOverwriteEachother) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+   {
+"a" : 12,
+"a" : 24
+   }
+   )");
+  ASSERT_NE(nullptr, json);
+  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  // should only be one item
+  ASSERT_EQ(1, jobject->get_number_of_items());
+
+  auto text = json->dump();
+  ASSERT_STREQ(R"({
+  "a": 24
+})", text );
+
+  delete json;
+}
+
+TEST(TestBasic, ValueInObjectOverwriteEachotherInsideArray) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+   {
+"a" : [12,24,48],
+"a" : 24
+   }
+   )");
+  ASSERT_NE(nullptr, json);
+  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  // should only be one item
+  ASSERT_EQ(1, jobject->get_number_of_items());
+
+  auto text = json->dump();
+  ASSERT_STREQ(R"({
+  "a": 24
+})", text);
+
+  delete json;
+}
+
+TEST(TestBasic, ValueInObjectOverwriteEachotherInsideArray2) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  { 
+    "a" : 12,
+    "a" : 24
+  },
+  12,24
+])");
+  ASSERT_NE(nullptr, json);
+  const auto tjarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, tjarray);
+
+  // should only be one item
+  ASSERT_EQ(3, tjarray->get_number_of_items());
+
+  auto text = json->dump();
+  ASSERT_STREQ(R"([
+  {
+    "a": 24
+  },
+  12,
+  24
+])", text);
+
+  delete json;
+}
