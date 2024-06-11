@@ -62,6 +62,13 @@ To read a JSON string you simply need to call the method `dump` on the JSON obje
   delete json;
 ```
 
+The formating types are
+
+```cpp
+  TinyJSON::formating::indented
+  TinyJSON::formating::none
+```
+
 This will then return an object that you can inspect.
 
 ```cpp
