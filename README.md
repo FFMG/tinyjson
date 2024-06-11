@@ -39,6 +39,7 @@ To read a JSON string you simply need to call the static method `parse`
 
 ```cpp
   auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
+  ...
   delete json;
 ```
 
@@ -58,7 +59,17 @@ To read a JSON string you simply need to call the method `dump` on the JSON obje
 ```cpp
   auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
   auto indented_json = json->dump(TinyJSON::formating::indented); 
+  /*
+    { 
+      "Hello": "World"
+    }
+   */
+
   auto notindented_json = json->dump(TinyJSON::formating::none); 
+  /*
+    {"Hello":"World"}
+   */
+  
   delete json;
 ```
 
@@ -67,15 +78,6 @@ The formating types are
 ```cpp
   TinyJSON::formating::indented
   TinyJSON::formating::none
-```
-
-This will then return an object that you can inspect.
-
-```cpp
-  ...
-  auto value = json->try_get_string("Hello"); //  "World"
-  auto no_value = json->try_get_string("Life"); //  null
-  ...
 ```
 
 ### Objects
