@@ -929,6 +929,35 @@ namespace TinyJSON
     }
 
     /// <summary>
+    /// We are moving the owership of the TJMember to the vector.
+    /// If the vector is not created we will create it.
+    /// Duplicate values will be overwiten here.
+    /// </summary>
+    /// <param name="member"></param>
+    /// <param name="members"></param>
+    static void move_member_to_members(TJMember* member, std::vector<TJMember*>*& members)
+    {
+      if (nullptr == members)
+      {
+        members = new std::vector<TJMember*>();
+      }
+      else
+      {
+        auto current = std::find_if(members->begin(), members->end(), [&](TJMember*& elem) 
+          { 
+            return strcmp( elem->name(), member->name()) == 0; 
+          });
+        if (current != members->end())
+        {
+          delete* current;
+          *current = member;
+          return;
+        }
+      }
+      members->push_back(member);
+    }
+
+    /// <summary>
     /// Try and read an object after we have read the openning bracket
     /// This is to prevent having to read the same char more than once.
     /// </summary>
@@ -985,20 +1014,17 @@ namespace TinyJSON
 
           // read the actual string and value
           // that's the way it has to be.
-          auto element = try_read_string_and_value(p);
-          if (element == nullptr)
+          auto member = try_read_string_and_value(p);
+          if (member == nullptr)
           {
             // ERROR: There was an error reading the name and/or the value
             free_members(members);
             return nullptr;
           }
-          if (nullptr == members)
-          {
-            members = new std::vector<TJMember*>();
-          }
 
           found_comma = false;
-          members->push_back(element);
+          move_member_to_members(member, members);
+          
           after_string = true;
           }
           break;
