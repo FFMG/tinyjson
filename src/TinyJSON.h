@@ -30,6 +30,7 @@ namespace TinyJSON
   class TJValueNull;
   class TJValueNumberInt;
   class TJValueObject;
+  class TJValueString;
 
   // A simple JSON value, the base of all items in a json
   class TJValue
@@ -39,6 +40,7 @@ namespace TinyJSON
     friend TJValueNull;
     friend TJValueNumberInt;
     friend TJValueObject;
+    friend TJValueString;
   public:
     TJValue();
     virtual ~TJValue();
@@ -66,7 +68,7 @@ namespace TinyJSON
     const char* dump(formating formating = formating::indented, const char* indent = "  ") const;
 
   protected:
-    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const;
+    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
     TJValue(const TJValue&) = delete;
@@ -183,7 +185,7 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValueObject* move(std::vector<TJMember*>*& members);
 
-    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const;
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
     // All the key value pairs in this object.
@@ -228,7 +230,7 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValueArray* move(std::vector<TJValue*>*& values);
 
-    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const;
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
     // All the key value pairs in this object.
@@ -263,6 +265,8 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValueString* move(char*& value);
 
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
+
   private:
     char* _value;
     void free_value();
@@ -287,7 +291,7 @@ namespace TinyJSON
     TJValue* clone() const;
 
   protected:
-    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const;
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
     const bool _is_true;
@@ -311,7 +315,7 @@ namespace TinyJSON
     bool is_null() const;
 
   protected:
-    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const;
+    virtual void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
   };
 
   // A number JSon, float or int
@@ -347,7 +351,7 @@ namespace TinyJSON
     TJValue* clone() const;
 
   protected:
-    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const;
+    void internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const;
 
   private:
     const long long _number;

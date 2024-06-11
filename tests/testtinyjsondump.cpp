@@ -241,3 +241,76 @@ TEST(TestDump, ArrayInArrayWithNumbers) {
 ])", text);
   delete json;
 }
+
+TEST(TestDump, ThreeDeepArrayWithNumbersAndString) {
+  auto json = TinyJSON::TinyJSON::parse(R"([
+  12,
+  [13,
+  [14,15,"Hello"]
+  ],
+  "World"
+])");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([
+  12,
+  [
+    13,
+    [
+      14,
+      15,
+      "Hello"
+    ]
+  ],
+  "World"
+])", text);
+  delete json;
+}
+
+TEST(TestDump, ThreeDeepObjectWithNumbersAndString) {
+  auto json = TinyJSON::TinyJSON::parse(R"({
+  "a":12,
+  "b":{"aa":13,
+  "bb":{"aaa":14,"bbb":15,"ccc": "Hello"}
+  },"c": "World"
+})");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"({
+  "a": 12,
+  "b": {
+    "aa": 13,
+    "bb": {
+      "aaa": 14,
+      "bbb": 15,
+      "ccc": "Hello"
+    }
+  },
+  "c": "World"
+})", text);
+  delete json;
+}
+
+TEST(TestDump, StringByItSelf) {
+  std::vector<std::string> values;
+  values.push_back(R"("")");
+  values.push_back(R"("Hello")");
+  values.push_back(R"("Hello With Spaces")");
+  for (auto& value : values)
+  {
+    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    ASSERT_NE(nullptr, json);
+
+    const auto& text = json->dump(TinyJSON::formating::indented);
+    ASSERT_NE(nullptr, text);
+
+    ASSERT_STREQ(value.c_str(), text);
+    delete json;
+  }
+}
