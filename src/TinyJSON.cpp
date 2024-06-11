@@ -60,6 +60,7 @@ namespace TinyJSON
     friend TJValueBoolean;
     friend TJValueNull;
     friend TJValueNumberInt;
+    friend TJValueObject;
   protected:
     static void free_members(std::vector<TJMember*>* members)
     {
@@ -1406,16 +1407,16 @@ namespace TinyJSON
     switch (formating)
     {
     case formating::none:
-      internal_dump(_last_dump, formating, nullptr, nullptr, buffer_pos, buffer_max_length);
+      internal_dump(_last_dump, formating, nullptr, nullptr, buffer_pos, buffer_max_length, false);
       break;
     case formating::indented:
-      internal_dump(_last_dump, formating, nullptr, indent, buffer_pos, buffer_max_length);
+      internal_dump(_last_dump, formating, nullptr, indent, buffer_pos, buffer_max_length, false);
       break;
     }
     return _last_dump;
   }
 
-  void TJValue::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  void TJValue::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const
   {
     // to be removed once it is a pure virtual
     (void)buffer;
@@ -1424,7 +1425,7 @@ namespace TinyJSON
     (void)indent;
     (void)buffer_pos;
     (void)buffer_max_length;
-
+    (void)use_open_indent;
   }
 
   ///////////////////////////////////////
@@ -1489,14 +1490,17 @@ namespace TinyJSON
     return new TJValueBoolean(_is_true);
   }
 
-  void TJValueBoolean::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  void TJValueBoolean::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const
   {
     // formating and indent are unused.
     (void)formating;
     (void)indent;
 
-    // firs we add the indent
-    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    // first we add the indent
+    if (true == use_open_indent)
+    {
+      TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    }
 
     // then the word we are after
     TJHelper::add_string_to_string(_is_true ? "true":"false", buffer, buffer_pos, buffer_max_length);
@@ -1533,14 +1537,17 @@ namespace TinyJSON
     return "null";
   }
 
-  void TJValueNull::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  void TJValueNull::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const
   {
     // formating and indent are unused.
     (void)formating;
     (void)indent;
-
-    // firs we add the indent
-    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+  
+    // first we add the indent
+    if (true == use_open_indent)
+    {
+      TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    }
 
     // then the word we are after
     TJHelper::add_string_to_string("null", buffer, buffer_pos, buffer_max_length);
@@ -1584,6 +1591,64 @@ namespace TinyJSON
       object->_members = members;
     }
     return object;
+  }
+
+  void TJValueObject::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const
+  {
+    // open it
+    if (true == use_open_indent)
+    {
+      TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    }
+    TJHelper::add_char_to_string('{', buffer, buffer_pos, buffer_max_length);
+
+    auto number_of_items = get_number_of_items();
+    if (number_of_items > 0)
+    {
+      // only return if we have data.
+      if (formating == formating::indented)
+      {
+        TJHelper::add_char_to_string('\n', buffer, buffer_pos, buffer_max_length);
+      }
+
+      int inner_buffer_pos = 0;
+      int inner_buffer_max_length = 0;
+      char* inner_current_indent = nullptr;
+
+      TJHelper::add_string_to_string(current_indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
+      TJHelper::add_string_to_string(indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
+
+      for (const auto& member : *_members)
+      {
+        TJHelper::add_string_to_string(inner_current_indent, buffer, buffer_pos, buffer_max_length);
+        TJHelper::add_char_to_string('"', buffer, buffer_pos, buffer_max_length);
+        TJHelper::add_string_to_string(member->name(), buffer, buffer_pos, buffer_max_length);
+        TJHelper::add_char_to_string('"', buffer, buffer_pos, buffer_max_length);
+        if (formating == formating::indented)
+        {
+          TJHelper::add_string_to_string(": ", buffer, buffer_pos, buffer_max_length);
+        }
+        else
+        {
+          TJHelper::add_char_to_string(':', buffer, buffer_pos, buffer_max_length);
+        }
+        member->value()->internal_dump(buffer, formating, inner_current_indent, indent, buffer_pos, buffer_max_length, false);
+
+        // don't add on the last item
+        if (--number_of_items > 0)
+        {
+          TJHelper::add_char_to_string(',', buffer, buffer_pos, buffer_max_length);
+        }
+        if (formating == formating::indented)
+        {
+          TJHelper::add_char_to_string('\n', buffer, buffer_pos, buffer_max_length);
+        }
+      }
+      delete[] inner_current_indent;
+    }
+    // close it.
+    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    TJHelper::add_char_to_string('}', buffer, buffer_pos, buffer_max_length);
   }
 
   bool TJValueObject::is_object() const
@@ -1674,10 +1739,13 @@ namespace TinyJSON
     return value;
   }
 
-  void TJValueArray::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  void TJValueArray::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const
   {
     // open it
-    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    if (true == use_open_indent)
+    {
+      TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    }
     TJHelper::add_char_to_string('[', buffer, buffer_pos, buffer_max_length);
 
     auto number_of_items = get_number_of_items();
@@ -1698,7 +1766,7 @@ namespace TinyJSON
 
       for (const auto& value : *_values)
       {
-        value->internal_dump(buffer, formating, inner_current_indent, indent, buffer_pos, buffer_max_length);
+        value->internal_dump(buffer, formating, inner_current_indent, indent, buffer_pos, buffer_max_length, true);
 
         // don't add on the last item
         if (--number_of_items > 0)
@@ -1713,6 +1781,7 @@ namespace TinyJSON
       delete[] inner_current_indent;
     }
     // close it.
+    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
     TJHelper::add_char_to_string(']', buffer, buffer_pos, buffer_max_length);
   }
 
@@ -1811,7 +1880,7 @@ namespace TinyJSON
     return new TJValueNumberInt(_number, _is_negative);
   }
 
-  void TJValueNumberInt::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  void TJValueNumberInt::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length, bool use_open_indent) const
   {
     // formating and indent are unused.
     (void)formating;
@@ -1823,7 +1892,10 @@ namespace TinyJSON
     std::sprintf(string, _is_negative ? "-%lld" : "%lld", _number);
 
     // firs we add the indent
-    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    if (true == use_open_indent)
+    {
+      TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    }
 
     // then the number
     TJHelper::add_string_to_string(string, buffer, buffer_pos, buffer_max_length);

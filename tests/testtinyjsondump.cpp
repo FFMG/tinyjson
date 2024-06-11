@@ -16,6 +16,18 @@ TEST(TestDump, EmptyArray) {
   delete json;
 }
 
+TEST(TestDump, EmptyObject) {
+  auto json = TinyJSON::TinyJSON::parse("{}");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("{}", text);
+
+  delete json;
+}
+
 TEST(TestDump, EmptyArrayNoIndent) {
   auto json = TinyJSON::TinyJSON::parse("[]");
   ASSERT_NE(nullptr, json);
@@ -24,6 +36,18 @@ TEST(TestDump, EmptyArrayNoIndent) {
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("[]", text);
+
+  delete json;
+}
+
+TEST(TestDump, EmptyObjectNoIndent) {
+  auto json = TinyJSON::TinyJSON::parse("{}");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::none);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("{}", text);
 
   delete json;
 }
@@ -142,4 +166,78 @@ TEST(TestDump, BooleanByItSelf) {
     ASSERT_STREQ(value.c_str(), text);
     delete json;
   }
+}
+
+TEST(TestDump, SimpleObjectWithNumbersNoIntent) {
+  auto json = TinyJSON::TinyJSON::parse(R"({
+  "a"  : 12,
+  "b" : 14
+})");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::none);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"({"a":12,"b":14})", text);
+  delete json;
+}
+
+TEST(TestDump, SimpleObjectWithNumbers) {
+  auto json = TinyJSON::TinyJSON::parse(R"({
+  "a"  : 12,
+  "b" : 14
+})");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"({
+  "a": 12,
+  "b": 14
+})", text);
+  delete json;
+}
+
+TEST(TestDump, ObjectInObjectWithNumbers) {
+  auto json = TinyJSON::TinyJSON::parse(R"({
+  "a"  : 12,
+  "b" : {
+    "aa"  : 12,
+    "bb"  : 12
+  }
+})");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"({
+  "a": 12,
+  "b": {
+    "aa": 12,
+    "bb": 12
+  }
+})", text);
+  delete json;
+}
+
+TEST(TestDump, ArrayInArrayWithNumbers) {
+  auto json = TinyJSON::TinyJSON::parse(R"([
+  12,
+  [12,13]
+])");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([
+  12,
+  [
+    12,
+    13
+  ]
+])", text);
+  delete json;
 }
