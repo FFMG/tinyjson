@@ -35,3 +35,34 @@ class Blah
    // methods
 }
 ```
+
+### Enums
+
+Enums are lower case
+
+```cpp
+enum class formating
+{
+  none,
+  indented
+};
+```
+
+### Macro or static constexpr?
+
+In almost all cases choose to use `static constexpr`, this will get you thread safety.
+
+You can use UPERCASE to reflect that this is a const.
+
+```cpp
+static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
+static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
+```
+
+Macros are used in cases where code is repeated.
+But in such cases, the name should make it very clear what the use case might be.
+
+```cpp
+#define TJ_CASE_SIGN          case '-': \
+                              case '+': 
+```

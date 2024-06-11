@@ -53,7 +53,7 @@ Then each items in the array are also `TJValue*` of type string, number and so o
 ```cpp
   auto json = TinyJSON::TinyJSON::parse( "[ 12, 14, 16 ]" );
   auto array_of_values = dynamic_cast<TinyJSON::TJValueArray*>(json);
-  auto number_of_items = array_of_values->number_of_items();  // 3
+  auto number_of_items = array_of_values->get_number_of_items();  // 3
 
   auto value1 = array_of_values->at(0);  //14
   auto value2 = array_of_values->at(2);  //16

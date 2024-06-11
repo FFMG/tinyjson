@@ -290,7 +290,7 @@ TEST(TestBasic, ReadPerformanceBlob) {
   ASSERT_NE(nullptr, fixed_name_object);
   ASSERT_TRUE(fixed_name_object->is_object());
   auto actual_fixed_name_object = dynamic_cast<const TinyJSON::TJValueObject*>(fixed_name_object);
-  ASSERT_EQ(5, actual_fixed_name_object->number_of_items());
+  ASSERT_EQ(5, actual_fixed_name_object->get_number_of_items());
 
   delete json;
 }

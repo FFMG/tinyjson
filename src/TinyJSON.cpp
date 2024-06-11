@@ -8,8 +8,8 @@
 #include <cstring> 
 #include <cstdio>
 
-#define TJ_MAX_NUMBER_OF_DIGGITS 19
-static const int TJ_DEFAULT_STRING_READ_SIZE = 10;
+static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
+static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
 
 #define TJ_CASE_NULL_TERMINATOR '\0'
 
@@ -55,6 +55,9 @@ namespace TinyJSON
   class TJHelper
   {
     friend TinyJSON;
+    friend TJValue;
+    friend TJValueArray;
+    friend TJValueNumberInt;
   protected:
     static void free_members(std::vector<TJMember*>* members)
     {
@@ -121,15 +124,28 @@ namespace TinyJSON
       return new_string;
     }
 
-    static void add_char_to_string(const char& char_to_add, char*& result, int& result_pos, int& result_max_length)
+    static void add_char_to_string(const char char_to_add, char*& buffer, int& buffer_pos, int& buffer_max_length)
     {
-      if (result_pos + 1 >= result_max_length)
+      if (buffer_pos + 1 >= buffer_max_length)
       {
-        result = resize_string(result, result_max_length, result_max_length + TJ_DEFAULT_STRING_READ_SIZE);
-        result_max_length += TJ_DEFAULT_STRING_READ_SIZE;
+        buffer = resize_string(buffer, buffer_max_length, buffer_max_length + TJ_DEFAULT_STRING_READ_SIZE);
+        buffer_max_length += TJ_DEFAULT_STRING_READ_SIZE;
       }
-      result[result_pos] = char_to_add;
-      ++result_pos;
+      buffer[buffer_pos] = char_to_add;
+      ++buffer_pos;
+    }
+
+    static void add_string_to_string(const char* string_to_add, char*& buffer, int& buffer_pos, int& buffer_max_length)
+    {
+      if (nullptr == string_to_add)
+      {
+        return;
+      }
+      while (*string_to_add != TJ_CASE_NULL_TERMINATOR)
+      {
+        add_char_to_string(*string_to_add, buffer, buffer_pos, buffer_max_length);
+        string_to_add++;
+      }
     }
 
     static void try_add_char_to_string_after_escape(const char*& source, char*& result, int& result_pos, int& result_max_length)
@@ -192,8 +208,7 @@ namespace TinyJSON
       const char* firstQuote = nullptr;
       while (*p != TJ_CASE_NULL_TERMINATOR)
       {
-        char c = *p;
-        switch (c)
+        switch (*p)
         {
           TJ_CASE_SPACE
             add_char_to_string(*p, result, result_pos, result_max_length);
@@ -245,8 +260,7 @@ namespace TinyJSON
     {
       while (*p != TJ_CASE_NULL_TERMINATOR)
       {
-        char c = *p;
-        switch (c)
+        switch (*p)
         {
           TJ_CASE_SPACE
             p++;
@@ -1328,8 +1342,23 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue
-  TJValue::TJValue()
+  TJValue::TJValue() : 
+    _last_dump(nullptr)
   {
+  }
+
+  TJValue::~TJValue()
+  {
+    free_last_dump();
+  }
+
+  void TJValue::free_last_dump()  const
+  {
+    if (nullptr != _last_dump)
+    {
+      delete[] _last_dump;
+      _last_dump = nullptr;
+    }
   }
 
   bool TJValue::is_object() const
@@ -1365,6 +1394,35 @@ namespace TinyJSON
   bool TJValue::is_null() const
   {
     return false;
+  }
+
+  const char* TJValue::dump(formating formating, const char* indent) const
+  {
+    int buffer_pos = 0;
+    int buffer_max_length = 0;
+    free_last_dump();
+    switch (formating)
+    {
+    case formating::none:
+      internal_dump(_last_dump, formating, nullptr, nullptr, buffer_pos, buffer_max_length);
+      break;
+    case formating::indented:
+      internal_dump(_last_dump, formating, nullptr, indent, buffer_pos, buffer_max_length);
+      break;
+    }
+    return _last_dump;
+  }
+
+  void TJValue::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  {
+    // to be removed once it is a pure virtual
+    (void)buffer;
+    (void)formating;
+    (void)current_indent;
+    (void)indent;
+    (void)buffer_pos;
+    (void)buffer_max_length;
+
   }
 
   ///////////////////////////////////////
@@ -1505,7 +1563,7 @@ namespace TinyJSON
     return true;
   }
 
-  int TJValueObject::number_of_items() const
+  int TJValueObject::get_number_of_items() const
   {
     return _members == nullptr ? 0 : _members->size();
   }
@@ -1517,7 +1575,7 @@ namespace TinyJSON
 
   TJMember* TJValueObject::at(int idx) const
   {
-    if(idx >= number_of_items() || idx < 0)
+    if(idx >= get_number_of_items() || idx < 0)
     {
       return nullptr;
     }
@@ -1588,6 +1646,48 @@ namespace TinyJSON
     return value;
   }
 
+  void TJValueArray::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  {
+    // open it
+    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+    TJHelper::add_char_to_string('[', buffer, buffer_pos, buffer_max_length);
+
+    auto number_of_items = get_number_of_items();
+    if (number_of_items > 0)
+    {
+      // only return if we have data.
+      if (formating == formating::indented)
+      {
+        TJHelper::add_char_to_string('\n', buffer, buffer_pos, buffer_max_length);
+      }
+
+      int inner_buffer_pos = 0;
+      int inner_buffer_max_length = 0;
+      char* inner_current_indent = nullptr;
+      
+      TJHelper::add_string_to_string(current_indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
+      TJHelper::add_string_to_string(indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
+
+      for (const auto& value : *_values)
+      {
+        value->internal_dump(buffer, formating, inner_current_indent, indent, buffer_pos, buffer_max_length);
+
+        // don't add on the last item
+        if (--number_of_items > 0)
+        {
+          TJHelper::add_char_to_string(',', buffer, buffer_pos, buffer_max_length);
+        }
+        if (formating == formating::indented)
+        {
+          TJHelper::add_char_to_string('\n', buffer, buffer_pos, buffer_max_length);
+        }
+      }
+      delete[] inner_current_indent;
+    }
+    // close it.
+    TJHelper::add_char_to_string(']', buffer, buffer_pos, buffer_max_length);
+  }
+
   TJValue* TJValueArray::clone() const
   {
     auto array = new TJValueArray();
@@ -1608,7 +1708,7 @@ namespace TinyJSON
     return true;
   }
 
-  int TJValueArray::number_of_items() const
+  int TJValueArray::get_number_of_items() const
   {
     return _values == nullptr ? 0 : _values->size();
   }
@@ -1625,7 +1725,7 @@ namespace TinyJSON
 
   TJValue* TJValueArray::at(int idx) const
   {
-    if (idx >= number_of_items() || idx < 0)
+    if (idx >= get_number_of_items() || idx < 0)
     {
       return nullptr;
     }
@@ -1675,6 +1775,26 @@ namespace TinyJSON
   TJValue* TJValueNumberInt::clone() const
   {
     return new TJValueNumberInt(_number, _is_negative);
+  }
+
+  void TJValueNumberInt::internal_dump(char*& buffer, formating formating, const char* current_indent, const char* indent, int& buffer_pos, int& buffer_max_length) const
+  {
+    // formating and indent are unused.
+    (void)formating;
+    (void)indent;
+
+    auto string = new char[255];
+
+    // if we have no fraction, then just return it.
+    std::sprintf(string, _is_negative ? "-%lld" : "%lld", _number);
+
+    // firs we add the indent
+    TJHelper::add_string_to_string(current_indent, buffer, buffer_pos, buffer_max_length);
+
+    // then the number
+    TJHelper::add_string_to_string(string, buffer, buffer_pos, buffer_max_length);
+
+    delete[] string;
   }
 
   long long TJValueNumberInt::get_number() const
