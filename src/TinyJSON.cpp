@@ -1527,6 +1527,9 @@ namespace TinyJSON
 
   void TJValueString::internal_dump(internal_dump_configuration& configuration, const char* current_indent) const
   {
+    //  unused
+    (void)current_indent;
+
     // add the quote, (if we have one)
     TJHelper::add_string_to_string(configuration._value_quote, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
     if (nullptr == _value)
@@ -1616,6 +1619,9 @@ namespace TinyJSON
 
   void TJValueBoolean::internal_dump(internal_dump_configuration& configuration, const char* current_indent) const
   {
+    //  unused
+    (void)current_indent;
+
     // then the word we are after
     TJHelper::add_string_to_string(_is_true ? "true":"false", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
   }
@@ -1643,6 +1649,9 @@ namespace TinyJSON
 
   void TJValueNull::internal_dump(internal_dump_configuration& configuration, const char* current_indent) const
   {
+    //  unused
+    (void)current_indent;
+
     // then the word we are after
     TJHelper::add_string_to_string("null", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
   }
@@ -1954,6 +1963,9 @@ namespace TinyJSON
 
   void TJValueNumberInt::internal_dump(internal_dump_configuration& configuration, const char* current_indent) const
   {
+    //  unused
+    (void)current_indent;
+
     auto string = new char[255];
 
     // if we have no fraction, then just return it.
@@ -1973,8 +1985,8 @@ namespace TinyJSON
   ///////////////////////////////////////
   /// TJValue float Number
   TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative) :
-    _string(nullptr),
     TJValueNumber(is_negative),
+    _string(nullptr),
     _number(number),
     _fraction(fraction),
     _fraction_exponent(fraction_exponent)
@@ -2000,7 +2012,6 @@ namespace TinyJSON
     auto format_string = new char[1024];
 
     // if we have no fraction, then just return it.
-    auto zeros = static_cast<unsigned long long>(_fraction_exponent);
     std::sprintf(format_string, "%s%%llu.%%0%ullu", _is_negative ? "-" : "", _fraction_exponent);
     std::sprintf(_string, format_string, _number, _fraction);
 
@@ -2014,6 +2025,9 @@ namespace TinyJSON
 
   void TJValueNumberFloat::internal_dump(internal_dump_configuration& configuration, const char* current_indent) const
   {
+    // unused
+    (void)current_indent;
+
     // make sthe string is needed
     make_string_if_needed();
 
@@ -2062,6 +2076,9 @@ namespace TinyJSON
 
   void TJValueNumberExponent::internal_dump(internal_dump_configuration& configuration, const char* current_indent) const
   {
+    // unused
+    (void)current_indent;
+
     // we only create the string value when the caller asks for it.
     // this is to make sure that we do not create it on parsing.
     make_string_if_needed();
