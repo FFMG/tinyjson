@@ -400,3 +400,14 @@ TEST(TestDump, AnExponentNumberByItSelf) {
     delete json;
   }
 }
+
+TEST(TestDump, DumpOfAStringWillExcapeTheNewLine) {
+  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\nAnd this is a new line")");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formating::indented);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"("This is a string.\nAnd this is a new line")", text);
+  delete json;
+}
