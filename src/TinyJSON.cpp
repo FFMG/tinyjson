@@ -48,9 +48,6 @@ static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
 
 #define TJ_CASE_MAYBE_ESCAPE  case '\\':
 
-static constexpr char* TJ_DUMP_CONFIG_DEFAULT_VALUE_QUOTE = "\"";
-static constexpr char* TJ_DUMP_CONFIG_DEFAULT_KEY_QUOTE = "\"";
-
 namespace TinyJSON
 {
   struct internal_dump_configuration
@@ -63,23 +60,29 @@ namespace TinyJSON
 
     const char* _item_separator;
     const char* _key_separator;
-    const char* _value_quote = TJ_DUMP_CONFIG_DEFAULT_VALUE_QUOTE;
-    const char* _key_quote = TJ_DUMP_CONFIG_DEFAULT_KEY_QUOTE;
+    const char* _value_quote;
+    const char* _key_quote;
+    const char* _new_line;
+    const bool _escape_special_characters;
 
     internal_dump_configuration(
-      formating formating, 
+      formating formating,
       const char* indent,
       const char* item_separator,
       const char* key_separator,
-      const char* value_quote = TJ_DUMP_CONFIG_DEFAULT_VALUE_QUOTE,
-      const char* key_quote = TJ_DUMP_CONFIG_DEFAULT_KEY_QUOTE
+      const char* value_quote,
+      const char* key_quote,
+      const char* new_line,
+      bool escape_special_characters
     ) :
       _formating(formating),
       _indent(indent),
       _item_separator(item_separator),
       _key_separator(key_separator),
       _value_quote(value_quote),
-      _key_quote(key_quote)
+      _key_quote(key_quote),
+      _new_line(new_line),
+      _escape_special_characters(escape_special_characters)
     {
       _buffer = nullptr;
       _buffer_max_length = _buffer_pos = 0;
@@ -1466,14 +1469,14 @@ namespace TinyJSON
     {
     case formating::none:
       {
-        internal_dump_configuration configuration(formating, nullptr, ",", ":");
+        internal_dump_configuration configuration(formating, nullptr, ",", ":", "\"", "\"", nullptr, true);
         internal_dump(configuration, nullptr);
         _last_dump = configuration._buffer;
       }
       break;
     case formating::indented:
       {
-        internal_dump_configuration configuration(formating, indent, ",", ": ");
+        internal_dump_configuration configuration(formating, indent, ",", ": ", "\"", "\"", "\n", true);
         internal_dump(configuration, nullptr);
         _last_dump = configuration._buffer;
       }
@@ -1485,7 +1488,7 @@ namespace TinyJSON
   const char* TJValue::dump_string() const
   {
     free_last_dump();
-    internal_dump_configuration configuration(formating::none, nullptr, nullptr, nullptr, nullptr);
+    internal_dump_configuration configuration(formating::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
     internal_dump(configuration, nullptr);
     _last_dump = configuration._buffer;
     return _last_dump;
@@ -1524,9 +1527,64 @@ namespace TinyJSON
 
   void TJValueString::internal_dump(internal_dump_configuration& configuration, const char* current_indent) const
   {
-    // then the word we are after with the quotes around.
+    // add the quote, (if we have one)
     TJHelper::add_string_to_string(configuration._value_quote, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
-    TJHelper::add_string_to_string(_value == nullptr ? "" : _value, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+    if (nullptr == _value)
+    {
+      TJHelper::add_string_to_string("", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+    }
+    else if (configuration._escape_special_characters)
+    {
+      const char* p = _value;
+      while (*p != TJ_CASE_NULL_TERMINATOR)
+      {
+        switch (*p)
+        {
+        case '\"': // % x22 / ; "    quotation mark  U+0022
+          TJHelper::add_string_to_string("\\\"", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        case '\\': // % x5C / ; \    reverse solidus U + 005C
+          TJHelper::add_string_to_string("\\\\", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        case '/': // % x2F / ; / solidus         U + 002F
+          TJHelper::add_string_to_string("\\/", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        case '\b': // % x62 / ; b    backspace       U + 0008
+          TJHelper::add_string_to_string("\\b", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        case '\f': // % x66 / ; f    form feed       U + 000C
+          TJHelper::add_string_to_string("\\f", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        case '\n':  // % x6E / ; n    line feed       U + 000A
+          TJHelper::add_string_to_string("\\n", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        case '\r':  // % x72 / ; r    carriage return U + 000D
+          TJHelper::add_string_to_string("\\r", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        case '\t':  // % x74 / ; t    tab             U + 0009
+          TJHelper::add_string_to_string("\\t", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+
+        default:
+          TJHelper::add_char_to_string(*p, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          break;
+        }
+        ++p;
+      }
+    }
+    else
+    {
+      TJHelper::add_string_to_string(_value, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+    }
+
+    // then close the quote, (if we have one)
     TJHelper::add_string_to_string(configuration._value_quote, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
   }
 
@@ -1745,7 +1803,7 @@ namespace TinyJSON
     }
 
     delete [] value->_last_dump;
-    internal_dump_configuration configuration(formating::none, nullptr, nullptr, nullptr, nullptr, nullptr);
+    internal_dump_configuration configuration(formating::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
     value->internal_dump(configuration, nullptr);
     value->_last_dump = configuration._buffer;
 
@@ -1781,10 +1839,7 @@ namespace TinyJSON
     if (number_of_items > 0)
     {
       // only return if we have data.
-      if (configuration._formating == formating::indented)
-      {
-        TJHelper::add_char_to_string('\n', configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
-      }
+      TJHelper::add_string_to_string(configuration._new_line, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
 
       int inner_buffer_pos = 0;
       int inner_buffer_max_length = 0;
@@ -1803,10 +1858,7 @@ namespace TinyJSON
         {
           TJHelper::add_string_to_string(configuration._item_separator, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
         }
-        if (configuration._formating == formating::indented)
-        {
-          TJHelper::add_char_to_string('\n', configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
-        }
+        TJHelper::add_string_to_string(configuration._new_line, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
       }
       delete[] inner_current_indent;
     }
