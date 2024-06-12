@@ -2,6 +2,32 @@
 
 TinyJSON is a fast and small C++ JSON parser
 
+## Supported JSON
+
+[RFC 8259](https://www.wikidata.org/wiki/Q47322594) (replaces [RFC 7159](https://www.wikidata.org/wiki/Q47470410))
+
+One of the important change is that prior to RFC 8259 only `objects` and `arrays` could be at the root.
+
+```json
+{
+  "meaning" : 42
+}
+```
+
+or
+
+```json
+[
+  42, 12, 3.14
+]
+```
+
+But since [RFC 8259](https://www.wikidata.org/wiki/Q47322594) any of the other elements are valid, (`string`, `true`, `false`, `null`, `number`)
+
+```json
+true
+```
+
 ## Data types
 
 | JSON   | c++/TinyJSON                                      |
@@ -68,6 +94,20 @@ To read a JSON string you simply need to call the method `dump` on the JSON obje
   auto notindented_json = json->dump(TinyJSON::formating::none); 
   /*
     {"Hello":"World"}
+   */
+  
+  delete json;
+```
+
+### Using a JSON string
+
+While you can `dump` a string to (re)write a json string you might want to use it directly in your code.
+
+```cpp
+  auto json = TinyJSON::TinyJSON::parse( R"("This is a test \" with a quote")" );
+  auto actual_string = json->dump_string(); 
+  /*
+    This is a test " with a quote
    */
   
   delete json;
