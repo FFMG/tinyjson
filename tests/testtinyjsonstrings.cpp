@@ -82,8 +82,8 @@ TEST(TestStrings, ArrayOfString) {
   ASSERT_NE(nullptr, jarray);
 
   ASSERT_EQ(2, jarray->get_number_of_items());
-  ASSERT_STREQ("Hello", jarray->at(0)->to_string());
-  ASSERT_STREQ("World", jarray->at(1)->to_string());
+  ASSERT_STREQ("Hello", jarray->at(0)->dump_string());
+  ASSERT_STREQ("World", jarray->at(1)->dump_string());
 
   delete json;
 }
@@ -102,7 +102,7 @@ TEST(TestStrings, CheckThatValueWithAVeryLongKeyValuePair) {
 
   auto string_value = jobject->try_get_value("ThisIsALongStringThatIsNormallyLongerThanTheDefault");
   ASSERT_NE(nullptr, string_value);
-  ASSERT_STREQ("The longest word is Pneumonoultramicroscopicsilicovolcanoconiosis", string_value->to_string());
+  ASSERT_STREQ("The longest word is Pneumonoultramicroscopicsilicovolcanoconiosis", string_value->dump_string());
   ASSERT_TRUE(string_value->is_string());
 
   delete json;
@@ -173,8 +173,8 @@ TEST(TestStrings, DifferentEscapeTypes) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_STREQ(R"(\"Hello\")", jarray->at(0)->to_string());
-  ASSERT_STREQ(R"(/"Hello/")", jarray->at(1)->to_string());
+  ASSERT_STREQ(R"(\"Hello\")", jarray->at(0)->dump_string());
+  ASSERT_STREQ(R"(/"Hello/")", jarray->at(1)->dump_string());
 
   delete json;
 }
@@ -192,8 +192,8 @@ TEST(TestStrings, EscapeQuoteInString) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_STREQ(R"(\"Escape Then quote\")", jarray->at(0)->to_string());
-  ASSERT_STREQ(R"("Quote")", jarray->at(1)->to_string());
+  ASSERT_STREQ(R"(\"Escape Then quote\")", jarray->at(0)->dump_string());
+  ASSERT_STREQ(R"("Quote")", jarray->at(1)->dump_string());
 
   delete json;
 }
@@ -210,7 +210,7 @@ TEST(TestStrings, EscapeFormFeedInString) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_STREQ("This is a \fA Form feed", jarray->at(0)->to_string());
+  ASSERT_STREQ("This is a \fA Form feed", jarray->at(0)->dump_string());
 
   delete json;
 }
@@ -227,7 +227,7 @@ TEST(TestStrings, EscapeBackSpaceInString) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_STREQ("This is a \bA backspace", jarray->at(0)->to_string());
+  ASSERT_STREQ("This is a \bA backspace", jarray->at(0)->dump_string());
 
   delete json;
 }
@@ -244,7 +244,7 @@ TEST(TestStrings, EscapeNewLineInString) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_STREQ("This is a \nNew Line", jarray->at(0)->to_string());
+  ASSERT_STREQ("This is a \nNew Line", jarray->at(0)->dump_string());
 
   delete json;
 }
@@ -261,7 +261,7 @@ TEST(TestStrings, EscapeCarriageReturnInString) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_STREQ("This is a \rCarriage return", jarray->at(0)->to_string());
+  ASSERT_STREQ("This is a \rCarriage return", jarray->at(0)->dump_string());
 
   delete json;
 }
@@ -278,7 +278,7 @@ TEST(TestStrings, EscapeTabInString) {
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
   ASSERT_NE(nullptr, jarray);
 
-  ASSERT_STREQ("This is a \tTab", jarray->at(0)->to_string());
+  ASSERT_STREQ("This is a \tTab", jarray->at(0)->dump_string());
 
   delete json;
 }

@@ -91,7 +91,7 @@ TEST(TestBasic, CheckForNull) {
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
 
-  EXPECT_STREQ(jobject->try_get_string("a"), "null");
+  ASSERT_STREQ(jobject->try_get_string("a"), "null");
   ASSERT_NE(nullptr, jobject->try_get_value("a"));
   ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueNull*>(jobject->try_get_value("a")));
 
@@ -151,11 +151,11 @@ TEST(TestBasic, CheckForDifferentValueTypes) {
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
 
-  EXPECT_STREQ(jobject->try_get_string("a"), "null");
+  ASSERT_STREQ(jobject->try_get_string("a"), "null");
   ASSERT_NE(nullptr, jobject->try_get_value("a"));
   ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueNull*>(jobject->try_get_value("a")));
 
-  EXPECT_STREQ(jobject->try_get_string("b"), "true");
+  ASSERT_STREQ(jobject->try_get_string("b"), "true");
   ASSERT_NE(nullptr, jobject->try_get_value("b"));
   
   auto boolean = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject->try_get_value("b"));
@@ -163,14 +163,13 @@ TEST(TestBasic, CheckForDifferentValueTypes) {
   ASSERT_TRUE(boolean->is_true());
 
 
-  EXPECT_STREQ(jobject->try_get_string("c"), "false");
+  ASSERT_STREQ(jobject->try_get_string("c"), "false");
   ASSERT_NE(nullptr, jobject->try_get_value("c"));
   auto boolean2 = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject->try_get_value("c"));
   ASSERT_NE(nullptr, boolean2);
   ASSERT_FALSE(boolean2->is_true());
 
-
-  EXPECT_STREQ(jobject->try_get_string("d"), "world");
+  ASSERT_STREQ(jobject->try_get_string("d"), "world");
   ASSERT_NE(nullptr, jobject->try_get_value("d"));
   ASSERT_NE(nullptr, dynamic_cast<const TinyJSON::TJValueString*>(jobject->try_get_value("d")));
 
@@ -197,7 +196,7 @@ TEST(TestBasic, ObjectInsideAnObject) {
   ASSERT_NE(nullptr, jobject2);
 
   // finally check that the value are correct.
-  EXPECT_STREQ(jobject2->try_get_string("b"), "true");
+  ASSERT_STREQ(jobject2->try_get_string("b"), "true");
   ASSERT_NE(nullptr, jobject2->try_get_value("b"));
 
   auto boolean = dynamic_cast<const TinyJSON::TJValueBoolean*>(jobject2->try_get_value("b"));
@@ -344,7 +343,7 @@ TEST(TestBasic, NothingIsJustAnEmptyString) {
   auto json = TinyJSON::TinyJSON::parse("");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_string());
-  ASSERT_STREQ("", json->to_string());
+  ASSERT_STREQ("", json->dump_string());
 
   delete json;
 }
@@ -360,7 +359,7 @@ TEST(TestBasic, NothingIsJustAnEmptyStringWithSpaces) {
 )");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_string());
-  ASSERT_STREQ("", json->to_string());
+  ASSERT_STREQ("", json->dump_string());
 
   delete json;
 }
@@ -369,7 +368,7 @@ TEST(TestBasic, StringValueIsValid) {
   auto json = TinyJSON::TinyJSON::parse(R"("Hello")");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_string());
-  ASSERT_STREQ("Hello", json->to_string());
+  ASSERT_STREQ("Hello", json->dump_string());
 
   delete json;
 }
@@ -385,7 +384,7 @@ TEST(TestBasic, StringValueIsValidWithSpaces) {
 )");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_string());
-  ASSERT_STREQ("Hello", json->to_string());
+  ASSERT_STREQ("Hello", json->dump_string());
 
   delete json;
 }
