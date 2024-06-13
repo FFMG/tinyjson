@@ -11,7 +11,17 @@
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
 
-#define TJ_CASE_NULL_TERMINATOR '\0'
+static constexpr char TJ_NULL_TERMINATOR = '\0';
+
+static constexpr char TJ_ESCAPE_QUOTATION = '\"';       // % x22 / ; "    quotation mark  U+0022
+static constexpr char TJ_ESCAPE_REVERSE_SOLIDUS = '\\'; // % x5C / ; \    reverse solidus U + 005C
+static constexpr char TJ_ESCAPE_SOLIDUS = '\/';         // % x2F / ; /    solidus         U + 002F
+static constexpr char TJ_ESCAPE_BACKSPACE = '\b';       // % x62 / ; b    backspace       U + 0008
+static constexpr char TJ_ESCAPE_FORM_FEED = '\f';       // % x66 / ; f    form feed       U + 000C
+static constexpr char TJ_ESCAPE_LINE_FEED = '\n';       // % x6E / ; n    line feed       U + 000A
+static constexpr char TJ_ESCAPE_CARRIAGE_RETURN = '\r'; // % x72 / ; r    carriage return U + 000D
+static constexpr char TJ_ESCAPE_TAB = '\t';             // % x74 / ; t    tab             U + 0009
+// static constexpr char TJ_ESCAPE_HEXDIG = '\u1234';// % x75 4HEXDIG; uXXXX                U + XXXX
 
 #define TJ_CASE_SIGN          case '-': \
                               case '+': 
@@ -28,11 +38,11 @@ static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
                               case '9': 
 
 #define TJ_CASE_SPACE         case ' ':  \
-                              case '\t': \
-                              case '\n': \
-                              case '\r':
+                              case TJ_ESCAPE_TAB: \
+                              case TJ_ESCAPE_LINE_FEED: \
+                              case TJ_ESCAPE_CARRIAGE_RETURN:
 
-#define TJ_CASE_START_STRING  case '"':
+#define TJ_CASE_START_STRING  case TJ_ESCAPE_QUOTATION:
 
 #define TJ_CASE_COMMA         case ',':
 
@@ -153,7 +163,7 @@ namespace TinyJSON
     static char* resize_string(char*& source, int length, int resize_length)
     {
       char* new_string = new char[resize_length];
-      memset(new_string, TJ_CASE_NULL_TERMINATOR, sizeof(char) * resize_length);
+      memset(new_string, TJ_NULL_TERMINATOR, sizeof(char) * resize_length);
       if (source == nullptr)
       {
         return new_string;
@@ -190,111 +200,114 @@ namespace TinyJSON
       {
         buffer = resize_string(buffer, buffer_max_length, buffer_max_length + TJ_DEFAULT_STRING_READ_SIZE);
       }
-      while (*string_to_add != TJ_CASE_NULL_TERMINATOR)
+      while (*string_to_add != TJ_NULL_TERMINATOR)
       {
         add_char_to_string(*string_to_add, buffer, buffer_pos, buffer_max_length);
         string_to_add++;
       }
     }
 
-    static void try_add_char_to_string_after_escape(const char*& source, char*& result, int& result_pos, int& result_max_length)
+    static bool try_add_char_to_string_after_escape(const char*& source, char*& result, int& result_pos, int& result_max_length)
     {
       const auto& next_char = *(source + 1);
-      if (next_char == TJ_CASE_NULL_TERMINATOR)
+      if (next_char == TJ_NULL_TERMINATOR)
       {
-        return;
+        return false;
       }
 
       // as per RFC8259
       switch (next_char)
       {
-      case '"': // "    quotation mark  U+0022
-      case '/': // \    reverse solidus U+005C
-      case '\\':// /    solidus         U+002F 
+      case TJ_ESCAPE_QUOTATION:       // "    quotation mark  U+0022
+      case TJ_ESCAPE_SOLIDUS:         // /    solidus         U+002F 
+      case TJ_ESCAPE_REVERSE_SOLIDUS: // \    reverse solidus U+005C
         // skip the escpape and keep the character
         source++;
-        break;
+        add_char_to_string(next_char, result, result_pos, result_max_length);
+        return true;
 
       case'f':  // f    form feed       U+000C
         source++;
-        add_char_to_string('\f', result, result_pos, result_max_length);
-        return;
+        add_char_to_string(TJ_ESCAPE_FORM_FEED, result, result_pos, result_max_length);
+        return true;
 
       case 'b': // b    backspace       U+0008
         source++;
-        add_char_to_string('\b', result, result_pos, result_max_length);
-        return;
+        add_char_to_string(TJ_ESCAPE_BACKSPACE, result, result_pos, result_max_length);
+        return true;
 
       case 'n': // n    line feed       U+000A
         source++;
-        add_char_to_string('\n', result, result_pos, result_max_length);
-        return;
+        add_char_to_string(TJ_ESCAPE_LINE_FEED, result, result_pos, result_max_length);
+        return true;
 
       case 'r': // r    carriage return U+000D
         source++;
-        add_char_to_string('\r', result, result_pos, result_max_length);
-        return;
+        add_char_to_string(TJ_ESCAPE_CARRIAGE_RETURN, result, result_pos, result_max_length);
+        return true;
 
       case 't': // t    tab             U+0009
         source++;
-        add_char_to_string('\t', result, result_pos, result_max_length);
-        return;
-
-      default:
-        break;
+        add_char_to_string(TJ_ESCAPE_TAB, result, result_pos, result_max_length);
+        return true;
       }
 
-      // if we escaped or not it does not matter.
-      // just add the character now.
-      add_char_to_string(*source, result, result_pos, result_max_length);
+      //  this is not an escaped character, just a single reverse solidus
+      return false;
     }
 
-    static char* try_read_string(const char*& p)
+    static char* try_continue_read_string(const char*& p)
     {
       int result_pos = 0;
       int result_max_length = 0;
       char* result = nullptr;
-      const char* firstQuote = nullptr;
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      const char* firstQuote = p;
+      while (*p != TJ_NULL_TERMINATOR)
       {
         switch (*p)
         {
-          TJ_CASE_SPACE
-            add_char_to_string(*p, result, result_pos, result_max_length);
-            p++;
-          break;
-
-          TJ_CASE_MAYBE_ESCAPE
-            try_add_char_to_string_after_escape(p, result, result_pos, result_max_length);
-            p++;
-          break;
-
-          TJ_CASE_START_STRING
-            if (nullptr == firstQuote)
-            {
-              p++;
-              firstQuote = p;  //  we need to add one to remove the quote.
-            }
-            else
-            {
-              p++;
-
-              // Allocate memory for the result string
-              // Null-terminate the string
-              add_char_to_string(TJ_CASE_NULL_TERMINATOR, result, result_pos, result_max_length);
-              return result;
-            }
-          break;
-
-        default:
-          // if we are still in the string, then we are good.
-          if (nullptr == firstQuote)
+        TJ_CASE_SPACE
+          //  only read if we started.
+          switch (*p)
           {
+          case TJ_ESCAPE_LINE_FEED:       // % x6E / ; n    line feed       U + 000A
+          case TJ_ESCAPE_CARRIAGE_RETURN: // % x72 / ; r    carriage return U + 000D
+          case  TJ_ESCAPE_TAB:            // % x74 / ; t    tab             U + 0009
             delete[] result;
-            // ERROR: unknown character
+            // ERROR: invalid character inside the string.
             return nullptr;
           }
+          add_char_to_string(*p, result, result_pos, result_max_length);
+          p++;
+        break;
 
+        TJ_CASE_MAYBE_ESCAPE
+          if (!try_add_char_to_string_after_escape(p, result, result_pos, result_max_length))
+          {
+            delete[] result;
+            // ERROR: single reverse solidus
+            return nullptr;
+          }
+          p++;
+        break;
+
+        case TJ_ESCAPE_SOLIDUS:         // % x2F / ; / solidus         U + 002F
+        case TJ_ESCAPE_BACKSPACE:       // % x62 / ; b    backspace       U + 0008
+        case TJ_ESCAPE_FORM_FEED:       // % x66 / ; f    form feed       U + 000C
+          delete[] result;
+          // ERROR: invalid character inside the string.
+          return nullptr;
+
+        TJ_CASE_START_STRING
+          p++;
+
+          // Allocate memory for the result string
+          // Null-terminate the string
+          add_char_to_string(TJ_NULL_TERMINATOR, result, result_pos, result_max_length);
+          return result;
+
+        default:
+          // we are still in the string, then we are good.
           add_char_to_string(*p, result, result_pos, result_max_length);
           p++;
           break;
@@ -308,7 +321,7 @@ namespace TinyJSON
 
     static bool try_skip_colon(const char*& p)
     {
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         switch (*p)
         {
@@ -742,7 +755,7 @@ namespace TinyJSON
     {
       const char* start = nullptr;
       int found_spaces = 0;
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         switch (*p)
         {
@@ -787,7 +800,7 @@ namespace TinyJSON
       // Allocate memory for the result string
       char* result = new char[length + 1];
       std::strncpy(result, start, length);
-      result[length] = TJ_CASE_NULL_TERMINATOR; // Null-terminate the string
+      result[length] = TJ_NULL_TERMINATOR; // Null-terminate the string
       return result;
     }
 
@@ -805,7 +818,7 @@ namespace TinyJSON
       auto len = std::strlen(whole_number);
       while (len > 1 && whole_number[len - 1] == '0')
       {
-        whole_number[len - 1] = TJ_CASE_NULL_TERMINATOR;
+        whole_number[len - 1] = TJ_NULL_TERMINATOR;
         --len;
       }
       return whole_number;
@@ -816,7 +829,7 @@ namespace TinyJSON
       // the numbers are unsigned and should only contain digits.
       // so we do not have signs or letters to worry about.
       long long result = 0;
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         char c = *p;
         switch (c)
@@ -1009,7 +1022,7 @@ namespace TinyJSON
       std::vector<TJMember*>* members = nullptr;
       bool after_string = false;
       bool waiting_for_a_string = false;
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         char c = *p;
         switch (c)
@@ -1106,7 +1119,7 @@ namespace TinyJSON
       std::vector<TJValue*>* values = nullptr;
       bool waiting_for_a_value = true;
       bool found_comma = false;
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         char c = *p;
         switch (c)
@@ -1175,28 +1188,28 @@ namespace TinyJSON
 
     static TJValue* try_read_Value(const char*& p)
     {
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         char c = *p;
         switch (c)
         {
-          TJ_CASE_SPACE
-            p++;
+        TJ_CASE_SPACE
+          p++;
           break;
 
-          TJ_CASE_START_STRING
+        TJ_CASE_START_STRING
+        {
+          auto string_value = try_continue_read_string(++p);
+          if (nullptr == string_value)
           {
-            auto value = try_read_string(p);
-            if (nullptr == value)
-            {
-              //  ERROR could not read the string properly.
-              return nullptr;
-            }
-
-            // whave read the string
-            // no need to try and move further forward.
-            return TJValueString::move(value);
+            //  ERROR could not read the string properly.
+            return nullptr;
           }
+
+          // whave read the string
+          // no need to try and move further forward.
+          return TJValueString::move(string_value);
+        }
 
         case 't':
           {
@@ -1232,7 +1245,7 @@ namespace TinyJSON
         }
 
         TJ_CASE_DIGIT
-          TJ_CASE_SIGN
+        TJ_CASE_SIGN
         {
           auto number = try_read_number(p);
           if (nullptr == number)
@@ -1243,7 +1256,7 @@ namespace TinyJSON
           return number;
         }
 
-          TJ_CASE_BEGIN_ARRAY
+        TJ_CASE_BEGIN_ARRAY
         {
           // an array within an array
           auto tjvalue_array = try_continue_read_array(++p);
@@ -1255,7 +1268,7 @@ namespace TinyJSON
           return tjvalue_array;
         }
 
-          TJ_CASE_BEGIN_OBJECT
+        TJ_CASE_BEGIN_OBJECT
         {
           // an object within the object
           auto tjvalue_object = try_continue_read_object(++p);
@@ -1280,8 +1293,8 @@ namespace TinyJSON
     static TJMember* try_read_string_and_value(const char*& p)
     {
       // first we look for the string, all the elements are supposed to have one.
-      auto string = try_read_string(p);
-      if (string == nullptr)
+      auto string_value = try_continue_read_string(++p);
+      if (string_value == nullptr)
       {
         //  ERROR: could not read the string.
         return nullptr;
@@ -1291,7 +1304,7 @@ namespace TinyJSON
       // only white spaces and the colon are allowed here.
       if (!try_skip_colon(p))
       {
-        delete[] string;
+        delete[] string_value;
         //  ERROR: Could not locate the expected colon
         return nullptr;
       }
@@ -1299,11 +1312,11 @@ namespace TinyJSON
       auto value = try_read_Value(p);
       if (nullptr == value)
       {
-        delete[] string;
+        delete[] string_value;
         //  ERROR: Could not read the value, the error was logged.
         return nullptr;
       }
-      return TJMember::move(string, value);
+      return TJMember::move(string_value, value);
     }
   };  // Helper class
 
@@ -1313,7 +1326,7 @@ namespace TinyJSON
   {
     // we can only have one value and nothing else
     TJValue* value_found = nullptr;
-    while (*source != TJ_CASE_NULL_TERMINATOR)
+    while (*source != TJ_NULL_TERMINATOR)
     {
       switch (*source)
       {
@@ -1539,39 +1552,39 @@ namespace TinyJSON
     else if (configuration._escape_special_characters)
     {
       const char* p = _value;
-      while (*p != TJ_CASE_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         switch (*p)
         {
-        case '\"': // % x22 / ; "    quotation mark  U+0022
+        case TJ_ESCAPE_QUOTATION: // % x22 / ; "    quotation mark  U+0022
           TJHelper::add_string_to_string("\\\"", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
-        case '\\': // % x5C / ; \    reverse solidus U + 005C
+        case TJ_ESCAPE_REVERSE_SOLIDUS: // % x5C / ; \    reverse solidus U + 005C
           TJHelper::add_string_to_string("\\\\", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
-        case '/': // % x2F / ; / solidus         U + 002F
+        case TJ_ESCAPE_SOLIDUS: // % x2F / ; / solidus         U + 002F
           TJHelper::add_string_to_string("\\/", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
-        case '\b': // % x62 / ; b    backspace       U + 0008
+        case TJ_ESCAPE_BACKSPACE: // % x62 / ; b    backspace       U + 0008
           TJHelper::add_string_to_string("\\b", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
-        case '\f': // % x66 / ; f    form feed       U + 000C
+        case TJ_ESCAPE_FORM_FEED: // % x66 / ; f    form feed       U + 000C
           TJHelper::add_string_to_string("\\f", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
-        case '\n':  // % x6E / ; n    line feed       U + 000A
+        case TJ_ESCAPE_LINE_FEED:  // % x6E / ; n    line feed       U + 000A
           TJHelper::add_string_to_string("\\n", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
-        case '\r':  // % x72 / ; r    carriage return U + 000D
+        case TJ_ESCAPE_CARRIAGE_RETURN:  // % x72 / ; r    carriage return U + 000D
           TJHelper::add_string_to_string("\\r", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
-        case '\t':  // % x74 / ; t    tab             U + 0009
+        case TJ_ESCAPE_TAB:  // % x74 / ; t    tab             U + 0009
           TJHelper::add_string_to_string("\\t", configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
           break;
 
@@ -1707,7 +1720,7 @@ namespace TinyJSON
       // only return if we have data.
       if (configuration._formating == formating::indented)
       {
-        TJHelper::add_char_to_string('\n', configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+        TJHelper::add_char_to_string(TJ_ESCAPE_LINE_FEED, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
       }
 
       int inner_buffer_pos = 0;
@@ -1736,7 +1749,7 @@ namespace TinyJSON
         }
         if (configuration._formating == formating::indented)
         {
-          TJHelper::add_char_to_string('\n', configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
+          TJHelper::add_char_to_string(TJ_ESCAPE_LINE_FEED, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
         }
       }
       delete[] inner_current_indent;

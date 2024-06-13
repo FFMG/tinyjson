@@ -492,3 +492,52 @@ TEST(TestStrings, ADumpedWithATabKeepsTheTab) {
   ASSERT_STREQ(R"("This is a string.\tAnd this is after a tab")", text);
   delete json;
 }
+
+TEST(TestStrings, YouCannotHaveALineFeedInAString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    [
+      "This is
+Invalid"])"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCannotHaveAFormFeedInAString) {
+  auto json = TinyJSON::TinyJSON::parse("[   \"This is \fInvalid\"]   ");
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCannotHaveASingleReverseSolidusInAString) {
+  auto json = TinyJSON::TinyJSON::parse("[\"This\\ is invalid\"]");
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCannotHaveATabInAString) {
+  auto json = TinyJSON::TinyJSON::parse("[   \"This is \\\tInvalid\"]   ");
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCanHaveATabBeforeAndAfterAString) {
+  auto json = TinyJSON::TinyJSON::parse("\t\"This is valid\"\t");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump_string();
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("This is valid", text);
+
+  delete json;
+}
+
+TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
+  auto json = TinyJSON::TinyJSON::parse("{\"a\" : \t\"This is valid\"\t}");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  ASSERT_NE(nullptr, jobject->try_get_value("a"));
+  ASSERT_STREQ(jobject->try_get_string("a"), "This is valid");
+
+  delete json;
+}
