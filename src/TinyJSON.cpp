@@ -139,6 +139,30 @@ namespace TinyJSON
     friend TJValueObject;
     friend TJValueString;
   protected:
+    // Function to multiply an unsigned integer by 10 using bit-shifting
+    static unsigned long long fast_multiply_by_10(unsigned long long number) 
+    {
+      return (number << 3) + (number << 1);
+    }
+
+    static unsigned long long fast_power_of_10(unsigned long long number, unsigned int exponent)
+    {
+      if( number == 0)
+      {
+        return 0;
+      }
+      if (exponent == 0)
+      {
+        return 1;
+      }
+
+      for (unsigned int i = 1; i < exponent; ++i)
+      {
+        number = fast_multiply_by_10(number);
+      }
+      return number;
+    }
+
     /// <summary>
     /// Get the length of a string.
     /// </summary>
@@ -170,7 +194,7 @@ namespace TinyJSON
     /// <param name="is_negative"></param>
     /// <param name="length"></param>
     /// <returns></returns>
-    static TJCHAR* fast_number_to_string(unsigned long long number, unsigned int fraction_exponent, bool is_negative, unsigned int& length)
+    static TJCHAR* fast_number_to_string(unsigned long long number, unsigned int fraction_exponent, bool is_negative, unsigned int& length, bool force_positive_sign = false)
     {
       TJCHAR reverse_buffer[255];
       unsigned reverse_position = 0;
@@ -239,6 +263,10 @@ namespace TinyJSON
       {
         reverse_buffer[reverse_position++] = '-';
       }
+      else if (force_positive_sign)
+      {
+        reverse_buffer[reverse_position++] = '+';
+      }
 
       TJCHAR* buffer = new TJCHAR[reverse_position+1];
       buffer[reverse_position] = '\0';
@@ -251,10 +279,10 @@ namespace TinyJSON
       return buffer;
     }
 
-    static TJCHAR* fast_number_to_string(unsigned long long number, unsigned int fraction_exponent, bool is_negative)
+    static TJCHAR* fast_number_to_string(unsigned long long number, unsigned int fraction_exponent, bool is_negative, bool force_positive_sign = false)
     {
       unsigned int ignore = 0;
-      return fast_number_to_string(number, fraction_exponent, is_negative, ignore);
+      return fast_number_to_string(number, fraction_exponent, is_negative, ignore, force_positive_sign);
     }
 
     /// <summary>
@@ -294,6 +322,75 @@ namespace TinyJSON
       // cleanup the number and fraction.
       delete[] string_number;
       delete[] string_fraction;
+      return final_string;
+    }
+
+    /// <summary>
+    /// 'join' a whole number together with a fraction and add the exponent as well if needed.
+    /// If the number is -12.0045e+12 then
+    ///   - the number is 12
+    ///   - the fraction is 45
+    ///   - the fraction_exponent is 4
+    ///   - the exponent is 12
+    ///   - and the number is negative.
+    /// </summary>
+    /// <param name="number"></param>
+    /// <param name="fraction"></param>
+    /// <param name="fraction_exponent"></param>
+    /// <param name="exponent"></param>
+    /// <param name="is_negative"></param>
+    /// <returns></returns>
+    static TJCHAR* fast_number_fraction_and_exponent_to_string(unsigned long long number, unsigned long long fraction, unsigned int fraction_exponent, int exponent, bool is_negative)
+    {
+      // format the number and fraction separately
+      unsigned int length_of_number = 0, length_of_fraction = 0, length_of_exponent = 0;
+
+      // the number has negative sign in front.
+      auto string_number = fast_number_to_string(number, 0, is_negative, length_of_number);
+
+      // the fraction does not have a negative sign
+      TJCHAR* string_fraction = nullptr;
+      if (fraction > 0)
+      {
+        string_fraction = fast_number_to_string(fraction, fraction_exponent, false, length_of_fraction);
+      }
+
+      // the fraction does not have a negative sign
+      TJCHAR* string_exponent = nullptr;
+      if (exponent < 0)
+      {
+        string_exponent = fast_number_to_string(-1*exponent, 0, true, length_of_exponent);
+      }
+      else
+      {
+        string_exponent = fast_number_to_string(exponent, 0, false, length_of_exponent, true);
+      }
+
+      // calculate the total length, 
+      //   - +1 for the '.' (if needed)
+      //   - +1 for the null terminator
+      //   - +1 for the 'e' (if needed)
+      int total_length = length_of_number + length_of_fraction + length_of_exponent +1 + 1 + 1;
+      int final_string_pos = 0;
+
+      // recreate the final string
+      TJCHAR* final_string = new TJCHAR[total_length];
+      add_string_to_string(string_number, final_string, final_string_pos, total_length);
+      if (nullptr != string_fraction)
+      {
+        add_char_to_string('.', final_string, final_string_pos, total_length);
+        add_string_to_string(string_fraction, final_string, final_string_pos, total_length);
+      }
+      if (nullptr != string_exponent)
+      {
+        add_char_to_string('e', final_string, final_string_pos, total_length);
+        add_string_to_string(string_exponent, final_string, final_string_pos, total_length);
+      }
+
+      // cleanup the number and fraction.
+      delete[] string_number;
+      delete[] string_fraction;
+      delete[] string_exponent;
       return final_string;
     }
 
@@ -634,19 +731,36 @@ namespace TinyJSON
                 return false;
             }
           }
+
           auto decimal = fast_hex_to_decimal(hex);
+          delete[] hex;
           if (decimal < 0)
           {
-            delete[] hex;
             return false; //  not sure what this is.
           }
-          delete[] hex;
-          if (decimal > 0x007f)
+#ifdef TJ_USE_CHAR8
+          if (decimal <= 0x7F) 
           {
-            return false;
+            // 1-byte UTF-8 (ASCII)
+            add_char_to_string(static_cast<char>(decimal), result, result_pos, result_max_length);
           }
+          else if (decimal <= 0x7FF) 
+          {
+            // 2-byte UTF-8
+            add_char_to_string(static_cast<char>(0xC0 | (decimal >> 6)), result, result_pos, result_max_length);
+            add_char_to_string(static_cast<char>(0x80 | (decimal & 0x3F)), result, result_pos, result_max_length);
+          }
+          else if (decimal <= 0xFFFF)
+          {
+            // 3-byte UTF-8
+            add_char_to_string(static_cast<char>(0xE0 | (decimal >> 12)), result, result_pos, result_max_length);
+            add_char_to_string(static_cast<char>(0x80 | ((decimal >> 6) & 0x3F)), result, result_pos, result_max_length);
+            add_char_to_string(static_cast<char>(0x80 | (decimal & 0x3F)), result, result_pos, result_max_length);
+          }
+#else
+          add_char_to_string(static_cast<TJCHAR>(decimal), result, result_pos, result_max_length);
+#endif
           source += 6;  //  the full \uXXXX = 6 char
-          add_char_to_string((TJCHAR)decimal, result, result_pos, result_max_length);
           return true;
         }
         return false;
@@ -825,13 +939,13 @@ namespace TinyJSON
       {
         return source;
       }
-      const auto muliplier = std::pow(10, exponent);
+      const auto muliplier = fast_power_of_10(10, exponent);
       return source * muliplier;
     }
 
     static unsigned long long shift_number_right(const unsigned long long source, const unsigned long long exponent, unsigned long long& shifted_source)
     {
-      const auto divider = std::pow(10, exponent);
+      const auto divider = fast_power_of_10(10, exponent);
       auto new_source = static_cast<unsigned long long>(source / divider);
       shifted_source = source - new_source * divider;
       return new_source;
@@ -867,7 +981,7 @@ namespace TinyJSON
 
       if (fraction_length == fraction_exponent)
       {
-        auto divider = std::pow(10, shitfed_unsigned_fraction_exponent);
+        const auto& divider = fast_power_of_10(10, shitfed_unsigned_fraction_exponent);
         const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
         shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
         return shifted_unsigned_fraction;
@@ -895,7 +1009,7 @@ namespace TinyJSON
         return 0ll;
       }
 
-      auto divider = std::pow(10, shitfed_unsigned_fraction_exponent);
+      auto divider = fast_power_of_10(10, shitfed_unsigned_fraction_exponent);
       const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
       shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
       return shifted_unsigned_fraction;
@@ -1007,7 +1121,7 @@ namespace TinyJSON
 
       // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
       auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * std::pow(10, shifted_fraction_exponent)) + unsigned_fraction;
+      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(10, shifted_fraction_exponent)) + unsigned_fraction;
 
       // and the exponent also shitt byt the number we moved.
       const unsigned long long shifted_exponent = exponent + shifted_unsigned_whole_number_exponent;
@@ -1072,7 +1186,7 @@ namespace TinyJSON
 
       // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
       auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * std::pow(10, shifted_fraction_exponent)) + unsigned_fraction;
+      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(10, shifted_fraction_exponent)) + unsigned_fraction;
 
       // and the exponent also shitt by the number we moved.
       // as it is a negative exponent we need to move to the left.
@@ -1236,60 +1350,60 @@ namespace TinyJSON
           // it might sound silly to do it that way but it is faster
           // than doing something like result += c - '0'
         case '0':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           p++;
           break;
 
         case '1':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 1;
           p++;
           break;
 
         case '2':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 2;
           p++;
           break;
 
         case '3':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 3;
           p++;
           break;
 
         case '4':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 4;
           p++;
           break;
 
         case '5':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 5;
           p++;
           break;
 
         case '6':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 6;
           p++;
           break;
 
         case '7':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 7;
           p++;
           break;
 
         case '8':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 8;
           p++;
           break;
 
         case '9':
-          result *= 10;
+          result = TJHelper::fast_multiply_by_10(result);
           result += 9;
           p++;
           break;
@@ -2455,7 +2569,7 @@ namespace TinyJSON
     }
 
     // Convert b to its fractional form
-    const auto& pow = std::powl(10, _fraction_exponent);
+    auto pow = static_cast<long double>(TJHelper::fast_power_of_10(10, _fraction_exponent));
     const auto& whole_number = _number * pow + _fraction;
 
     // Combine the number and the fraction
@@ -2506,26 +2620,6 @@ namespace TinyJSON
     {
       return;
     }
-
-    // we need space for the whole number + fraction + exponent
-    _string = new TJCHAR[255];
-
-    // if we have no fraction, then just return it.
-    if (_fraction == 0)
-    {
-      std::sprintf(_string, _is_negative ? TJCHARPREFIX("-%llue+%i") : TJCHARPREFIX("%llue+%i"), _number, _exponent);
-    }
-    else
-    {
-      // rebuild the buffer and make sure that we have all the zeros for the fractions.
-      if (_exponent < 0)
-      {
-        std::sprintf(_string, _is_negative ? TJCHARPREFIX("-%llu.%0*llue%i") : TJCHARPREFIX("%llu.%0*llue%i"), _number, _fraction_exponent, _fraction, _exponent);
-      }
-      else
-      {
-        std::sprintf(_string, _is_negative ? TJCHARPREFIX("-%llu.%0*llue+%i") : TJCHARPREFIX("%llu.%0*llue+%i"), _number, _fraction_exponent, _fraction, _exponent);
-      }
-    }
+    _string = TJHelper::fast_number_fraction_and_exponent_to_string(_number, _fraction, _fraction_exponent, _exponent, _is_negative);
   }
 } // TinyJSON

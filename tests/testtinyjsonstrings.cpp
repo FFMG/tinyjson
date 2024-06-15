@@ -546,7 +546,7 @@ TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
 TEST(TestStrings, ValidHexValues) {
   auto json = TinyJSON::TinyJSON::parse(R"(
 [
-  "\u0123\u4567\u89AB\uCDEF\uabcd\uef4A",
+  "\u0123\u4567\u89AB\uCDEF\uabcd\uef4A"
 ]
 )"
 );
@@ -556,7 +556,7 @@ TEST(TestStrings, ValidHexValues) {
   ASSERT_NE(nullptr, jarray);
 
   ASSERT_EQ(1, jarray->get_number_of_items());
-  ASSERT_STREQ("Hello", jarray->at(0)->dump_string());
+  ASSERT_STREQ("\u0123\u4567\u89AB\uCDEF\uabcd\uef4A", jarray->at(0)->dump_string());
 
   delete json;
 }
