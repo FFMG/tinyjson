@@ -2,7 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include <gtest/gtest.h>
-#define TJ_USE_CHAR8
+#define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
 TEST(TestBooleans, BooleanIsAfterMissingColon) {

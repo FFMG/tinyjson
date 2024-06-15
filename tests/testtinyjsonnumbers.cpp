@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 #include <gtest/gtest.h>
 #include <vector>
-#define TJ_USE_CHAR8
+#define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
 TEST(TestNumbers, NumberIsAfterMissingColon) {

@@ -13,12 +13,20 @@ static const short TJ_VERSION_MINOR = 0;
 static const short TJ_VERSION_PATCH = 1;
 static const char TJ_VERSION_STRING[] = "0.0.1";
 
-#define TJ_USE_CHAR8
+#ifndef TJ_USE_CHAR
+#  define TJ_USE_CHAR 1
+#endif
 
-#ifdef TJ_USE_CHAR8
+#if TJ_USE_CHAR == 1
 #  define TJCHAR char
 #  define TJCHARPREFIX(x) x
-#else
+#elif TJ_USE_CHAR == 8
+#  define TJCHAR char8_t
+#  define TJCHARPREFIX(x) u8 ## x
+#elif TJ_USE_CHAR == 16
+#  define TJCHAR char16_t
+#  define TJCHARPREFIX(x) u ## x
+#elif TJ_USE_CHAR == 32
 #  define TJCHAR char32_t
 #  define TJCHARPREFIX(x) U ## x
 #endif

@@ -14,14 +14,14 @@ static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
 
 static constexpr TJCHAR TJ_NULL_TERMINATOR = '\0';
 
-static constexpr TJCHAR TJ_ESCAPE_QUOTATION = '\"';       // % x22 / ; "    quotation mark  U+0022
-static constexpr TJCHAR TJ_ESCAPE_REVERSE_SOLIDUS = '\\'; // % x5C / ; \    reverse solidus U + 005C
-static constexpr TJCHAR TJ_ESCAPE_SOLIDUS = '/';          // % x2F / ; /    solidus         U + 002F
-static constexpr TJCHAR TJ_ESCAPE_BACKSPACE = '\b';       // % x62 / ; b    backspace       U + 0008
-static constexpr TJCHAR TJ_ESCAPE_FORM_FEED = '\f';       // % x66 / ; f    form feed       U + 000C
-static constexpr TJCHAR TJ_ESCAPE_LINE_FEED = '\n';       // % x6E / ; n    line feed       U + 000A
-static constexpr TJCHAR TJ_ESCAPE_CARRIAGE_RETURN = '\r'; // % x72 / ; r    carriage return U + 000D
-static constexpr TJCHAR TJ_ESCAPE_TAB = '\t';             // % x74 / ; t    tab             U + 0009
+static constexpr TJCHAR TJ_ESCAPE_QUOTATION = static_cast<TJCHAR>(0x022);       // % x22 / ; "    quotation mark  U+0022
+static constexpr TJCHAR TJ_ESCAPE_REVERSE_SOLIDUS = static_cast<TJCHAR>(0x05C); // % x5C / ; \    reverse solidus U+005C
+static constexpr TJCHAR TJ_ESCAPE_SOLIDUS = static_cast<TJCHAR>(0x02F);         // % x2F / ; /    solidus         U+002F
+static constexpr TJCHAR TJ_ESCAPE_BACKSPACE = static_cast<TJCHAR>(0x008);       // % x62 / ; b    backspace       U+0008
+static constexpr TJCHAR TJ_ESCAPE_FORM_FEED = static_cast<TJCHAR>(0x00C);       // % x66 / ; f    form feed       U+000C
+static constexpr TJCHAR TJ_ESCAPE_LINE_FEED = static_cast<TJCHAR>(0x00A);       // % x6E / ; n    line feed       U+000A
+static constexpr TJCHAR TJ_ESCAPE_CARRIAGE_RETURN = static_cast<TJCHAR>(0x00D); // % x72 / ; r    carriage return U+000D
+static constexpr TJCHAR TJ_ESCAPE_TAB = static_cast<TJCHAR>(0x009);             // % x74 / ; t    tab             U+0009
 // static constexpr TJCHAR TJ_ESCAPE_HEXDIG = '\u1234';// % x75 4HEXDIG; uXXXX                U + XXXX
 
 #define TJ_CASE_SIGN          case '-': \
@@ -756,7 +756,7 @@ namespace TinyJSON
           {
             return false; //  not sure what this is.
           }
-#ifdef TJ_USE_CHAR8
+#if TJ_USE_CHAR == 1
           if (decimal <= 0x7F) 
           {
             // 1-byte UTF-8 (ASCII)
