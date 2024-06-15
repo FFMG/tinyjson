@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include <gtest/gtest.h>
+#define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
 TEST(TestStrings, StringIsAfterMissingColon) {
@@ -490,5 +491,72 @@ TEST(TestStrings, ADumpedWithATabKeepsTheTab) {
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\tAnd this is after a tab")", text);
+  delete json;
+}
+
+TEST(TestStrings, YouCannotHaveALineFeedInAString) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+    [
+      "This is
+Invalid"])"
+  );
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCannotHaveAFormFeedInAString) {
+  auto json = TinyJSON::TinyJSON::parse("[   \"This is \fInvalid\"]   ");
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCannotHaveASingleReverseSolidusInAString) {
+  auto json = TinyJSON::TinyJSON::parse("[\"This\\ is invalid\"]");
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCannotHaveATabInAString) {
+  auto json = TinyJSON::TinyJSON::parse("[   \"This is \\\tInvalid\"]   ");
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, YouCanHaveATabBeforeAndAfterAString) {
+  auto json = TinyJSON::TinyJSON::parse("\t\"This is valid\"\t");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump_string();
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("This is valid", text);
+
+  delete json;
+}
+
+TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
+  auto json = TinyJSON::TinyJSON::parse("{\"a\" : \t\"This is valid\"\t}");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  ASSERT_NE(nullptr, jobject->try_get_value("a"));
+  ASSERT_STREQ(jobject->try_get_string("a"), "This is valid");
+
+  delete json;
+}
+
+TEST(TestStrings, ValidHexValues) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "\u0123\u4567\u89AB\uCDEF\uabcd\uef4A"
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_EQ(1, jarray->get_number_of_items());
+  ASSERT_STREQ("\u0123\u4567\u89AB\uCDEF\uabcd\uef4A", jarray->at(0)->dump_string());
+
   delete json;
 }

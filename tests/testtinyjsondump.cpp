@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include <gtest/gtest.h>
+#define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
 TEST(TestDump, EmptyArray) {
@@ -361,6 +362,7 @@ TEST(TestDump, StringByItSelf) {
 
 TEST(TestDump, AFloatNumberByItSelf) {
   std::vector<std::string> values;
+  values.push_back("-0.1234");
   values.push_back("3.1415926535897932384");
   values.push_back("1.00001");
   values.push_back("3.0141592653589793238");
@@ -368,7 +370,6 @@ TEST(TestDump, AFloatNumberByItSelf) {
   values.push_back("42.1254");
   values.push_back("0.1234");
   values.push_back("-42.789");
-  values.push_back("-0.1234");
   for (auto& value : values)
   {
     auto json = TinyJSON::TinyJSON::parse(value.c_str());

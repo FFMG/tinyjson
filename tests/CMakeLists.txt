@@ -10,12 +10,13 @@ project (${Project}
   LANGUAGES CXX C)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 set( Headers
 )
 
 set( Sources
+  "testjsonchecker.cpp"
   "testtinyjson.cpp"
   "testtinyjsonarrays.cpp"
   "testtinyjsonbooleans.cpp"

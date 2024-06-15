@@ -13,6 +13,24 @@ static const short TJ_VERSION_MINOR = 0;
 static const short TJ_VERSION_PATCH = 1;
 static const char TJ_VERSION_STRING[] = "0.0.1";
 
+#ifndef TJ_USE_CHAR
+#  define TJ_USE_CHAR 1
+#endif
+
+#if TJ_USE_CHAR == 1
+#  define TJCHAR char
+#  define TJCHARPREFIX(x) x
+#elif TJ_USE_CHAR == 8
+#  define TJCHAR char8_t
+#  define TJCHARPREFIX(x) u8 ## x
+#elif TJ_USE_CHAR == 16
+#  define TJCHAR char16_t
+#  define TJCHARPREFIX(x) u ## x
+#elif TJ_USE_CHAR == 32
+#  define TJCHAR char32_t
+#  define TJCHARPREFIX(x) U ## x
+#endif
+
 #include <vector>
 
 namespace TinyJSON
@@ -52,11 +70,11 @@ namespace TinyJSON
     virtual bool is_false() const;
     virtual bool is_null() const;
 
-    const char* dump(formating formating = formating::indented, const char* indent = "  ") const;
-    const char* dump_string() const;
+    const TJCHAR* dump(formating formating = formating::indented, const TJCHAR* indent = TJCHARPREFIX("  ")) const;
+    const TJCHAR* dump_string() const;
 
   protected:
-    virtual void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const = 0;
+    virtual void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const = 0;
 
   private:
     TJValue(const TJValue&) = delete;
@@ -64,7 +82,7 @@ namespace TinyJSON
     TJValue& operator=(TJValue&&) = delete;
     TJValue& operator=(const TJValue&) = delete;
 
-    mutable char* _last_dump;
+    mutable TJCHAR* _last_dump;
     void free_last_dump() const;
   };
 
@@ -79,7 +97,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="source">The source we are trying to parse.</param>
     /// <returns></returns>
-    static TJValue* parse(const char* source);
+    static TJValue* parse(const TJCHAR* source);
 
   private:
     TinyJSON() = delete;
@@ -94,10 +112,10 @@ namespace TinyJSON
   {
     friend TJHelper;
   public:
-    TJMember(const char* string, const TJValue* value);
+    TJMember(const TJCHAR* string, const TJValue* value);
     virtual ~TJMember();
 
-    const char* name() const;
+    const TJCHAR* name() const;
     const TJValue* value() const;
 
   protected:
@@ -108,10 +126,10 @@ namespace TinyJSON
     /// <param name="string"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    static TJMember* move(char*& string, TJValue*& value);
+    static TJMember* move(TJCHAR*& string, TJValue*& value);
 
   private:
-    char* _string;
+    TJCHAR* _string;
     TJValue* _value;
     void free_string();
     void free_value();
@@ -136,14 +154,14 @@ namespace TinyJSON
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    const char* try_get_string(const char* name) const;
+    const TJCHAR* try_get_string(const TJCHAR* name) const;
 
     /// <summary>
     /// Try and get the value of this member if it exists.
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    virtual const TJValue* try_get_value(const char* name) const;
+    virtual const TJValue* try_get_value(const TJCHAR* name) const;
 
     TJValue* clone() const;
 
@@ -161,7 +179,7 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValueObject* move(std::vector<TJMember*>*& members);
 
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
@@ -200,7 +218,7 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValueArray* move(std::vector<TJValue*>*& values);
 
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
@@ -214,7 +232,7 @@ namespace TinyJSON
   {
     friend TJHelper;
   public:
-    TJValueString(const char* value);
+    TJValueString(const TJCHAR* value);
     virtual ~TJValueString();
 
     TJValue* clone() const;
@@ -227,12 +245,12 @@ namespace TinyJSON
     /// </summary>
     /// <param name="value"></param>
     /// <returns></returns>
-    static TJValueString* move(char*& value);
+    static TJValueString* move(TJCHAR*& value);
 
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
-    char* _value;
+    TJCHAR* _value;
     void free_value();
   };
 
@@ -249,7 +267,7 @@ namespace TinyJSON
     TJValue* clone() const;
 
   protected:
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     const bool _is_true;
@@ -267,7 +285,7 @@ namespace TinyJSON
     bool is_null() const;
 
   protected:
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
   };
 
   // A number JSon, float or int
@@ -297,7 +315,7 @@ namespace TinyJSON
     TJValue* clone() const;
 
   protected:
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     const long long _number;
@@ -315,12 +333,12 @@ namespace TinyJSON
     TJValue* clone() const;
 
   protected:
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
   private:
     void make_string_if_needed() const;
-    mutable char* _string;
+    mutable TJCHAR* _string;
     const unsigned long long _number;
     const unsigned long long _fraction;
     const unsigned int _fraction_exponent;
@@ -336,11 +354,11 @@ namespace TinyJSON
     TJValue* clone() const;
 
   protected:
-    void internal_dump(internal_dump_configuration& configuration, const char* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     void make_string_if_needed() const;
-    mutable char* _string;
+    mutable TJCHAR* _string;
     const unsigned long long _number;
     const unsigned long long _fraction;
     const unsigned int _fraction_exponent;
