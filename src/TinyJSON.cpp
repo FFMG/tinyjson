@@ -145,22 +145,40 @@ namespace TinyJSON
       return (number << 3) + (number << 1);
     }
 
-    static unsigned long long fast_power_of_10(unsigned long long number, unsigned int exponent)
+    static unsigned long long fast_power_of_10(unsigned int exponent)
     {
-      if( number == 0)
-      {
-        return 0;
-      }
       if (exponent == 0)
       {
         return 1;
       }
 
+      unsigned long long base = 10;
       for (unsigned int i = 1; i < exponent; ++i)
       {
-        number = fast_multiply_by_10(number);
+        base = fast_multiply_by_10(base);
       }
-      return number;
+      return base;
+    }
+
+    /// <summary>
+    /// Raise a number to the power of 16
+    /// </summary>
+    /// <param name="number"></param>
+    /// <param name="exponent"></param>
+    /// <returns></returns>
+    static unsigned long long fast_power_of_16(unsigned int exponent)
+    {
+      if (exponent == 0)
+      {
+        return 1;
+      }
+
+      unsigned long long base = 16;
+      for (unsigned int i = 1; i < exponent; ++i)
+      {
+        base = base << 4;
+      }
+      return base;
     }
 
     /// <summary>
@@ -490,7 +508,7 @@ namespace TinyJSON
         }
         if(number > 0 )
         {
-          decimal = decimal + (number * std::pow(16, power++));
+          decimal = decimal + (number * fast_power_of_16(power++));
         }
       }
       return decimal;
@@ -939,13 +957,13 @@ namespace TinyJSON
       {
         return source;
       }
-      const auto muliplier = fast_power_of_10(10, exponent);
+      const auto muliplier = fast_power_of_10(exponent);
       return source * muliplier;
     }
 
     static unsigned long long shift_number_right(const unsigned long long source, const unsigned long long exponent, unsigned long long& shifted_source)
     {
-      const auto divider = fast_power_of_10(10, exponent);
+      const auto divider = fast_power_of_10(exponent);
       auto new_source = static_cast<unsigned long long>(source / divider);
       shifted_source = source - new_source * divider;
       return new_source;
@@ -981,7 +999,7 @@ namespace TinyJSON
 
       if (fraction_length == fraction_exponent)
       {
-        const auto& divider = fast_power_of_10(10, shitfed_unsigned_fraction_exponent);
+        const auto& divider = fast_power_of_10(shitfed_unsigned_fraction_exponent);
         const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
         shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
         return shifted_unsigned_fraction;
@@ -1009,7 +1027,7 @@ namespace TinyJSON
         return 0ll;
       }
 
-      auto divider = fast_power_of_10(10, shitfed_unsigned_fraction_exponent);
+      auto divider = fast_power_of_10(shitfed_unsigned_fraction_exponent);
       const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
       shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
       return shifted_unsigned_fraction;
@@ -1121,7 +1139,7 @@ namespace TinyJSON
 
       // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
       auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(10, shifted_fraction_exponent)) + unsigned_fraction;
+      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(shifted_fraction_exponent)) + unsigned_fraction;
 
       // and the exponent also shitt byt the number we moved.
       const unsigned long long shifted_exponent = exponent + shifted_unsigned_whole_number_exponent;
@@ -1186,7 +1204,7 @@ namespace TinyJSON
 
       // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
       auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(10, shifted_fraction_exponent)) + unsigned_fraction;
+      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(shifted_fraction_exponent)) + unsigned_fraction;
 
       // and the exponent also shitt by the number we moved.
       // as it is a negative exponent we need to move to the left.
@@ -2569,7 +2587,7 @@ namespace TinyJSON
     }
 
     // Convert b to its fractional form
-    auto pow = static_cast<long double>(TJHelper::fast_power_of_10(10, _fraction_exponent));
+    auto pow = static_cast<long double>(TJHelper::fast_power_of_10(_fraction_exponent));
     const auto& whole_number = _number * pow + _fraction;
 
     // Combine the number and the fraction
