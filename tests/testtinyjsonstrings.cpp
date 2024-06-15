@@ -2,6 +2,7 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include <gtest/gtest.h>
+#define TJ_USE_CHAR8
 #include "../src/TinyJSON.h"
 
 TEST(TestStrings, StringIsAfterMissingColon) {
@@ -538,6 +539,24 @@ TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
 
   ASSERT_NE(nullptr, jobject->try_get_value("a"));
   ASSERT_STREQ(jobject->try_get_string("a"), "This is valid");
+
+  delete json;
+}
+
+TEST(TestStrings, ValidHexValues) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+[
+  "\u0123\u4567\u89AB\uCDEF\uabcd\uef4A",
+]
+)"
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+
+  ASSERT_EQ(1, jarray->get_number_of_items());
+  ASSERT_STREQ("Hello", jarray->at(0)->dump_string());
 
   delete json;
 }

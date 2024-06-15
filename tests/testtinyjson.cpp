@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <type_traits>
 
+#define TJ_USE_CHAR8
 #include "../src/TinyJSON.h"
 
 int main(int argc, char** argv) {
