@@ -59,6 +59,18 @@ static const short TJ_VERSION_PATCH = 1;
 static const char TJ_VERSION_STRING[] = "0.0.1";
 ```
 
+### Read a JSON file
+
+To read a JSON file you simply need to call the static method `parse_file`, the extention does not have to be `.json`
+
+```cpp
+  auto json = TinyJSON::TinyJSON::parse_file( "myfile.json" );
+  ...
+  delete json;
+```
+
+This will then return an object that you can inspect as per normal.
+
 ### Read a JSON string
 
 To read a JSON string you simply need to call the static method `parse`
@@ -98,6 +110,10 @@ To read a JSON string you simply need to call the method `dump` on the JSON obje
   
   delete json;
 ```
+
+### UTF-8 DOM
+
+Regardless if you are parsing a file or parsing a string, TinyJSON will parse the file for UTF-8 DOM if there is one.
 
 ### Using a JSON string
 
