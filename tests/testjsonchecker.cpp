@@ -23,17 +23,6 @@ bool matches_file(const std::filesystem::directory_entry& file, const std::strin
   return std::regex_match(filename, regex);
 }
 
-std::string get_file_contents(const std::filesystem::directory_entry& file)
-{
-  const auto& filename = file.path().string();
-  std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
-  if(in)
-  {
-    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-  }
-  throw(errno);
-}
-
 TEST(JSONchecker, AllFiles)
 {
   const std::filesystem::path path{ "../../../../tests/data/JSON_checker/" };
@@ -62,8 +51,8 @@ TEST(JSONchecker, AllFiles)
       continue;
     }
 
-    auto& json_content = get_file_contents(file);
-    auto json = TinyJSON::TinyJSON::parse(json_content.c_str());
+    const auto& filename = file.path().string();
+    auto json = TinyJSON::TinyJSON::parse_file(filename.c_str());
     if (is_fail)
     {
       EXPECT_EQ(nullptr, json);

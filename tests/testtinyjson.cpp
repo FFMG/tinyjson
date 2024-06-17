@@ -26,6 +26,16 @@ bool IsDerivedFrom() {
   return std::is_base_of<Base, Derived>::value;
 }
 
+TEST(TestBasic, WeCanPassANullString) {
+  auto json = TinyJSON::TinyJSON::parse(nullptr);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBasic, WeCanPassANullFileName) {
+  auto json = TinyJSON::TinyJSON::parse_file(nullptr);
+  ASSERT_EQ(nullptr, json);
+}
+
 TEST(TestBasic, TheObjectInsideTheObjectDoesNotCloseProperly) {
   auto json = TinyJSON::TinyJSON::parse(R"(
    {
