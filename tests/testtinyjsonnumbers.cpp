@@ -376,3 +376,53 @@ TEST(TestBooleans, CloneInt) {
   delete number1;
   delete number2;
 }
+
+TEST(TestNumbers, NumberCannotHaveALeadingZero) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 0123
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, NegativeNumberCannotHaveALeadingZero) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : -0123
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, NumberCannotHaveALeadingZeroEvenIfDecimal) {
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "a" : 0123.45
+}
+)"
+);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestNumbers, JustZero) {
+  auto json = TinyJSON::TinyJSON::parse( "0");
+
+  ASSERT_NE(nullptr, json);
+  auto value = dynamic_cast<const TinyJSON::TJValueNumberInt*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(0, value->get_number());
+}
+
+TEST(TestNumbers, JustZeroDecimal) {
+  auto json = TinyJSON::TinyJSON::parse("0.0");
+
+  ASSERT_NE(nullptr, json);
+  auto value = dynamic_cast<const TinyJSON::TJValueNumberInt*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(0, value->get_number());
+}
