@@ -97,7 +97,14 @@ namespace TinyJSON
     /// </summary>
     /// <param name="source">The source we are trying to parse.</param>
     /// <returns></returns>
-    static TJValue* parse(const TJCHAR* source);
+    static TJValue* parse(const TJCHAR* file_path);
+
+    /// <summary>
+    /// Parse a json file
+    /// </summary>
+    /// <param name="source">The source file we are trying to parse.</param>
+    /// <returns></returns>
+    static TJValue* parse_file(const TJCHAR* source);
 
   private:
     TinyJSON() = delete;

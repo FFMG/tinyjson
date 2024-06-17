@@ -7,12 +7,18 @@
 #include <cmath>
 #include <cstring> 
 #include <cstdio>
+#include <fstream>
+#include <iostream>
 #include <string> 
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
 
 static constexpr TJCHAR TJ_NULL_TERMINATOR = '\0';
+
+static constexpr TJCHAR TJ_UTF8_BOM0 = static_cast<TJCHAR>(0x0EF);
+static constexpr TJCHAR TJ_UTF8_BOM1 = static_cast<TJCHAR>(0x0BB);
+static constexpr TJCHAR TJ_UTF8_BOM2 = static_cast<TJCHAR>(0x0BF);
 
 static constexpr TJCHAR TJ_ESCAPE_QUOTATION = static_cast<TJCHAR>(0x022);       // % x22 / ; "    quotation mark  U+0022
 static constexpr TJCHAR TJ_ESCAPE_REVERSE_SOLIDUS = static_cast<TJCHAR>(0x05C); // % x5C / ; \    reverse solidus U+005C
@@ -287,7 +293,7 @@ namespace TinyJSON
       }
 
       TJCHAR* buffer = new TJCHAR[reverse_position+1];
-      buffer[reverse_position] = '\0';
+      buffer[reverse_position] = TJ_NULL_TERMINATOR;
       for (unsigned int i = 0; i < reverse_position; ++i)
       {
         buffer[reverse_position -1 - i] = reverse_buffer[i];
@@ -1849,12 +1855,105 @@ namespace TinyJSON
       }
       return TJMember::move(string_value, value);
     }
+
+    /// <summary>
+    /// Return true of the content of the given source has a utf-8 bom
+    /// </summary>
+    /// <param name="source"></param>
+    /// <returns></returns>
+    static bool has_utf8_bom(const TJCHAR* source)
+    {
+      if (source == nullptr)
+      {
+        return false;
+      }
+
+      const auto& c0 = *source;
+      if (c0 != TJ_UTF8_BOM0)
+      {
+        return false;
+      }
+      const auto& c1 = *(source +1);
+      if (c1 != TJ_UTF8_BOM1)
+      {
+        return false;
+      }
+      const auto& c2 = *(source +2);
+      if (c2 != TJ_UTF8_BOM2)
+      {
+        return false;
+      }
+
+      // if we are here, then it is utf-8
+      return true;
+    }
   };  // Helper class
 
   ///////////////////////////////////////
   /// TinyJSON
+  /// <summary>
+  /// Parse a json file
+  /// </summary>
+  /// <param name="source">The source file we are trying to parse.</param>
+  /// <returns></returns>
+  TJValue* TinyJSON::parse_file(const TJCHAR* file_path)
+  {
+    // sanity check
+    if (nullptr == file_path)
+    {
+      return nullptr;
+    }
+
+    std::ifstream file(file_path, std::ios::binary | std::ios::ate);
+    if (!file.is_open())
+    {
+      // ERROR: Could not open the file
+      return nullptr;
+    }
+
+    std::streamsize file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    TJCHAR* buffer = new TJCHAR[file_size+1];
+    if (!file.read(buffer, file_size))
+    {
+      delete[] buffer;
+      return nullptr;
+    }
+    buffer[file_size] = TJ_NULL_TERMINATOR;
+
+    // we can explicitely close the file to free the resources.
+    file.close();
+
+    // parse the file.
+    auto value = parse(buffer);
+    
+    // get rid of the buffer
+    delete[] buffer;
+
+    // return whatever we managed to read out of the file.
+    return value;
+  }
+
+  /// <summary>
+  /// Parse a json string
+  /// </summary>
+  /// <param name="source">The source we are trying to parse.</param>
+  /// <returns></returns>
   TJValue* TinyJSON::parse(const TJCHAR* source)
   {
+    // if we have a utf-8 content then we just skip those.
+    if (TJHelper::has_utf8_bom(source))
+    {
+      source += 3;
+    }
+
+    // sanity check
+    if (nullptr == source)
+    {
+      return nullptr;
+    }
+
     // we can only have one value and nothing else
     TJValue* value_found = nullptr;
     while (*source != TJ_NULL_TERMINATOR)
