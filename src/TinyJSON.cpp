@@ -799,7 +799,7 @@ namespace TinyJSON
       int result_pos = 0;
       int result_max_length = 0;
       TJCHAR* result = nullptr;
-            while (*p != TJ_NULL_TERMINATOR)
+      while (*p != TJ_NULL_TERMINATOR)
       {
         switch (*p)
         {
@@ -816,7 +816,7 @@ namespace TinyJSON
           }
           add_char_to_string(*p, result, result_pos, result_max_length);
           p++;
-        break;
+          break;
 
         TJ_CASE_MAYBE_ESCAPE
           if (!try_add_char_to_string_after_escape(p, result, result_pos, result_max_length))
@@ -826,9 +826,15 @@ namespace TinyJSON
             return nullptr;
           }
           p++;
-        break;
+          break;
 
-        case TJ_ESCAPE_SOLIDUS:         // % x2F / ; / solidus         U + 002F
+        case TJ_ESCAPE_SOLIDUS:         // % x2F / ; /    solidus         U + 002F
+          // solidus can be escaped ... and not escaped...
+          // this is a case where it is not escaped.
+          add_char_to_string(*p, result, result_pos, result_max_length);
+          p++;
+          break;
+
         case TJ_ESCAPE_BACKSPACE:       // % x62 / ; b    backspace       U + 0008
         case TJ_ESCAPE_FORM_FEED:       // % x66 / ; f    form feed       U + 000C
           delete[] result;

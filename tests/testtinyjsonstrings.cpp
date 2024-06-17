@@ -530,6 +530,66 @@ TEST(TestStrings, YouCanHaveATabBeforeAndAfterAString) {
   delete json;
 }
 
+TEST(TestStrings, JustControls) {
+  auto json = TinyJSON::TinyJSON::parse(R"("\b\f\n\r\t")");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump_string();
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("\b\f\n\r\t", text);
+
+  delete json;
+}
+
+TEST(TestStrings, JustControlsInObject) {
+  auto json = TinyJSON::TinyJSON::parse(R"({"controls": "\b\f\n\r\t"})");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto controls = jobject->try_get_value("controls");
+  ASSERT_NE(nullptr, controls);
+
+  const auto& text = controls->dump_string();
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("\b\f\n\r\t", text);
+
+  delete json;
+}
+
+TEST(TestStrings, JustSlash) {
+  auto json = TinyJSON::TinyJSON::parse(R"("/ & \/")");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump_string();
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("/ & /", text);
+
+  delete json;
+}
+
+TEST(TestStrings, JustSlashInObject) {
+  auto json = TinyJSON::TinyJSON::parse(R"({"slash": "/ & \/"})");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto controls = jobject->try_get_value("slash");
+  ASSERT_NE(nullptr, controls);
+
+  const auto& text = controls->dump_string();
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ("/ & /", text);
+
+  delete json;
+}
+
 TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
   auto json = TinyJSON::TinyJSON::parse("{\"a\" : \t\"This is valid\"\t}");
   ASSERT_NE(nullptr, json);
