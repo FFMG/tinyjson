@@ -1440,6 +1440,17 @@ namespace TinyJSON
       return result;
     }
 
+    static bool has_possible_double_zero(const TJCHAR* p)
+    {
+      if (p[0] == TJ_NULL_TERMINATOR || p[1] == TJ_NULL_TERMINATOR || p[0] != '0')
+      {
+        return false;
+      }
+      // if the number is 0121 then it is wrong
+      // but if we have 0.121 then it is valid
+      return p[0] == '0' && p[1] != '.';
+    }
+
     static TJValue* try_read_number(const TJCHAR*& p)
     {
       bool is_negative = false;
@@ -1454,6 +1465,12 @@ namespace TinyJSON
       if (nullptr == possible_number)
       {
         // ERROR: Could not locate the number.
+        return nullptr;
+      }
+      if (has_possible_double_zero(possible_number))
+      {
+        // ERROR: Numbers cannot have leading zeros
+        delete[] possible_number;
         return nullptr;
       }
 
