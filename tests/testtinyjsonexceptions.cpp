@@ -5,11 +5,40 @@
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
-TEST(TestException, SourceCannotBeNull) {
+TEST(TestException, IfWeHaveNoExceptionWeDoNotThrow) {
   TinyJSON::options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse(nullptr, options), TinyJSON::TJParseException);
+  TinyJSON::TJValue* json = nullptr;
+  EXPECT_NO_THROW( json = TinyJSON::TinyJSON::parse("[12,13,14]", options));
+  delete json;
 }
+
+TEST(TestException, ParseExceptionMessageIsSetProperly) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  TinyJSON::TJValue* json = nullptr;
+  EXPECT_NO_THROW(json = TinyJSON::TinyJSON::parse("[12,13,14]", options));
+  delete json;
+}
+
+TEST(TestException, SourceCannotBeNull) {
+  TinyJSON::TJParseException ex("Hello");
+  EXPECT_STREQ("Hello", ex.what());
+}
+
+TEST(TestException, OperatorCopyParseException) {
+  TinyJSON::TJParseException ex1("Hello");
+  TinyJSON::TJParseException ex2("World");
+  ex2 = ex1;
+  EXPECT_STREQ("Hello", ex2.what());
+}
+
+TEST(TestException, CopyConstructorParseException) {
+  TinyJSON::TJParseException ex1("Hello");
+  TinyJSON::TJParseException ex2(ex1);
+  EXPECT_STREQ("Hello", ex2.what());
+}
+
 
 TEST(TestException, EscapedTabCharacterInString) {
   TinyJSON::options options = {};
