@@ -59,6 +59,26 @@ static const short TJ_VERSION_PATCH = 1;
 static const char TJ_VERSION_STRING[] = "0.0.1";
 ```
 
+### Exceptions
+
+#### Parsing Exception
+
+The parsing exception is `TinyJSON::TJParseException` and can be made optional in the `TinyJSON::options` flag.
+
+```cpp
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  try
+  {
+    auto blah = TinyJSON::TinyJSON::parse("[0123]", options)
+    ...
+  }
+  catch(TinyJSON::TJParseException ex)
+  {
+     ex.what(); // Numbers cannot have leading zeros
+  }
+```
+
 ### Read a JSON file
 
 To read a JSON file you simply need to call the static method `parse_file`, the extention does not have to be `.json`

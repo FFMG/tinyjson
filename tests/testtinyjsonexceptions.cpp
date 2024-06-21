@@ -125,14 +125,20 @@ TEST(TestException, BadNull) {
   EXPECT_THROW(TinyJSON::TinyJSON::parse("[nul]", options), TinyJSON::TJParseException);
 }
 
+TEST(TestException, MissingColonInObject) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse(R"({ "Missing colon" null })", options), TinyJSON::TJParseException);
+}
+
 TEST(TestException, InvalidNumberWithLeadingZero) {
   TinyJSON::options options = {};
   options.throw_exception = true;
   EXPECT_THROW(TinyJSON::TinyJSON::parse("[0123]", options), TinyJSON::TJParseException);
 }
 
-TEST(TestException, MissingColonInObject) {
+TEST(TestException, ExponentsWithZero) {
   TinyJSON::options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse(R"({ "Missing colon" null })", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TinyJSON::parse("[1e00]", options), TinyJSON::TJParseException);
 }

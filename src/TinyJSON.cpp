@@ -1412,7 +1412,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="p">The current string pointer.</param>
     /// <returns></returns>
-    static TJCHAR* try_read_whole_number(const TJCHAR*& p)
+    static TJCHAR* try_read_whole_number(const TJCHAR*& p, ParseResult& parse_result)
     {
       const TJCHAR* start = nullptr;
       int found_spaces = 0;
@@ -1436,6 +1436,7 @@ namespace TinyJSON
             if (found_spaces > 0)
             {
               // ERROR: Number has a space between it.
+              parse_result.assign_parse_exception_message("Number has a space between it.");
               return nullptr;
             }
             p++;
@@ -1465,10 +1466,10 @@ namespace TinyJSON
       return result;
     }
 
-    static TJCHAR* try_read_whole_number_as_fraction(const TJCHAR*& p)
+    static TJCHAR* try_read_whole_number_as_fraction(const TJCHAR*& p, ParseResult& parse_result)
     {
       // try read the number
-      auto whole_number = try_read_whole_number(p);
+      auto whole_number = try_read_whole_number(p, parse_result);
       if (nullptr == whole_number)
       {
         return nullptr;
@@ -1575,7 +1576,13 @@ namespace TinyJSON
       return p[0] == '0' && p[1] != '.';
     }
 
-    static TJValue* try_read_number(const TJCHAR*& p)
+    /// <summary>
+    /// Try and read a number given a string.
+    /// </summary>
+    /// <param name="p"></param>
+    /// <param name="parse_result"></param>
+    /// <returns></returns>
+    static TJValue* try_read_number(const TJCHAR*& p, ParseResult& parse_result)
     {
       bool is_negative = false;
       if (*p == '-')
@@ -1585,15 +1592,17 @@ namespace TinyJSON
       }
 
       // then try and read the digit(s).
-      auto possible_number = try_read_whole_number(p);
+      auto possible_number = try_read_whole_number(p, parse_result);
       if (nullptr == possible_number)
       {
         // ERROR: Could not locate the number.
         return nullptr;
       }
+
       if (has_possible_double_zero(possible_number))
       {
         // ERROR: Numbers cannot have leading zeros
+        parse_result.assign_parse_exception_message("Numbers cannot have leading zeros.");
         delete[] possible_number;
         return nullptr;
       }
@@ -1608,7 +1617,7 @@ namespace TinyJSON
       if (*p == '.')
       {
         p++;
-        const auto& possible_fraction_number = try_read_whole_number_as_fraction(p);
+        const auto& possible_fraction_number = try_read_whole_number_as_fraction(p, parse_result);
         if (nullptr == possible_fraction_number)
         {
           // ERROR: we cannot have a number like '-12.' or '42.
@@ -1638,7 +1647,7 @@ namespace TinyJSON
           is_negative_exponent = false;
           p++;
         }
-        const auto& possible_exponent = try_read_whole_number(p);
+        const auto& possible_exponent = try_read_whole_number(p, parse_result);
         if (nullptr == possible_exponent)
         {
           // ERROR: we cannot have a number like '-12.' or '42.
@@ -1651,6 +1660,7 @@ namespace TinyJSON
         if (0 == unsigned_exponent)
         {
           // ERROR: we cannot have an exponent with zero.
+          parse_result.assign_parse_exception_message("We cannot have an exponent with zero.");
           return nullptr;
         }
         exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
@@ -1937,11 +1947,10 @@ namespace TinyJSON
         TJ_CASE_DIGIT
         TJ_CASE_SIGN
         {
-          auto number = try_read_number(p);
+          auto number = try_read_number(p, parse_result);
           if (nullptr == number)
           {
             //  ERROR: could not read number
-            parse_result.assign_parse_exception_message("Could not read number.");
             return nullptr;
           }
           return number;
