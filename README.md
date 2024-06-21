@@ -59,6 +59,29 @@ static const short TJ_VERSION_PATCH = 1;
 static const char TJ_VERSION_STRING[] = "0.0.1";
 ```
 
+## Options
+
+- Depth: (`max_depth:64`) You can set how deep you want to allow the parsing to go.
+- Throw: (`throw_exception:false`) If you want to throw exceptions or simply return null.
+
+For example ...
+
+```cpp
+TinyJSON::options options = {};
+options.throw_exception = true;
+options.max_depth = 10;
+
+try
+{
+  auto blah = TinyJSON::TinyJSON::parse("[0123]", options)
+  ...
+}
+catch(TinyJSON::TJParseException ex)
+{
+    ex.what(); // Numbers cannot have leading zeros
+}
+```
+
 ### Exceptions
 
 #### Parsing Exception
