@@ -51,24 +51,33 @@ TEST(JSONchecker, AllFiles)
       continue;
     }
 
-    const auto& filename = file.path().string();
-    auto json = TinyJSON::TinyJSON::parse_file(filename.c_str());
+    TinyJSON::options options;
     if (is_fail)
     {
-      EXPECT_EQ(nullptr, json);
-      if (nullptr != json)
-      {
-        std::cout << "Expected Fail: " << std::filesystem::path(file.path()).filename() << '\n';
-      }
+      // we expect a failure here
+      options.throw_exception = false;
     }
     else
     {
-      EXPECT_NE(nullptr, json);
-      if (nullptr == json)
+      options.throw_exception = true;
+    }
+    
+    const auto& filename = file.path().string();
+    try
+    {
+      auto json = TinyJSON::TinyJSON::parse_file(filename.c_str(), options);
+      if (is_fail && json != nullptr)
       {
-        std::cout << "Expected Pass: " << std::filesystem::path(file.path()).filename() << '\n';
+        EXPECT_TRUE(false) << "Expected Fail: " << std::filesystem::path(file.path()).filename();
+      }
+      delete json;
+    }
+    catch(TinyJSON::TJParseException ex)
+    {
+      if (!is_fail)
+      {
+        EXPECT_TRUE(false) << "Expected Pass: " << std::filesystem::path(file.path()).filename() << "\nException: " << ex.what();
       }
     }
-    delete json;
   }
 }

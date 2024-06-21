@@ -42,6 +42,38 @@ namespace TinyJSON
     indented
   };
 
+  /// <summary>
+  /// The parsing options.
+  /// </summary>
+  struct options
+  {
+    /// <summary>
+    /// If we want to throw an exception or not.
+    /// </summary>
+    bool throw_exception = false;
+
+    /// <summary>
+    /// How deep we want to allow the array/objects to recurse.
+    /// </summary>
+    unsigned int max_depth = 64;  
+  };
+
+  class TJParseException : public std::exception
+  {
+  public:
+    TJParseException(const char* message);
+    TJParseException(const TJParseException& exception);
+    TJParseException& operator=(const TJParseException& exception);
+    virtual ~TJParseException() noexcept;
+
+    virtual const char* what() const noexcept;
+
+  private:
+    void free_message() noexcept;
+    void assign_message(const char* message);
+    char* _message;
+  };
+
   struct internal_dump_configuration;
   class TJHelper;
   class TJValueArray;
@@ -96,15 +128,27 @@ namespace TinyJSON
     /// Parse a json string
     /// </summary>
     /// <param name="source">The source we are trying to parse.</param>
+    /// <param name="options">The option we want to use when parsing this.</param>
     /// <returns></returns>
-    static TJValue* parse(const TJCHAR* source);
+    static TJValue* parse(const TJCHAR* source, const options& options = {});
 
     /// <summary>
     /// Parse a json file
     /// </summary>
     /// <param name="file_path">The source file we are trying to parse.</param>
+    /// <param name="options">The option we want to use when parsing this.</param>
     /// <returns></returns>
-    static TJValue* parse_file(const TJCHAR* file_path);
+    static TJValue* parse_file(const TJCHAR* file_path, const options& options = {});
+
+  protected:
+    /// <summary>
+    /// Internal parsing of a json source
+    /// We will use the option to throw, (or not).
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    static TJValue* internal_parse(const TJCHAR* source, const options& options);
 
   private:
     TinyJSON() = delete;
