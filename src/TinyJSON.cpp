@@ -136,7 +136,8 @@ namespace TinyJSON
   public:
     ParseResult(const options& options) :
       _parse_exception_message(nullptr),
-      _options(options)
+      _options(options),
+      _depth(0)
     {
     }
 
@@ -146,6 +147,21 @@ namespace TinyJSON
     ~ParseResult()
     {
       free_parse_exception_message();
+    }
+
+    void push_depth()
+    {
+      ++_depth;
+    }
+
+    void pop_depth()
+    {
+      --_depth;
+    }
+
+    unsigned int current_depth() const
+    {
+      return _depth;
     }
 
     /// <summary>
@@ -176,6 +192,11 @@ namespace TinyJSON
       throw TJParseException(_parse_exception_message);
     }
 
+    const options& parse_options() const
+    {
+      return _options;
+    }
+
   protected:
     void free_parse_exception_message() noexcept
     {
@@ -188,6 +209,7 @@ namespace TinyJSON
 
     char* _parse_exception_message;
     const options& _options;
+    unsigned int _depth;
   };
 
   ///////////////////////////////////////
@@ -1705,6 +1727,12 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_continue_read_object(const TJCHAR*& p, ParseResult& parse_result)
     {
+      if (parse_result.current_depth() >= parse_result.parse_options().max_depth)
+      {
+        // Error: We reached the max depth
+        parse_result.assign_parse_exception_message("Reached the max parse depth (object).");
+        return nullptr;
+      }
       //  assume no members in that object.
       bool found_comma = false;
       std::vector<TJMember*>* members = nullptr;
@@ -1808,6 +1836,13 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_continue_read_array(const TJCHAR*& p, ParseResult& parse_result)
     {
+      if (parse_result.current_depth() >= parse_result.parse_options().max_depth)
+      {
+        // Error: We reached the max depth
+        parse_result.assign_parse_exception_message("Reached the max parse depth (array).");
+        return nullptr;
+      }
+
       //  assume no values in that array
       std::vector<TJValue*>* values = nullptr;
       bool waiting_for_a_value = true;
@@ -1959,24 +1994,28 @@ namespace TinyJSON
         TJ_CASE_BEGIN_ARRAY
         {
           // an array within an array
+          parse_result.push_depth();
           auto tjvalue_array = try_continue_read_array(++p, parse_result);
           if (tjvalue_array == nullptr)
           {
             // Error: something went wrong reading an array, the error was logged.
             return nullptr;
           }
+          parse_result.pop_depth();
           return tjvalue_array;
         }
 
         TJ_CASE_BEGIN_OBJECT
         {
           // an object within the object
+          parse_result.push_depth();
           auto tjvalue_object = try_continue_read_object(++p, parse_result);
           if (tjvalue_object == nullptr)
           {
             // Error: something went wrong reading an object, the error was logged.
             return nullptr;
           }
+          parse_result.pop_depth();
           return tjvalue_object;
         }
 

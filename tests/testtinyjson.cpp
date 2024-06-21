@@ -471,3 +471,11 @@ TEST(TestBasic, ValueInObjectOverwriteEachotherInsideArray2) {
 
   delete json;
 }
+
+TEST(TestBasic, WeReachedMaxDepthMixed) {
+  TinyJSON::options options = {};
+  options.throw_exception = false;
+  options.max_depth = 4;
+  auto json = TinyJSON::TinyJSON::parse(R"({"a":[12,{"c":{}}]})", options);
+  ASSERT_EQ(nullptr, json);
+}

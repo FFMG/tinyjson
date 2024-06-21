@@ -52,6 +52,7 @@ TEST(JSONchecker, AllFiles)
     }
 
     TinyJSON::options options;
+    options.max_depth = 20;   //  for the one test case
     if (is_fail)
     {
       // we expect a failure here

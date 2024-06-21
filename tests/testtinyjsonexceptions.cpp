@@ -171,3 +171,30 @@ TEST(TestException, ExponentsWithZero) {
   options.throw_exception = true;
   EXPECT_THROW(TinyJSON::TinyJSON::parse("[1e00]", options), TinyJSON::TJParseException);
 }
+
+TEST(TestException, WeReachedMaxDepthOfObjects) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  options.max_depth = 4;
+  TinyJSON::TJValue* json = nullptr;
+  EXPECT_THROW(json = TinyJSON::TinyJSON::parse(R"({"a":{"b":{"c":{}}}})", options), TinyJSON::TJParseException);
+  delete json;
+}
+
+TEST(TestException, WeReachedMaxDepthOfArrays) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  options.max_depth = 4;
+  TinyJSON::TJValue* json = nullptr;
+  EXPECT_THROW(json = TinyJSON::TinyJSON::parse("[12,[13,[14,[]]]]", options), TinyJSON::TJParseException);
+  delete json;
+}
+
+TEST(TestException, WeReachedMaxDepthMixed) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  options.max_depth = 4;
+  TinyJSON::TJValue* json = nullptr;
+  EXPECT_THROW(json = TinyJSON::TinyJSON::parse(R"({"a":[12,{"c":{}}]})", options), TinyJSON::TJParseException);
+  delete json;
+}
