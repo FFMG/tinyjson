@@ -130,6 +130,120 @@ namespace TinyJSON
   };
 
   ///////////////////////////////////////
+  // Parse result.
+  class ParseResult
+  {
+  public:
+    ParseResult(const options& options) :
+      _parse_exception_message(nullptr),
+      _options(options)
+    {
+    }
+
+    ParseResult(const ParseResult& parse_result) = delete;
+    ParseResult& operator=(const ParseResult& parse_result) = delete;
+
+    ~ParseResult()
+    {
+      free_parse_exception_message();
+    }
+
+    /// <summary>
+    /// Assign a parse error message.
+    /// </summary>
+    /// <param name="parse_exception_message"></param>
+    void assign_parse_exception_message(const char* parse_exception_message)
+    {
+      free_parse_exception_message();
+      if (parse_exception_message != nullptr)
+      {
+        auto length = strlen(parse_exception_message);
+        _parse_exception_message = new char[length + 1];
+        std::strcpy(_parse_exception_message, parse_exception_message);
+      }
+    }
+
+    void throw_if_parse_exception()
+    {
+      if (!_options.throw_exception)
+      {
+        return;
+      }
+      if (nullptr == _parse_exception_message)
+      {
+        return;
+      }
+      throw TJParseException(_parse_exception_message);
+    }
+
+  protected:
+    void free_parse_exception_message() noexcept
+    {
+      if (_parse_exception_message != nullptr)
+      {
+        delete[] _parse_exception_message;
+        _parse_exception_message = nullptr;
+      }
+    }
+
+    char* _parse_exception_message;
+    const options& _options;
+  };
+
+  ///////////////////////////////////////
+  /// Parsing Exception
+  TJParseException::TJParseException(const char* message) :
+    _message(nullptr)
+  {
+    assign_message(message);
+  }
+
+  TJParseException::TJParseException(const TJParseException& exception)
+    : _message(nullptr)
+  {
+    *this = exception;
+  }
+
+  TJParseException::~TJParseException()
+  {
+    free_message();
+  }
+
+  TJParseException& TJParseException::operator=(const TJParseException& exception)
+  {
+    if (this != &exception)
+    {
+      assign_message(exception._message);
+    }
+    return *this;
+  }
+
+  const char* TJParseException::what() const noexcept
+  {
+    return _message == nullptr ? "Unknown" : _message;
+  }
+
+  void TJParseException::assign_message(const char* message)
+  {
+    free_message();
+    if (message != nullptr)
+    {
+      auto length = strlen(message);
+      _message = new char[length + 1];
+      std::strcpy(_message, message);
+    }
+  }
+
+  void TJParseException::free_message() noexcept
+  {
+    if (_message != nullptr)
+    {
+      delete[] _message;
+      _message = nullptr;
+    }
+  }
+
+  ///////////////////////////////////////
   /// Protected Helper class
   class TJHelper
   {
@@ -659,7 +773,7 @@ namespace TinyJSON
       return new_string;
     }
 
-    static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length)
+    static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
     {
       if (buffer_pos + 1 >= buffer_max_length)
       {
@@ -671,7 +785,7 @@ namespace TinyJSON
       ++buffer_pos;
     }
 
-    static void add_string_to_string(const TJCHAR* string_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length)
+    static void add_string_to_string(const TJCHAR* string_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
     {
       if (nullptr == string_to_add)
       {
@@ -794,7 +908,7 @@ namespace TinyJSON
       return false;
     }
 
-    static TJCHAR* try_continue_read_string(const TJCHAR*& p)
+    static TJCHAR* try_continue_read_string(const TJCHAR*& p, ParseResult& parse_result)
     {
       int result_pos = 0;
       int result_max_length = 0;
@@ -810,8 +924,9 @@ namespace TinyJSON
           case TJ_ESCAPE_LINE_FEED:       // % x6E / ; n    line feed       U + 000A
           case TJ_ESCAPE_CARRIAGE_RETURN: // % x72 / ; r    carriage return U + 000D
           case  TJ_ESCAPE_TAB:            // % x74 / ; t    tab             U + 0009
-            delete[] result;
             // ERROR: invalid character inside the string.
+            delete[] result;
+            parse_result.assign_parse_exception_message("Invalid character inside the string.");
             return nullptr;
           }
           add_char_to_string(*p, result, result_pos, result_max_length);
@@ -822,7 +937,8 @@ namespace TinyJSON
           if (!try_add_char_to_string_after_escape(p, result, result_pos, result_max_length))
           {
             delete[] result;
-            // ERROR: single reverse solidus
+            // ERROR: invalid/unknown character after single reverse solidus.
+            parse_result.assign_parse_exception_message("Invalid/unknown character after single reverse solidus.");
             return nullptr;
           }
           p++;
@@ -839,6 +955,7 @@ namespace TinyJSON
         case TJ_ESCAPE_FORM_FEED:       // % x66 / ; f    form feed       U + 000C
           delete[] result;
           // ERROR: invalid character inside the string.
+          parse_result.assign_parse_exception_message("Invalid character inside the string..");
           return nullptr;
 
         TJ_CASE_START_STRING
@@ -859,6 +976,7 @@ namespace TinyJSON
 
       // // ERROR: we could not close the object.
       delete[] result;
+      parse_result.assign_parse_exception_message("We could not close the string.");
       return nullptr;
     }
 
@@ -1006,7 +1124,7 @@ namespace TinyJSON
       // so we are not shifting the whole way but we have to be careful as the
       // len of the fraction might actually be less than the fraction because of leading 0s
       // for example 0.0012 and 0.12 have a len of 2 but a fraction_exponent of 2 and 4
-      // the lenght can never be more than the fraction exponent.
+      // the length can never be more than the fraction exponent.
       const auto& fraction_length = get_number_of_digits(fraction);
 
       if (fraction_length == fraction_exponent)
@@ -1294,7 +1412,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="p">The current string pointer.</param>
     /// <returns></returns>
-    static TJCHAR* try_read_whole_number(const TJCHAR*& p)
+    static TJCHAR* try_read_whole_number(const TJCHAR*& p, ParseResult& parse_result)
     {
       const TJCHAR* start = nullptr;
       int found_spaces = 0;
@@ -1318,6 +1436,7 @@ namespace TinyJSON
             if (found_spaces > 0)
             {
               // ERROR: Number has a space between it.
+              parse_result.assign_parse_exception_message("Number has a space between it.");
               return nullptr;
             }
             p++;
@@ -1347,10 +1466,10 @@ namespace TinyJSON
       return result;
     }
 
-    static TJCHAR* try_read_whole_number_as_fraction(const TJCHAR*& p)
+    static TJCHAR* try_read_whole_number_as_fraction(const TJCHAR*& p, ParseResult& parse_result)
     {
       // try read the number
-      auto whole_number = try_read_whole_number(p);
+      auto whole_number = try_read_whole_number(p, parse_result);
       if (nullptr == whole_number)
       {
         return nullptr;
@@ -1457,7 +1576,13 @@ namespace TinyJSON
       return p[0] == '0' && p[1] != '.';
     }
 
-    static TJValue* try_read_number(const TJCHAR*& p)
+    /// <summary>
+    /// Try and read a number given a string.
+    /// </summary>
+    /// <param name="p"></param>
+    /// <param name="parse_result"></param>
+    /// <returns></returns>
+    static TJValue* try_read_number(const TJCHAR*& p, ParseResult& parse_result)
     {
       bool is_negative = false;
       if (*p == '-')
@@ -1467,15 +1592,17 @@ namespace TinyJSON
       }
 
       // then try and read the digit(s).
-      auto possible_number = try_read_whole_number(p);
+      auto possible_number = try_read_whole_number(p, parse_result);
       if (nullptr == possible_number)
       {
         // ERROR: Could not locate the number.
         return nullptr;
       }
+
       if (has_possible_double_zero(possible_number))
       {
         // ERROR: Numbers cannot have leading zeros
+        parse_result.assign_parse_exception_message("Numbers cannot have leading zeros.");
         delete[] possible_number;
         return nullptr;
       }
@@ -1490,7 +1617,7 @@ namespace TinyJSON
       if (*p == '.')
       {
         p++;
-        const auto& possible_fraction_number = try_read_whole_number_as_fraction(p);
+        const auto& possible_fraction_number = try_read_whole_number_as_fraction(p, parse_result);
         if (nullptr == possible_fraction_number)
         {
           // ERROR: we cannot have a number like '-12.' or '42.
@@ -1520,7 +1647,7 @@ namespace TinyJSON
           is_negative_exponent = false;
           p++;
         }
-        const auto& possible_exponent = try_read_whole_number(p);
+        const auto& possible_exponent = try_read_whole_number(p, parse_result);
         if (nullptr == possible_exponent)
         {
           // ERROR: we cannot have a number like '-12.' or '42.
@@ -1533,6 +1660,7 @@ namespace TinyJSON
         if (0 == unsigned_exponent)
         {
           // ERROR: we cannot have an exponent with zero.
+          parse_result.assign_parse_exception_message("We cannot have an exponent with zero.");
           return nullptr;
         }
         exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
@@ -1575,7 +1703,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="p"></param>
     /// <returns></returns>
-    static TJValue* try_continue_read_object(const TJCHAR*& p)
+    static TJValue* try_continue_read_object(const TJCHAR*& p, ParseResult& parse_result)
     {
       //  assume no members in that object.
       bool found_comma = false;
@@ -1587,29 +1715,30 @@ namespace TinyJSON
         TJCHAR c = *p;
         switch (c)
         {
-          TJ_CASE_SPACE
-            p++;
+        TJ_CASE_SPACE
+          p++;
           break;
 
-          TJ_CASE_END_OBJECT
-            // but is it what we expected?
-            if (waiting_for_a_string)
-            {
-              // ERROR: unexpected end of object, there was a "," after
-              //        the last string and we expected a string now, not a close "}"
-              free_members(members);
-              return nullptr;
-            }
+        TJ_CASE_END_OBJECT
+          // but is it what we expected?
+          if (waiting_for_a_string)
+          {
+            // ERROR: unexpected end of object, there was a "," after
+            //        the last string and we expected a string now, not a close "}"
+            free_members(members);
+            parse_result.assign_parse_exception_message("Unexpected end of object, there was a ', ' after the last string.");
+            return nullptr;
+          }
           p++;
 
           // we are done, we found it.
           // we give the ownership of the members over.
           return TJValueObject::move(members);
 
-          TJ_CASE_START_STRING
-          {
-            // we got our string, no longer waiting for one.
-            waiting_for_a_string = false;
+        TJ_CASE_START_STRING
+        {
+          // we got our string, no longer waiting for one.
+          waiting_for_a_string = false;
 
           // we are no longer after the string
           after_string = false;
@@ -1621,12 +1750,13 @@ namespace TinyJSON
           {
             // ERROR: expected a comma after the last element
             free_members(members);
+            parse_result.assign_parse_exception_message("Expected a comma after the last element.");
             return nullptr;
           }
 
           // read the actual string and value
           // that's the way it has to be.
-          auto member = try_read_string_and_value(p);
+          auto member = try_read_string_and_value(p, parse_result);
           if (member == nullptr)
           {
             // ERROR: There was an error reading the name and/or the value
@@ -1638,16 +1768,17 @@ namespace TinyJSON
           move_member_to_members(member, members);
           
           after_string = true;
-          }
-          break;
+        }
+        break;
 
-          TJ_CASE_COMMA
-            if (!after_string)
-            {
-              // ERROR: found a comma out of order
-              free_members(members);
-              return nullptr;
-            }
+        TJ_CASE_COMMA
+          if (!after_string)
+          {
+            // ERROR: found a comma out of order
+            free_members(members);
+            parse_result.assign_parse_exception_message("Found a comma out of order.");
+            return nullptr;
+          }
           // we are no longer after the string
           after_string = false;
           waiting_for_a_string = true;
@@ -1658,12 +1789,14 @@ namespace TinyJSON
         default:
           // ERROR: unknown character
           free_members(members);
+          parse_result.assign_parse_exception_message("Unknown character.");
           return nullptr;
         }
       }
 
       // ERROR end of the string was found and we didn't find what we needed.
       free_members(members);
+      parse_result.assign_parse_exception_message("End of the string was found and we didn't find what we needed.");
       return nullptr;
     }
 
@@ -1673,7 +1806,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="p"></param>
     /// <returns></returns>
-    static TJValue* try_continue_read_array(const TJCHAR*& p)
+    static TJValue* try_continue_read_array(const TJCHAR*& p, ParseResult& parse_result)
     {
       //  assume no values in that array
       std::vector<TJValue*>* values = nullptr;
@@ -1684,31 +1817,33 @@ namespace TinyJSON
         TJCHAR c = *p;
         switch (c)
         {
-          TJ_CASE_SPACE
-            p++;
+        TJ_CASE_SPACE
+          p++;
           break;
 
-          TJ_CASE_END_ARRAY
-            if (found_comma && waiting_for_a_value)
-            {
-              // ERROR: unexpected end of array, there was a "," after
-              //        the last value and we expected a value now, not a close "]"
-              free_values(values);
-              return nullptr;
-            }
+        TJ_CASE_END_ARRAY
+          if (found_comma && waiting_for_a_value)
+          {
+            // ERROR: unexpected end of array, there was a "," after
+            //        the last value and we expected a value now, not a close "]"
+            free_values(values);
+            parse_result.assign_parse_exception_message("Unexpected end of array, there was a ', ' after the last string.");
+            return nullptr;
+          }
           p++;
 
           // we are done, we found it.
           // we give the ownership of the members over.
           return TJValueArray::move(values);
 
-          TJ_CASE_COMMA
-            if (waiting_for_a_value)
-            {
-              // ERROR: found a comma out of order, (2 commas)
-              free_values(values);
-              return nullptr;
-            }
+        TJ_CASE_COMMA
+          if (waiting_for_a_value)
+          {
+            // ERROR: found a comma out of order, (2 commas)
+            free_values(values);
+            parse_result.assign_parse_exception_message("Found a comma out of order, (2 commas).");
+            return nullptr;
+          }
           // we are now waiting for a value
           waiting_for_a_value = true;
           found_comma = true;
@@ -1716,7 +1851,7 @@ namespace TinyJSON
           break;
 
         default:
-          const auto& value = try_read_Value(p);
+          const auto& value = try_read_Value(p, parse_result);
           if (value == nullptr)
           {
             // ERROR: unknown character
@@ -1732,6 +1867,7 @@ namespace TinyJSON
             // ERROR: We found a value but we expected a comma.
             delete value;
             free_values(values);
+            parse_result.assign_parse_exception_message("We found a value but we expected a comma.");
             return nullptr;
           }
           values->push_back(value);
@@ -1741,12 +1877,13 @@ namespace TinyJSON
         }
       }
 
-      // ERROR end of the string was found and we didn't find what we needed.
+      // ERROR: end of the string was found and we didn't find what we needed.
       free_values(values);
+      parse_result.assign_parse_exception_message("End of the string was found and we didn't find what we needed.");
       return nullptr;
     }
 
-    static TJValue* try_read_Value(const TJCHAR*& p)
+    static TJValue* try_read_Value(const TJCHAR*& p, ParseResult& parse_result)
     {
       while (*p != TJ_NULL_TERMINATOR)
       {
@@ -1759,10 +1896,10 @@ namespace TinyJSON
 
         TJ_CASE_START_STRING
         {
-          auto string_value = try_continue_read_string(++p);
+          auto string_value = try_continue_read_string(++p, parse_result);
           if (nullptr == string_value)
           {
-            //  ERROR could not read the string properly.
+            //  ERROR: could not read the string properly.
             return nullptr;
           }
 
@@ -1777,6 +1914,7 @@ namespace TinyJSON
             if (nullptr == true_value)
             {
               //  ERROR could not read the word 'true'
+              parse_result.assign_parse_exception_message("Could not read the word 'true'.");
               return nullptr;
             }
             return true_value;
@@ -1787,7 +1925,8 @@ namespace TinyJSON
           auto false_value = try_continue_read_false(++p);
           if (nullptr == false_value)
           {
-            //  ERROR could not read the word 'true'
+            //  ERROR: could not read the word 'false'
+            parse_result.assign_parse_exception_message("Could not read the word 'false'.");
             return nullptr;
           }
           return false_value;
@@ -1798,7 +1937,8 @@ namespace TinyJSON
           auto null_value = try_continue_read_null(++p);
           if (nullptr == null_value)
           {
-            //  ERROR could not read the word 'true'
+            //  ERROR: could not read the word 'null'
+            parse_result.assign_parse_exception_message("Could not read the word 'null'.");
             return nullptr;
           }
           return null_value;
@@ -1807,10 +1947,10 @@ namespace TinyJSON
         TJ_CASE_DIGIT
         TJ_CASE_SIGN
         {
-          auto number = try_read_number(p);
+          auto number = try_read_number(p, parse_result);
           if (nullptr == number)
           {
-            //  ERROR could not read the word 'true'
+            //  ERROR: could not read number
             return nullptr;
           }
           return number;
@@ -1819,10 +1959,10 @@ namespace TinyJSON
         TJ_CASE_BEGIN_ARRAY
         {
           // an array within an array
-          auto tjvalue_array = try_continue_read_array(++p);
+          auto tjvalue_array = try_continue_read_array(++p, parse_result);
           if (tjvalue_array == nullptr)
           {
-            // Error:  something went wrong, the error was logged.
+            // Error: something went wrong reading an array, the error was logged.
             return nullptr;
           }
           return tjvalue_array;
@@ -1831,10 +1971,10 @@ namespace TinyJSON
         TJ_CASE_BEGIN_OBJECT
         {
           // an object within the object
-          auto tjvalue_object = try_continue_read_object(++p);
+          auto tjvalue_object = try_continue_read_object(++p, parse_result);
           if (tjvalue_object == nullptr)
           {
-            // Error:  something went wrong, the error was logged.
+            // Error: something went wrong reading an object, the error was logged.
             return nullptr;
           }
           return tjvalue_object;
@@ -1850,13 +1990,13 @@ namespace TinyJSON
       return nullptr;
     }
 
-    static TJMember* try_read_string_and_value(const TJCHAR*& p)
+    static TJMember* try_read_string_and_value(const TJCHAR*& p, ParseResult& parse_result)
     {
       // first we look for the string, all the elements are supposed to have one.
-      auto string_value = try_continue_read_string(++p);
+      auto string_value = try_continue_read_string(++p, parse_result);
       if (string_value == nullptr)
       {
-        //  ERROR: could not read the string.
+        //  ERROR: could not read the string
         return nullptr;
       }
 
@@ -1865,11 +2005,12 @@ namespace TinyJSON
       if (!try_skip_colon(p))
       {
         delete[] string_value;
-        //  ERROR: Could not locate the expected colon
+        //  ERROR: could not locate the expected colon after the key value
+        parse_result.assign_parse_exception_message("Could not locate the expected colon after the key value.");
         return nullptr;
       }
 
-      auto value = try_read_Value(p);
+      auto value = try_read_Value(p, parse_result);
       if (nullptr == value)
       {
         delete[] string_value;
@@ -1918,8 +2059,9 @@ namespace TinyJSON
   /// Parse a json file
   /// </summary>
   /// <param name="source">The source file we are trying to parse.</param>
+  /// <param name="options">The option we want to use when parsing this.</param>
   /// <returns></returns>
-  TJValue* TinyJSON::parse_file(const TJCHAR* file_path)
+  TJValue* TinyJSON::parse_file(const TJCHAR* file_path, const options& options)
   {
     // sanity check
     if (nullptr == file_path)
@@ -1948,34 +2090,64 @@ namespace TinyJSON
     // we can explicitely close the file to free the resources.
     file.close();
 
-    // parse the file.
-    auto value = parse(buffer);
-    
-    // get rid of the buffer
-    delete[] buffer;
+    try
+    {
+      // parse the file.
+      auto value = internal_parse(buffer, options);
 
-    // return whatever we managed to read out of the file.
-    return value;
+      // get rid of the buffer
+      delete[] buffer;
+
+      // return whatever we managed to read out of the file.
+      return value;
+    }
+    catch (...)
+    {
+      // get rid of the buffer
+      delete[] buffer;
+
+      // rethrow.
+      throw;
+    }
   }
 
   /// <summary>
   /// Parse a json string
   /// </summary>
   /// <param name="source">The source we are trying to parse.</param>
+  /// <param name="options">The option we want to use when parsing this.</param>
   /// <returns></returns>
-  TJValue* TinyJSON::parse(const TJCHAR* source)
+  TJValue* TinyJSON::parse(const TJCHAR* source, const options& options)
   {
+    return internal_parse(source, options);
+  }
+
+  /// <summary>
+  /// Internal parsing of a json source
+  /// We will use the option to throw, (or not).
+  /// </summary>
+  /// <param name="source"></param>
+  /// <param name="options"></param>
+  /// <returns></returns>
+  TJValue* TinyJSON::internal_parse(const TJCHAR* source, const options& options)
+  {
+    // sanity check
+    if (nullptr == source)
+    {
+      if (options.throw_exception)
+      {
+        throw TJParseException("The given source is null.");
+      }
+      return nullptr;
+    }
+
     // if we have a utf-8 content then we just skip those.
     if (TJHelper::has_utf8_bom(source))
     {
       source += 3;
     }
 
-    // sanity check
-    if (nullptr == source)
-    {
-      return nullptr;
-    }
+    ParseResult parse_result(options);
 
     // we can only have one value and nothing else
     TJValue* value_found = nullptr;
@@ -1997,10 +2169,11 @@ namespace TinyJSON
         }
 
         // try and look for the value
-        value_found = TJHelper::try_read_Value(source);
+        value_found = TJHelper::try_read_Value(source, parse_result);
         if (nullptr == value_found)
         {
           // there was an issue trying to parse.
+          parse_result.throw_if_parse_exception();
           return nullptr;
         }
         break;
@@ -2010,6 +2183,7 @@ namespace TinyJSON
     // return if we found anything.
     // if we found nothing ... then it is not an error, 
     // just an empty string
+    parse_result.throw_if_parse_exception();
     return value_found != nullptr ? value_found : new TJValueString(TJCHARPREFIX(""));
   }
 

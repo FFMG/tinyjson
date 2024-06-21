@@ -21,6 +21,7 @@ set( Sources
   "testtinyjsonarrays.cpp"
   "testtinyjsonbooleans.cpp"
   "testtinyjsondump.cpp"
+  "testtinyjsonexceptions.cpp"
   "testtinyjsonexponents.cpp"
   "testtinyjsonnulls.cpp"
   "testtinyjsonnumbers.cpp"
