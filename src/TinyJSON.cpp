@@ -1679,13 +1679,17 @@ namespace TinyJSON
         const auto& unsigned_exponent = fast_string_to_long_long(possible_exponent);
         delete[] possible_exponent;
 
+        // as per the spec it is allowed to have 1e00
+        // https://github.com/FFMG/tinyjson/issues/14
         if (0 == unsigned_exponent)
         {
-          // ERROR: we cannot have an exponent with zero.
-          parse_result.assign_parse_exception_message("We cannot have an exponent with zero.");
-          return nullptr;
+          exponent = 0;
+          is_negative_exponent = false;
         }
-        exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
+        else
+        {
+          exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
+        }
       }
       return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent);
     }
