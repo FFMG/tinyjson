@@ -69,7 +69,7 @@ TEST(TestExponents, InvalidMissingNegativeExponent) {
 }
 
 TEST(TestExponents, ExponentCanBeZero) {
-  TinyJSON::options options = {};
+  TinyJSON::parse_options options = {};
   options.throw_exception = true;
   auto json = TinyJSON::TinyJSON::parse(R"(
 {
@@ -90,7 +90,7 @@ TEST(TestExponents, ExponentCanBeZero) {
 }
 
 TEST(TestExponents, NegativeExponentCanBeZero) {
-  TinyJSON::options options = {};
+  TinyJSON::parse_options options = {};
   options.throw_exception = true;
   auto json = TinyJSON::TinyJSON::parse(R"(
 {

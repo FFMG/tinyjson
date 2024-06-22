@@ -3,13 +3,8 @@
 // See the LICENSE file in the project root for more information.
 #include "TinyJSON.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstring> 
-#include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <string> 
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
@@ -145,9 +140,9 @@ namespace TinyJSON
   class ParseResult
   {
   public:
-    ParseResult(const options& options) :
-      _parse_exception_message(nullptr),
-      _options(options),
+    ParseResult(const parse_options& parse_options) :
+      _exception_message(nullptr),
+      _options(parse_options),
       _depth(0)
     {
     }
@@ -157,7 +152,7 @@ namespace TinyJSON
 
     ~ParseResult()
     {
-      free_parse_exception_message();
+      free_exception_message();
     }
 
     void push_depth()
@@ -179,53 +174,124 @@ namespace TinyJSON
     /// Assign a parse error message.
     /// </summary>
     /// <param name="parse_exception_message"></param>
-    void assign_parse_exception_message(const char* parse_exception_message)
+    void assign_exception_message(const char* parse_exception_message)
     {
-      free_parse_exception_message();
+      free_exception_message();
       if (parse_exception_message != nullptr)
       {
         auto length = strlen(parse_exception_message);
-        _parse_exception_message = new char[length + 1];
-        std::strcpy(_parse_exception_message, parse_exception_message);
+        _exception_message = new char[length + 1];
+        std::strcpy(_exception_message, parse_exception_message);
       }
     }
 
-    void throw_if_parse_exception()
+    void throw_if_exception()
     {
       if (!_options.throw_exception)
       {
         return;
       }
-      if (!has_parse_exception_message())
+      if (!has_exception_message())
       {
         return;
       }
-      throw TJParseException(_parse_exception_message);
+      throw TJParseException(_exception_message);
     }
 
-    bool has_parse_exception_message() const
+    bool has_exception_message() const
     {
-      return _parse_exception_message != nullptr;
+      return _exception_message != nullptr;
     }
 
-    const options& parse_options() const
+    const parse_options& options() const
     {
       return _options;
     }
 
   protected:
-    void free_parse_exception_message() noexcept
+    void free_exception_message() noexcept
     {
-      if (_parse_exception_message != nullptr)
+      if (_exception_message != nullptr)
       {
-        delete[] _parse_exception_message;
-        _parse_exception_message = nullptr;
+        delete[] _exception_message;
+        _exception_message = nullptr;
       }
     }
 
-    char* _parse_exception_message;
-    const options& _options;
+    char* _exception_message;
+    const parse_options& _options;
     unsigned int _depth;
+  };
+
+  ///////////////////////////////////////
+  // Write result.
+  class WriteResult
+  {
+  public:
+    WriteResult(const write_options& write_options) :
+      _exception_message(nullptr),
+      _options(write_options)
+    {
+    }
+
+    WriteResult(const WriteResult& parse_result) = delete;
+    WriteResult& operator=(const WriteResult& parse_result) = delete;
+
+    ~WriteResult()
+    {
+      free_exception_message();
+    }
+
+    /// <summary>
+    /// Assign a write error message.
+    /// </summary>
+    /// <param name="write_exception_message"></param>
+    void assign_exception_message(const char* write_exception_message)
+    {
+      free_exception_message();
+      if (write_exception_message != nullptr)
+      {
+        auto length = strlen(write_exception_message);
+        _exception_message = new char[length + 1];
+        std::strcpy(_exception_message, write_exception_message);
+      }
+    }
+
+    void throw_if_exception()
+    {
+      if (!_options.throw_exception)
+      {
+        return;
+      }
+      if (!has_exception_message())
+      {
+        return;
+      }
+      throw TJWriteException(_exception_message);
+    }
+
+    bool has_exception_message() const
+    {
+      return _exception_message != nullptr;
+    }
+
+    const write_options& options() const
+    {
+      return _options;
+    }
+
+  protected:
+    void free_exception_message() noexcept
+    {
+      if (_exception_message != nullptr)
+      {
+        delete[] _exception_message;
+        _exception_message = nullptr;
+      }
+    }
+
+    char* _exception_message;
+    const write_options& _options;
   };
 
   ///////////////////////////////////////
@@ -273,6 +339,59 @@ namespace TinyJSON
   }
 
   void TJParseException::free_message() noexcept
+  {
+    if (_message != nullptr)
+    {
+      delete[] _message;
+      _message = nullptr;
+    }
+  }
+
+  ///////////////////////////////////////
+  /// Write Exception
+  TJWriteException::TJWriteException(const char* message) :
+    _message(nullptr)
+  {
+    assign_message(message);
+  }
+
+  TJWriteException::TJWriteException(const TJWriteException& exception)
+    : _message(nullptr)
+  {
+    *this = exception;
+  }
+
+  TJWriteException::~TJWriteException()
+  {
+    free_message();
+  }
+
+  TJWriteException& TJWriteException::operator=(const TJWriteException& exception)
+  {
+    if (this != &exception)
+    {
+      assign_message(exception._message);
+    }
+    return *this;
+  }
+
+  const char* TJWriteException::what() const noexcept
+  {
+    return _message == nullptr ? "Unknown" : _message;
+  }
+
+  void TJWriteException::assign_message(const char* message)
+  {
+    free_message();
+    if (message != nullptr)
+    {
+      auto length = strlen(message);
+      _message = new char[length + 1];
+      std::strcpy(_message, message);
+    }
+  }
+
+  void TJWriteException::free_message() noexcept
   {
     if (_message != nullptr)
     {
@@ -964,7 +1083,7 @@ namespace TinyJSON
           case  TJ_ESCAPE_TAB:            // % x74 / ; t    tab             U + 0009
             // ERROR: invalid character inside the string.
             delete[] result;
-            parse_result.assign_parse_exception_message("Invalid character inside the string.");
+            parse_result.assign_exception_message("Invalid character inside the string.");
             return nullptr;
           }
           add_char_to_string(*p, result, result_pos, result_max_length);
@@ -976,7 +1095,7 @@ namespace TinyJSON
           {
             delete[] result;
             // ERROR: invalid/unknown character after single reverse solidus.
-            parse_result.assign_parse_exception_message("Invalid/unknown character after single reverse solidus.");
+            parse_result.assign_exception_message("Invalid/unknown character after single reverse solidus.");
             return nullptr;
           }
           p++;
@@ -993,7 +1112,7 @@ namespace TinyJSON
         case TJ_ESCAPE_FORM_FEED:       // % x66 / ; f    form feed       U + 000C
           delete[] result;
           // ERROR: invalid character inside the string.
-          parse_result.assign_parse_exception_message("Invalid character inside the string..");
+          parse_result.assign_exception_message("Invalid character inside the string..");
           return nullptr;
 
         TJ_CASE_START_STRING
@@ -1014,7 +1133,7 @@ namespace TinyJSON
 
       // // ERROR: we could not close the object.
       delete[] result;
-      parse_result.assign_parse_exception_message("We could not close the string.");
+      parse_result.assign_exception_message("We could not close the string.");
       return nullptr;
     }
 
@@ -1474,7 +1593,7 @@ namespace TinyJSON
             if (found_spaces > 0)
             {
               // ERROR: Number has a space between it.
-              parse_result.assign_parse_exception_message("Number has a space between it.");
+              parse_result.assign_exception_message("Number has a space between it.");
               return nullptr;
             }
             p++;
@@ -1510,7 +1629,7 @@ namespace TinyJSON
       auto whole_number = try_read_whole_number(p, parse_result);
       if (nullptr == whole_number)
       {
-        parse_result.assign_parse_exception_message("Fraction does not have a number after the token '.'");
+        parse_result.assign_exception_message("Fraction does not have a number after the token '.'");
         return nullptr;
       }
       // trip the trailling zeros are they are not needed in a fraction
@@ -1641,7 +1760,7 @@ namespace TinyJSON
       if (has_possible_double_zero(possible_number))
       {
         // ERROR: Numbers cannot have leading zeros
-        parse_result.assign_parse_exception_message("Numbers cannot have leading zeros.");
+        parse_result.assign_exception_message("Numbers cannot have leading zeros.");
         delete[] possible_number;
         return nullptr;
       }
@@ -1690,7 +1809,7 @@ namespace TinyJSON
         if (nullptr == possible_exponent)
         {
           // ERROR: we cannot have a number like '-12e' or '42e
-          parse_result.assign_parse_exception_message("Number has exponent 'e' or 'E' but does not have a number.");
+          parse_result.assign_exception_message("Number has exponent 'e' or 'E' but does not have a number.");
           return nullptr;
         }
 
@@ -1749,10 +1868,10 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_continue_read_object(const TJCHAR*& p, ParseResult& parse_result)
     {
-      if (parse_result.current_depth() >= parse_result.parse_options().max_depth)
+      if (parse_result.current_depth() >= parse_result.options().max_depth)
       {
         // Error: We reached the max depth
-        parse_result.assign_parse_exception_message("Reached the max parse depth (object).");
+        parse_result.assign_exception_message("Reached the max parse depth (object).");
         return nullptr;
       }
       //  assume no members in that object.
@@ -1776,7 +1895,7 @@ namespace TinyJSON
             // ERROR: unexpected end of object, there was a "," after
             //        the last string and we expected a string now, not a close "}"
             free_members(members);
-            parse_result.assign_parse_exception_message("Unexpected end of object, there was a ', ' after the last string.");
+            parse_result.assign_exception_message("Unexpected end of object, there was a ', ' after the last string.");
             return nullptr;
           }
           p++;
@@ -1800,7 +1919,7 @@ namespace TinyJSON
           {
             // ERROR: expected a comma after the last element
             free_members(members);
-            parse_result.assign_parse_exception_message("Expected a comma after the last element.");
+            parse_result.assign_exception_message("Expected a comma after the last element.");
             return nullptr;
           }
 
@@ -1826,7 +1945,7 @@ namespace TinyJSON
           {
             // ERROR: found a comma out of order
             free_members(members);
-            parse_result.assign_parse_exception_message("Found a comma out of order.");
+            parse_result.assign_exception_message("Found a comma out of order.");
             return nullptr;
           }
           // we are no longer after the string
@@ -1839,14 +1958,14 @@ namespace TinyJSON
         default:
           // ERROR: unknown character
           free_members(members);
-          parse_result.assign_parse_exception_message("Unknown character.");
+          parse_result.assign_exception_message("Unknown character.");
           return nullptr;
         }
       }
 
       // ERROR end of the string was found and we didn't find what we needed.
       free_members(members);
-      parse_result.assign_parse_exception_message("End of the string was found and we didn't find what we needed.");
+      parse_result.assign_exception_message("End of the string was found and we didn't find what we needed.");
       return nullptr;
     }
 
@@ -1858,10 +1977,10 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_continue_read_array(const TJCHAR*& p, ParseResult& parse_result)
     {
-      if (parse_result.current_depth() >= parse_result.parse_options().max_depth)
+      if (parse_result.current_depth() >= parse_result.options().max_depth)
       {
         // Error: We reached the max depth
-        parse_result.assign_parse_exception_message("Reached the max parse depth (array).");
+        parse_result.assign_exception_message("Reached the max parse depth (array).");
         return nullptr;
       }
 
@@ -1884,7 +2003,7 @@ namespace TinyJSON
             // ERROR: unexpected end of array, there was a "," after
             //        the last value and we expected a value now, not a close "]"
             free_values(values);
-            parse_result.assign_parse_exception_message("Unexpected end of array, there was a ', ' after the last string.");
+            parse_result.assign_exception_message("Unexpected end of array, there was a ', ' after the last string.");
             return nullptr;
           }
           p++;
@@ -1898,7 +2017,7 @@ namespace TinyJSON
           {
             // ERROR: found a comma out of order, (2 commas)
             free_values(values);
-            parse_result.assign_parse_exception_message("Found a comma out of order, (2 commas).");
+            parse_result.assign_exception_message("Found a comma out of order, (2 commas).");
             return nullptr;
           }
           // we are now waiting for a value
@@ -1924,7 +2043,7 @@ namespace TinyJSON
             // ERROR: We found a value but we expected a comma.
             delete value;
             free_values(values);
-            parse_result.assign_parse_exception_message("We found a value but we expected a comma.");
+            parse_result.assign_exception_message("We found a value but we expected a comma.");
             return nullptr;
           }
           values->push_back(value);
@@ -1936,7 +2055,7 @@ namespace TinyJSON
 
       // ERROR: end of the string was found and we didn't find what we needed.
       free_values(values);
-      parse_result.assign_parse_exception_message("End of the string was found and we didn't find what we needed.");
+      parse_result.assign_exception_message("End of the string was found and we didn't find what we needed.");
       return nullptr;
     }
 
@@ -1971,7 +2090,7 @@ namespace TinyJSON
             if (nullptr == true_value)
             {
               //  ERROR could not read the word 'true'
-              parse_result.assign_parse_exception_message("Could not read the word 'true'.");
+              parse_result.assign_exception_message("Could not read the word 'true'.");
               return nullptr;
             }
             return true_value;
@@ -1983,7 +2102,7 @@ namespace TinyJSON
           if (nullptr == false_value)
           {
             //  ERROR: could not read the word 'false'
-            parse_result.assign_parse_exception_message("Could not read the word 'false'.");
+            parse_result.assign_exception_message("Could not read the word 'false'.");
             return nullptr;
           }
           return false_value;
@@ -1995,7 +2114,7 @@ namespace TinyJSON
           if (nullptr == null_value)
           {
             //  ERROR: could not read the word 'null'
-            parse_result.assign_parse_exception_message("Could not read the word 'null'.");
+            parse_result.assign_exception_message("Could not read the word 'null'.");
             return nullptr;
           }
           return null_value;
@@ -2043,7 +2162,7 @@ namespace TinyJSON
 
         default:
           // ERROR: Unexpected Token while trying to read value.
-          parse_result.assign_parse_exception_message("Unexpected Token while trying to read value.");
+          parse_result.assign_exception_message("Unexpected Token while trying to read value.");
           return nullptr;
         }
       }
@@ -2068,7 +2187,7 @@ namespace TinyJSON
       {
         delete[] string_value;
         //  ERROR: could not locate the expected colon after the key value
-        parse_result.assign_parse_exception_message("Could not locate the expected colon after the key value.");
+        parse_result.assign_exception_message("Could not locate the expected colon after the key value.");
         return nullptr;
       }
 
@@ -2117,13 +2236,26 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TinyJSON
+
+  /// <summary>
+  /// Write a value to a file.
+  /// </summary>
+  /// <param name="file_path">The path of the file.</param>
+  /// <param name="root">the value we are writting</param>
+  /// <param name="write_options">The options we will be using to write</param>
+  /// <returns></returns>
+  bool TinyJSON::write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
+  {
+    return internal_write_file(file_path, root, write_options);
+  }
+
   /// <summary>
   /// Parse a json file
   /// </summary>
   /// <param name="source">The source file we are trying to parse.</param>
-  /// <param name="options">The option we want to use when parsing this.</param>
+  /// <param name="parse_options">The option we want to use when parsing this.</param>
   /// <returns></returns>
-  TJValue* TinyJSON::parse_file(const TJCHAR* file_path, const options& options)
+  TJValue* TinyJSON::parse_file(const TJCHAR* file_path, const parse_options& parse_options)
   {
     // sanity check
     if (nullptr == file_path)
@@ -2155,7 +2287,7 @@ namespace TinyJSON
     try
     {
       // parse the file.
-      auto value = internal_parse(buffer, options);
+      auto value = internal_parse(buffer, parse_options);
 
       // get rid of the buffer
       delete[] buffer;
@@ -2178,10 +2310,10 @@ namespace TinyJSON
   /// </summary>
   /// <param name="source">The source we are trying to parse.</param>
   /// <param name="options">The option we want to use when parsing this.</param>
-  /// <returns></returns>
-  TJValue* TinyJSON::parse(const TJCHAR* source, const options& options)
+  /// <returns></parse_options>
+  TJValue* TinyJSON::parse(const TJCHAR* source, const parse_options& parse_options)
   {
-    return internal_parse(source, options);
+    return internal_parse(source, parse_options);
   }
 
   /// <summary>
@@ -2189,17 +2321,16 @@ namespace TinyJSON
   /// We will use the option to throw, (or not).
   /// </summary>
   /// <param name="source"></param>
-  /// <param name="options"></param>
+  /// <param name="parse_options"></param>
   /// <returns></returns>
-  TJValue* TinyJSON::internal_parse(const TJCHAR* source, const options& options)
+  TJValue* TinyJSON::internal_parse(const TJCHAR* source, const parse_options& parse_options)
   {
     // sanity check
+    ParseResult parse_result(parse_options);
     if (nullptr == source)
     {
-      if (options.throw_exception)
-      {
-        throw TJParseException("The given source is null.");
-      }
+      parse_result.assign_exception_message("The given source is null.");
+      parse_result.throw_if_exception();
       return nullptr;
     }
 
@@ -2208,8 +2339,6 @@ namespace TinyJSON
     {
       source += 3;
     }
-
-    ParseResult parse_result(options);
 
     // we can only have one value and nothing else
     TJValue* value_found = nullptr;
@@ -2225,10 +2354,10 @@ namespace TinyJSON
         if (nullptr != value_found)
         {
           // Error: Unexpected multiple JSON values in root.
-          parse_result.assign_parse_exception_message("Unexpected multiple JSON values in root.");
+          parse_result.assign_exception_message("Unexpected multiple JSON values in root.");
           delete value_found;
-          TJASSERT(parse_result.has_parse_exception_message());
-          parse_result.throw_if_parse_exception();
+          TJASSERT(parse_result.has_exception_message());
+          parse_result.throw_if_exception();
           return nullptr;
         }
 
@@ -2237,32 +2366,93 @@ namespace TinyJSON
         if (nullptr == value_found)
         {
           // there was an issue trying to parse.
-          TJASSERT(parse_result.has_parse_exception_message());
-          parse_result.throw_if_parse_exception();
+          TJASSERT(parse_result.has_exception_message());
+          parse_result.throw_if_exception();
           return nullptr;
         }
         break;
       }
     }
 
-    if (options.specification == options::rfc4627 && !parse_result.has_parse_exception_message())
+    if (parse_options.specification == parse_options::rfc4627 && !parse_result.has_exception_message())
     {
       if (value_found == nullptr || (!value_found->is_array() && !value_found->is_object()))
       {
         // error: RFC 4627: A JSON text must be either an object or an array.
-        parse_result.assign_parse_exception_message("RFC 4627: A JSON text must be either an object or an array.");
+        parse_result.assign_exception_message("RFC 4627: A JSON text must be either an object or an array.");
         delete value_found;
 
         // throw if the options want us to, otherwise return null.
-        parse_result.throw_if_parse_exception();
+        parse_result.throw_if_exception();
         return nullptr;
       }
     }
 
     // return if we found anything.
     // if we found nothing ... then it is not an error, just an empty string
-    parse_result.throw_if_parse_exception();
+    parse_result.throw_if_exception();
     return value_found != nullptr ? value_found : new TJValueString(TJCHARPREFIX(""));
+  }
+
+  /// <summary>
+  /// Write a value to a file.
+  /// </summary>
+  /// <param name="file_path">The path of the file.</param>
+  /// <param name="root">the value we are writting</param>
+  /// <param name="write_options">The options we will be using to write</param>
+  /// <returns></returns>
+  bool TinyJSON::internal_write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
+  {
+    WriteResult write_result(write_options);
+
+    //  create the json first before we open anything.
+    auto json = root.dump(write_result.options().formating);
+    if (nullptr == json)
+    {
+      write_result.assign_exception_message("Unable to dump the json.");
+      write_result.throw_if_exception();
+      return false;
+    }
+
+    //  try and optn the file...
+    std::ofstream outFile(file_path, std::ios::out | std::ios::binary);
+    if (!outFile)
+    {
+      write_result.assign_exception_message("Unable to open file for writting.");
+      write_result.throw_if_exception();
+      return false;
+    }
+
+    if (write_result.options().byte_order_mark == write_options::utf8)
+    {
+      char utf8_marker[3]{ TJ_UTF8_BOM0, TJ_UTF8_BOM1, TJ_UTF8_BOM2 };
+      outFile.write(utf8_marker, 3);
+      if (!outFile)
+      {
+        write_result.assign_exception_message("Unable to write UTF-8 BOM.");
+        write_result.throw_if_exception();
+        return false;
+      }
+    }
+
+    outFile.write(json, strlen(json));
+
+    if (!outFile) 
+    {
+      write_result.assign_exception_message("Unable to write to file.");
+      write_result.throw_if_exception();
+      return false;
+    }
+
+    outFile.close();
+
+    if (!outFile) 
+    {
+      write_result.assign_exception_message("Unable to close the file.");
+      write_result.throw_if_exception();
+      return false;
+    }
+    return true;
   }
 
   ///////////////////////////////////////

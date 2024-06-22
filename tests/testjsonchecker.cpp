@@ -51,9 +51,9 @@ TEST(JSONchecker, AllFiles)
       continue;
     }
 
-    TinyJSON::options options;
+    TinyJSON::parse_options options;
     options.max_depth = 20;   //  for the one test case
-    options.specification = TinyJSON::options::rfc4627;   //  for the other test case
+    options.specification = TinyJSON::parse_options::rfc4627;   //  for the other test case
     if (is_fail)
     {
       // we expect a failure here

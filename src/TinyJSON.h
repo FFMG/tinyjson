@@ -2,6 +2,8 @@
 // Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+#ifndef TJ_INCLUDED 
+#define TJ_INCLUDED
 
 // https://semver.org/
 // Semantic Versioning 2.0.0
@@ -45,7 +47,7 @@ namespace TinyJSON
   /// <summary>
   /// The parsing options.
   /// </summary>
-  struct options
+  struct parse_options
   {
     enum specification
     {
@@ -68,6 +70,49 @@ namespace TinyJSON
     /// How deep we want to allow the array/objects to recurse.
     /// </summary>
     unsigned int max_depth = 64;  
+  };
+
+  /// <summary>
+  /// The write options.
+  /// </summary>
+  struct write_options
+  {
+    enum byte_order_mark
+    {
+      none,
+      utf8
+    };
+
+    /// <summary>
+    /// If we want to throw an exception or not.
+    /// </summary>
+    bool throw_exception = false;
+
+    /// <summary>
+    /// The formating type we want to use.
+    /// </summary>
+    formating formating = formating::indented;
+
+    /// <summary>
+    /// The byte order mark we will be using.
+    /// </summary>
+    byte_order_mark byte_order_mark = none;
+  };
+
+  class TJWriteException : public std::exception
+  {
+  public:
+    TJWriteException(const char* message);
+    TJWriteException(const TJWriteException& exception);
+    TJWriteException& operator=(const TJWriteException& exception);
+    virtual ~TJWriteException() noexcept;
+
+    virtual const char* what() const noexcept;
+
+  private:
+    void free_message() noexcept;
+    void assign_message(const char* message);
+    char* _message;
   };
 
   class TJParseException : public std::exception
@@ -140,17 +185,26 @@ namespace TinyJSON
     /// Parse a json string
     /// </summary>
     /// <param name="source">The source we are trying to parse.</param>
-    /// <param name="options">The option we want to use when parsing this.</param>
+    /// <param name="parse_options">The option we want to use when parsing this.</param>
     /// <returns></returns>
-    static TJValue* parse(const TJCHAR* source, const options& options = {});
+    static TJValue* parse(const TJCHAR* source, const parse_options& parse_options = {});
 
     /// <summary>
     /// Parse a json file
     /// </summary>
     /// <param name="file_path">The source file we are trying to parse.</param>
-    /// <param name="options">The option we want to use when parsing this.</param>
+    /// <param name="parse_options">The option we want to use when parsing this.</param>
     /// <returns></returns>
-    static TJValue* parse_file(const TJCHAR* file_path, const options& options = {});
+    static TJValue* parse_file(const TJCHAR* file_path, const parse_options& parse_options = {});
+
+    /// <summary>
+    /// Write a value to a file.
+    /// </summary>
+    /// <param name="file_path">The path of the file.</param>
+    /// <param name="root">the value we are writting</param>
+    /// <param name="write_options">The options we will be using to write</param>
+    /// <returns></returns>
+    static bool write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options = {});
 
   protected:
     /// <summary>
@@ -158,9 +212,18 @@ namespace TinyJSON
     /// We will use the option to throw, (or not).
     /// </summary>
     /// <param name="source"></param>
-    /// <param name="options"></param>
+    /// <param name="parse_options"></param>
     /// <returns></returns>
-    static TJValue* internal_parse(const TJCHAR* source, const options& options);
+    static TJValue* internal_parse(const TJCHAR* source, const parse_options& parse_options);
+
+    /// <summary>
+    /// Write a value to a file.
+    /// </summary>
+    /// <param name="file_path">The path of the file.</param>
+    /// <param name="root">the value we are writting</param>
+    /// <param name="write_options">The options we will be using to write</param>
+    /// <returns></returns>
+    static bool internal_write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options);
 
   private:
     TinyJSON() = delete;
@@ -428,3 +491,4 @@ namespace TinyJSON
     const int _exponent;
   };
 } // TinyJSON
+#endif // !TJ_INCLUDED 

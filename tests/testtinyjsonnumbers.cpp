@@ -415,6 +415,7 @@ TEST(TestNumbers, JustZero) {
   ASSERT_NE(nullptr, value);
 
   ASSERT_EQ(0, value->get_number());
+  delete json;
 }
 
 TEST(TestNumbers, JustZeroDecimal) {
@@ -425,4 +426,5 @@ TEST(TestNumbers, JustZeroDecimal) {
   ASSERT_NE(nullptr, value);
 
   ASSERT_EQ(0, value->get_number());
+  delete json;
 }

@@ -46,7 +46,7 @@ true
 
 ### Version Control
 
-We follow Semantic Versioning 2.0.0, (https://semver.org/)
+We follow Semantic Versioning 2.0.0, [semver.org](https://semver.org/)
 
 - MAJOR version when you make incompatible API changes
 - MINOR version when you add functionality in a backward compatible manner
@@ -63,13 +63,19 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 
 ## Options
 
+### Parse Options
+
 - Depth: (`max_depth:64`) You can set how deep you want to allow the parsing to go.
 - Throw: (`throw_exception:false`) If you want to throw exceptions or simply return null.
+- Specification: (`specification:parse_options::rfc8259`) What specs will the parser be following/enforcing.
+  - rfc4627
+  - rfc7159
+  - rfc8259
 
 For example ...
 
 ```cpp
-TinyJSON::options options = {};
+TinyJSON::parse_options options = {};
 options.throw_exception = true;
 options.max_depth = 10;
 
@@ -84,14 +90,48 @@ catch(TinyJSON::TJParseException ex)
 }
 ```
 
+### Write Options
+
+- Throw: (`throw_exception:false`) If you want to throw exceptions or simply return false.
+- formating: (`formating::indented`) The formating we want to write the file with.
+  - none
+  - indented
+- Byte order mark: (`byte_order_mark:none`)
+  - none
+  - uft8
+
+For example ...
+
+```cpp
+TinyJSON::write_options options = {};
+options.throw_exception = true;
+options.formating = TinyJSON::formating::none;
+
+try
+{
+  ...
+  // get JSON somewhere or create it.
+  ...
+  if( TinyJSON::TinyJSON::write_file("file.json", *json, options))
+  {
+    // all good
+  }
+  ...
+}
+catch(TinyJSON::TJParseException ex)
+{
+    ex.what(); // what?
+}
+```
+
 ### Exceptions
 
 #### Parsing Exception
 
-The parsing exception is `TinyJSON::TJParseException` and can be made optional in the `TinyJSON::options` flag.
+The parsing exception is `TinyJSON::TJParseException` and can be made optional in the `TinyJSON::parse_options` flag.
 
 ```cpp
-  TinyJSON::options options = {};
+  TinyJSON::parse_options options = {};
   options.throw_exception = true;
   try
   {
@@ -137,21 +177,18 @@ This will then return an object that you can inspect.
 
 ### Write a JSON string
 
-To read a JSON string you simply need to call the method `dump` on the JSON object returned.
+To write a JSON string you simply need to call the method `write_file` on the JSON object returned.
 
 ```cpp
   auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
-  auto indented_json = json->dump(TinyJSON::formating::indented); 
-  /*
-    { 
-      "Hello": "World"
-    }
-   */
-
-  auto notindented_json = json->dump(TinyJSON::formating::none); 
-  /*
-    {"Hello":"World"}
-   */
+  if( TinyJSON::TinyJSON::write_file("file.json", *json))
+  {
+    // all good
+  }
+  else
+  {
+    // something broke
+  }
   
   delete json;
 ```
