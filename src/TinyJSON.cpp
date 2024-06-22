@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 #include "TinyJSON.h"
 
+#include <algorithm>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 
