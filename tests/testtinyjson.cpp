@@ -500,6 +500,7 @@ TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnObject) {
   auto json = TinyJSON::TinyJSON::parse("{}", options);
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_object());
+  delete json;
 }
 
 TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnArray) {
@@ -509,4 +510,5 @@ TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnArray) {
   auto json = TinyJSON::TinyJSON::parse("[12,13,14]", options);
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_array());
+  delete json;
 }
