@@ -47,6 +47,18 @@ namespace TinyJSON
   /// </summary>
   struct options
   {
+    enum specification
+    {
+      rfc4627,
+      rfc7159,
+      rfc8259
+    };
+
+    /// <summary>
+    /// The RFC specification we want to follow.
+    /// </summary>
+    specification specification = rfc8259;
+
     /// <summary>
     /// If we want to throw an exception or not.
     /// </summary>

@@ -200,3 +200,12 @@ TEST(TestException, WeReachedMaxDepthMixed) {
   EXPECT_THROW(json = TinyJSON::TinyJSON::parse(R"({"a":[12,{"c":{}}]})", options), TinyJSON::TJParseException);
   delete json;
 }
+
+TEST(TestException, Rfc4627WantsAnObjectOrAnArray) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  options.specification = TinyJSON::options::rfc4627;
+  TinyJSON::TJValue* json = nullptr;
+  EXPECT_THROW(json = TinyJSON::TinyJSON::parse("true", options), TinyJSON::TJParseException);
+  delete json;
+}

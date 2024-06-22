@@ -6,6 +6,8 @@ TinyJSON is a fast and small C++ JSON parser
 
 [RFC 8259](https://www.wikidata.org/wiki/Q47322594) (replaces [RFC 7159](https://www.wikidata.org/wiki/Q47470410))
 
+See more in the [specifications document](./specifications.md).
+
 One of the important change is that prior to RFC 8259 only `objects` and `arrays` could be at the root.
 
 ```json

@@ -479,3 +479,34 @@ TEST(TestBasic, WeReachedMaxDepthMixed) {
   auto json = TinyJSON::TinyJSON::parse(R"({"a":[12,{"c":{}}]})", options);
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsNeither) {
+  TinyJSON::options options = {};
+  options.specification = TinyJSON::options::rfc4627;
+  auto json = TinyJSON::TinyJSON::parse("true", options);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsEmpty) {
+  TinyJSON::options options = {};
+  options.specification = TinyJSON::options::rfc4627;
+  auto json = TinyJSON::TinyJSON::parse("     ", options);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnObject) {
+  TinyJSON::options options = {};
+  options.specification = TinyJSON::options::rfc4627;
+  auto json = TinyJSON::TinyJSON::parse("{}", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_object());
+}
+
+TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnArray) {
+  TinyJSON::options options = {};
+  options.specification = TinyJSON::options::rfc4627;
+  options.max_depth = 4;
+  auto json = TinyJSON::TinyJSON::parse("[12,13,14]", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_array());
+}
