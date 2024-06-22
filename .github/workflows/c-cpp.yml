@@ -13,11 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: configure
-      run: ./configure
-    - name: make
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+    - name: build basic
+      run: g++ -std=c++11 -Wall -Wextra -Werror -O3 src\TinyJSON.cpp example\basic_parse.cpp -o a.exe
+      
