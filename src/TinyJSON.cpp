@@ -30,6 +30,17 @@ static constexpr TJCHAR TJ_ESCAPE_CARRIAGE_RETURN = static_cast<TJCHAR>(0x00D); 
 static constexpr TJCHAR TJ_ESCAPE_TAB = static_cast<TJCHAR>(0x009);             // % x74 / ; t    tab             U+0009
 // static constexpr TJCHAR TJ_ESCAPE_HEXDIG = '\u1234';// % x75 4HEXDIG; uXXXX                U + XXXX
 
+#ifdef _DEBUG
+# if defined(_MSC_VER)
+#   define TJASSERT(x) for(;;){ if(!x){ __debugbreak();}; break;}
+#else
+#   include  <assert.h>
+#   define TJASSERT(x) for(;;){ assert(x); break;}
+# endif
+#else
+# define TJASSERT(x) for(;;){break;}
+#endif
+
 #define TJ_CASE_SIGN          case '-': \
                               case '+': 
 
@@ -1499,6 +1510,7 @@ namespace TinyJSON
       auto whole_number = try_read_whole_number(p, parse_result);
       if (nullptr == whole_number)
       {
+        parse_result.assign_parse_exception_message("Fraction does not have a number after the token '.'");
         return nullptr;
       }
       // trip the trailling zeros are they are not needed in a fraction
@@ -1677,7 +1689,8 @@ namespace TinyJSON
         const auto& possible_exponent = try_read_whole_number(p, parse_result);
         if (nullptr == possible_exponent)
         {
-          // ERROR: we cannot have a number like '-12.' or '42.
+          // ERROR: we cannot have a number like '-12e' or '42e
+          parse_result.assign_parse_exception_message("Number has exponent 'e' or 'E' but does not have a number.");
           return nullptr;
         }
 
@@ -2029,7 +2042,8 @@ namespace TinyJSON
         }
 
         default:
-          // ERROR: expected colon after the string
+          // ERROR: Unexpected Token while trying to read value.
+          parse_result.assign_parse_exception_message("Unexpected Token while trying to read value.");
           return nullptr;
         }
       }
@@ -2210,9 +2224,11 @@ namespace TinyJSON
       default:
         if (nullptr != value_found)
         {
-          // we cannot find anything else, we already found our value.
+          // Error: Unexpected multiple JSON values in root.
+          parse_result.assign_parse_exception_message("Unexpected multiple JSON values in root.");
           delete value_found;
-          value_found = nullptr;
+          TJASSERT(parse_result.has_parse_exception_message());
+          parse_result.throw_if_parse_exception();
           return nullptr;
         }
 
@@ -2221,6 +2237,7 @@ namespace TinyJSON
         if (nullptr == value_found)
         {
           // there was an issue trying to parse.
+          TJASSERT(parse_result.has_parse_exception_message());
           parse_result.throw_if_parse_exception();
           return nullptr;
         }

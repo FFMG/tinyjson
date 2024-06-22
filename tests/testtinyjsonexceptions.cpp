@@ -209,3 +209,45 @@ TEST(TestException, Rfc4627WantsAnObjectOrAnArray) {
   EXPECT_THROW(json = TinyJSON::TinyJSON::parse("true", options), TinyJSON::TJParseException);
   delete json;
 }
+
+TEST(TestException, WeCannotHaveMoreThanOneItemInRoot) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse("{},[]", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, UnexpectedTokenWhileLookingForValue) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse(R"({"a" : Value)", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, ExponentDoesNotHaveANumber) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse("[0e]", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, ExponentDoesNotHaveANumberButHasNegativeSign) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse("[0e-]", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, ExponentDoesNotHaveANumberButHasPositiveSign) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse("[0e+]", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, FractionIsMissingNumberBeforExponent) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse("12.e2", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, FractionIsMissingNumber) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TinyJSON::parse("12.", options), TinyJSON::TJParseException);
+}
