@@ -185,11 +185,16 @@ namespace TinyJSON
       {
         return;
       }
-      if (nullptr == _parse_exception_message)
+      if (!has_parse_exception_message())
       {
         return;
       }
       throw TJParseException(_parse_exception_message);
+    }
+
+    bool has_parse_exception_message() const
+    {
+      return _parse_exception_message != nullptr;
     }
 
     const options& parse_options() const
@@ -2223,9 +2228,22 @@ namespace TinyJSON
       }
     }
 
+    if (options.specification == options::rfc4627 && !parse_result.has_parse_exception_message())
+    {
+      if (value_found == nullptr || (!value_found->is_array() && !value_found->is_object()))
+      {
+        // error: RFC 4627: A JSON text must be either an object or an array.
+        parse_result.assign_parse_exception_message("RFC 4627: A JSON text must be either an object or an array.");
+        delete value_found;
+
+        // throw if the options want us to, otherwise return null.
+        parse_result.throw_if_parse_exception();
+        return nullptr;
+      }
+    }
+
     // return if we found anything.
-    // if we found nothing ... then it is not an error, 
-    // just an empty string
+    // if we found nothing ... then it is not an error, just an empty string
     parse_result.throw_if_parse_exception();
     return value_found != nullptr ? value_found : new TJValueString(TJCHARPREFIX(""));
   }
