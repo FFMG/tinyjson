@@ -68,14 +68,46 @@ TEST(TestExponents, InvalidMissingNegativeExponent) {
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestExponents, ExponentCannotBeZero) {
+TEST(TestExponents, ExponentCanBeZero) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
   auto json = TinyJSON::TinyJSON::parse(R"(
 {
-  "a" : 12.2e0
+  "number" : 12e0
 }
-)"
+)", options
 );
-  ASSERT_EQ(nullptr, json);
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("number"));
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(12, valuea->get_number());
+
+  delete json;
+}
+
+TEST(TestExponents, NegativeExponentCanBeZero) {
+  TinyJSON::options options = {};
+  options.throw_exception = true;
+  auto json = TinyJSON::TinyJSON::parse(R"(
+{
+  "number" : 12e-000
+}
+)", options
+);
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("number"));
+  ASSERT_NE(nullptr, valuea);
+  ASSERT_EQ(12, valuea->get_number());
+
+  delete json;
 }
 
 TEST(TestExponents, FractionNUmbersWithExponentIsActuallyWholeNumber) {

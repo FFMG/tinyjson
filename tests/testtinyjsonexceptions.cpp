@@ -166,10 +166,12 @@ TEST(TestException, InvalidNumberWithLeadingZero) {
   EXPECT_THROW(TinyJSON::TinyJSON::parse("[0123]", options), TinyJSON::TJParseException);
 }
 
-TEST(TestException, ExponentsWithZero) {
+TEST(TestException, ExponentsWithZeroDoNotThrow) {
   TinyJSON::options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[1e00]", options), TinyJSON::TJParseException);
+  TinyJSON::TJValue* json = nullptr;
+  EXPECT_NO_THROW(json = TinyJSON::TinyJSON::parse("[1e00]", options));
+  delete json;
 }
 
 TEST(TestException, WeReachedMaxDepthOfObjects) {
