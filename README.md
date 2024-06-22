@@ -302,10 +302,10 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 - [] More tests!
 - [x] Add version number (started at version 0.0.1)
 - [x] Copyright
-- [] Add 2 kinds of error handling, either throw or return an error structure.
+- [x] Add 2 kinds of error handling, either throw or return an error structure.
 - [] Automated build
 - [] While we do not care about size, (on paper), it would be nice to implement limits in the code.
-  - [] depth
+  - [x] depth
   - [] string
   - [] numbers
 - [] Automated build
