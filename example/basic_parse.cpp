@@ -17,7 +17,7 @@ int main()
     auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
     std::cout << "Parsed an object with " << tjobject->get_number_of_items() << " item(s)\n";
 
-    std::cout << "\nPrety dump:\n" << tjobject->dump() << "\n";
+    std::cout << "\nPretty dump:\n" << tjobject->dump() << "\n";
   }
   else
   {
