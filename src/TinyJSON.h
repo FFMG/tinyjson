@@ -45,7 +45,7 @@ namespace TinyJSON
   /// <summary>
   /// The parsing options.
   /// </summary>
-  struct options
+  struct parse_options
   {
     enum specification
     {
@@ -140,17 +140,19 @@ namespace TinyJSON
     /// Parse a json string
     /// </summary>
     /// <param name="source">The source we are trying to parse.</param>
-    /// <param name="options">The option we want to use when parsing this.</param>
+    /// <param name="parse_options">The option we want to use when parsing this.</param>
     /// <returns></returns>
-    static TJValue* parse(const TJCHAR* source, const options& options = {});
+    static TJValue* parse(const TJCHAR* source, const parse_options& parse_options = {});
 
     /// <summary>
     /// Parse a json file
     /// </summary>
     /// <param name="file_path">The source file we are trying to parse.</param>
-    /// <param name="options">The option we want to use when parsing this.</param>
+    /// <param name="parse_options">The option we want to use when parsing this.</param>
     /// <returns></returns>
-    static TJValue* parse_file(const TJCHAR* file_path, const options& options = {});
+    static TJValue* parse_file(const TJCHAR* file_path, const parse_options& parse_options = {});
+
+    static bool write_file(const TJCHAR* file_path, const TJValue& root);
 
   protected:
     /// <summary>
@@ -158,9 +160,9 @@ namespace TinyJSON
     /// We will use the option to throw, (or not).
     /// </summary>
     /// <param name="source"></param>
-    /// <param name="options"></param>
+    /// <param name="parse_options"></param>
     /// <returns></returns>
-    static TJValue* internal_parse(const TJCHAR* source, const options& options);
+    static TJValue* internal_parse(const TJCHAR* source, const parse_options& parse_options);
 
   private:
     TinyJSON() = delete;

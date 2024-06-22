@@ -63,13 +63,19 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 
 ## Options
 
+### Parse Options
+
 - Depth: (`max_depth:64`) You can set how deep you want to allow the parsing to go.
 - Throw: (`throw_exception:false`) If you want to throw exceptions or simply return null.
+- Specification: (`specification:parse_options::rfc8259`) What specs will the parser be following/enforcing.
+  - rfc4627
+  - rfc7159
+  - rfc8259
 
 For example ...
 
 ```cpp
-TinyJSON::options options = {};
+TinyJSON::parse_options options = {};
 options.throw_exception = true;
 options.max_depth = 10;
 
@@ -88,10 +94,10 @@ catch(TinyJSON::TJParseException ex)
 
 #### Parsing Exception
 
-The parsing exception is `TinyJSON::TJParseException` and can be made optional in the `TinyJSON::options` flag.
+The parsing exception is `TinyJSON::TJParseException` and can be made optional in the `TinyJSON::parse_options` flag.
 
 ```cpp
-  TinyJSON::options options = {};
+  TinyJSON::parse_options options = {};
   options.throw_exception = true;
   try
   {

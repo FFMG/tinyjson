@@ -145,9 +145,9 @@ namespace TinyJSON
   class ParseResult
   {
   public:
-    ParseResult(const options& options) :
+    ParseResult(const parse_options& parse_options) :
       _parse_exception_message(nullptr),
-      _options(options),
+      _parse_options(parse_options),
       _depth(0)
     {
     }
@@ -192,7 +192,7 @@ namespace TinyJSON
 
     void throw_if_parse_exception()
     {
-      if (!_options.throw_exception)
+      if (!_parse_options.throw_exception)
       {
         return;
       }
@@ -208,9 +208,9 @@ namespace TinyJSON
       return _parse_exception_message != nullptr;
     }
 
-    const options& parse_options() const
+    const parse_options& options() const
     {
-      return _options;
+      return _parse_options;
     }
 
   protected:
@@ -224,7 +224,7 @@ namespace TinyJSON
     }
 
     char* _parse_exception_message;
-    const options& _options;
+    const parse_options& _parse_options;
     unsigned int _depth;
   };
 
@@ -1749,7 +1749,7 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_continue_read_object(const TJCHAR*& p, ParseResult& parse_result)
     {
-      if (parse_result.current_depth() >= parse_result.parse_options().max_depth)
+      if (parse_result.current_depth() >= parse_result.options().max_depth)
       {
         // Error: We reached the max depth
         parse_result.assign_parse_exception_message("Reached the max parse depth (object).");
@@ -1858,7 +1858,7 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_continue_read_array(const TJCHAR*& p, ParseResult& parse_result)
     {
-      if (parse_result.current_depth() >= parse_result.parse_options().max_depth)
+      if (parse_result.current_depth() >= parse_result.options().max_depth)
       {
         // Error: We reached the max depth
         parse_result.assign_parse_exception_message("Reached the max parse depth (array).");
@@ -2121,9 +2121,9 @@ namespace TinyJSON
   /// Parse a json file
   /// </summary>
   /// <param name="source">The source file we are trying to parse.</param>
-  /// <param name="options">The option we want to use when parsing this.</param>
+  /// <param name="parse_options">The option we want to use when parsing this.</param>
   /// <returns></returns>
-  TJValue* TinyJSON::parse_file(const TJCHAR* file_path, const options& options)
+  TJValue* TinyJSON::parse_file(const TJCHAR* file_path, const parse_options& parse_options)
   {
     // sanity check
     if (nullptr == file_path)
@@ -2155,7 +2155,7 @@ namespace TinyJSON
     try
     {
       // parse the file.
-      auto value = internal_parse(buffer, options);
+      auto value = internal_parse(buffer, parse_options);
 
       // get rid of the buffer
       delete[] buffer;
@@ -2178,10 +2178,10 @@ namespace TinyJSON
   /// </summary>
   /// <param name="source">The source we are trying to parse.</param>
   /// <param name="options">The option we want to use when parsing this.</param>
-  /// <returns></returns>
-  TJValue* TinyJSON::parse(const TJCHAR* source, const options& options)
+  /// <returns></parse_options>
+  TJValue* TinyJSON::parse(const TJCHAR* source, const parse_options& parse_options)
   {
-    return internal_parse(source, options);
+    return internal_parse(source, parse_options);
   }
 
   /// <summary>
@@ -2189,14 +2189,14 @@ namespace TinyJSON
   /// We will use the option to throw, (or not).
   /// </summary>
   /// <param name="source"></param>
-  /// <param name="options"></param>
+  /// <param name="parse_options"></param>
   /// <returns></returns>
-  TJValue* TinyJSON::internal_parse(const TJCHAR* source, const options& options)
+  TJValue* TinyJSON::internal_parse(const TJCHAR* source, const parse_options& parse_options)
   {
     // sanity check
     if (nullptr == source)
     {
-      if (options.throw_exception)
+      if (parse_options.throw_exception)
       {
         throw TJParseException("The given source is null.");
       }
@@ -2209,7 +2209,7 @@ namespace TinyJSON
       source += 3;
     }
 
-    ParseResult parse_result(options);
+    ParseResult parse_result(parse_options);
 
     // we can only have one value and nothing else
     TJValue* value_found = nullptr;
@@ -2245,7 +2245,7 @@ namespace TinyJSON
       }
     }
 
-    if (options.specification == options::rfc4627 && !parse_result.has_parse_exception_message())
+    if (parse_options.specification == parse_options::rfc4627 && !parse_result.has_parse_exception_message())
     {
       if (value_found == nullptr || (!value_found->is_array() && !value_found->is_object()))
       {
