@@ -144,6 +144,42 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
   }
 ```
 
+#### Write Exception
+
+The parsing exception is `TinyJSON::TJParseException` and can be made optional in the `TinyJSON::parse_options` flag.
+
+```cpp
+  TinyJSON::write_options options = {};
+  options.throw_exception = true;
+  options.write_formating = TinyJSON::formating::none;
+
+  try
+  {
+    auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
+    TinyJSON::TinyJSON::write_file("file.json", *json, options)
+    ...
+  }
+  catch(TinyJSON::TJWriteException ex)
+  {
+     ex.what(); // some write error
+  }
+```
+
+### Check if JSON is valid
+
+You can simply call the `TinyJSON::TinyJSON::is_valid(...)` method
+
+```cpp
+    if(TinyJSON::TinyJSON::parse("[123,456]"))
+    {
+      // do this
+    }
+    else
+    {
+      // do that
+    }
+```
+
 ### Read a JSON file
 
 To read a JSON file you simply need to call the static method `parse_file`, the extention does not have to be `.json`
@@ -308,7 +344,7 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
   - [x] depth
   - [] string
   - [] numbers
-- [] Automated build
+- [x] Automated build
 - [x] Run on linux/gcc/g++ or something other than visual studio.
      `g++ -std=c++11 -Wall -Wextra -Werror -O3 src/tinyJSON.cpp -o a.exe`
 - [] We need to add copy and move constructors to `TJValue` and the derived classes.

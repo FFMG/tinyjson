@@ -182,6 +182,14 @@ namespace TinyJSON
     virtual ~TinyJSON() = default;
 
     /// <summary>
+    /// Return if the given source is valid or not.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="parse_options"></param>
+    /// <returns></returns>
+    static bool is_valid(const TJCHAR* source, const parse_options& parse_options = {});
+
+    /// <summary>
     /// Parse a json string
     /// </summary>
     /// <param name="source">The source we are trying to parse.</param>

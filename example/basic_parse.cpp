@@ -6,10 +6,18 @@
  
 int main()
 {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = R"({
     "number" : 12,
     "string" : "Hello world"
-  })");
+  })";
+
+  if (!TinyJSON::TinyJSON::is_valid(json))
+  {
+    // this should have been valid!
+    return -1;
+  }
+
+  auto tjjson = TinyJSON::TinyJSON::parse(json);
   if(nullptr == json)
   {
     return -1;
@@ -25,7 +33,9 @@ int main()
   else
   {
     std::cout << "There was an issue parsing the object";
+    delete tjjson;
+    return -1;
   }
-  delete json;
+  delete tjjson;
   return 0;
 }
