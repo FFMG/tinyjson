@@ -28,7 +28,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: build options c++11
-      run: g++ -std=c++11 -fpermissive src/TinyJSON.cpp example/options.cpp -o options11.exe
+      run: g++ -std=c++11 -fpermissive src/TinyJSON.cpp example/options11.cpp -o options11.exe
 
     - name: run otpions11  
       run: |
