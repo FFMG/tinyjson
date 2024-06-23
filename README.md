@@ -93,7 +93,7 @@ catch(TinyJSON::TJParseException ex)
 ### Write Options
 
 - Throw: (`throw_exception:false`) If you want to throw exceptions or simply return false.
-- formating: (`formating::indented`) The formating we want to write the file with.
+- write_formating: (`write_formating::indented`) The formating we want to write the file with.
   - none
   - indented
 - Byte order mark: (`byte_order_mark:none`)
@@ -105,7 +105,7 @@ For example ...
 ```cpp
 TinyJSON::write_options options = {};
 options.throw_exception = true;
-options.formating = TinyJSON::formating::none;
+options.write_formating = TinyJSON::formating::none;
 
 try
 {
