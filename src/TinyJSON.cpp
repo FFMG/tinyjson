@@ -2319,6 +2319,20 @@ namespace TinyJSON
   }
 
   /// <summary>
+  /// Return if the given source is valid or not.
+  /// </summary>
+  /// <param name="source"></param>
+  /// <param name="parse_options"></param>
+  /// <returns></returns>
+  bool TinyJSON::is_valid(const TJCHAR* source, const parse_options& parse_options)
+  {
+    auto* tj_value = internal_parse(source, parse_options);
+    auto is_valid = tj_value != nullptr;
+    delete tj_value;
+    return is_valid;
+  }
+
+  /// <summary>
   /// Internal parsing of a json source
   /// We will use the option to throw, (or not).
   /// </summary>

@@ -512,3 +512,51 @@ TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnArray) {
   ASSERT_TRUE(json->is_array());
   delete json;
 }
+
+TEST(TestBasic, Rfc4627ArrayIsValid) {
+  TinyJSON::parse_options options = {};
+  options.specification = TinyJSON::parse_options::rfc4627;
+  options.max_depth = 4;
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("[12,13,14]", options));
+}
+
+TEST(TestBasic, Rfc4627ObjectIsValid) {
+  TinyJSON::parse_options options = {};
+  options.specification = TinyJSON::parse_options::rfc4627;
+  options.max_depth = 4;
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("{\"a\" : 12}", options));
+}
+
+TEST(TestBasic, Rfc4627IsNotValidAsItMustBeAnArrayOrObject) {
+  TinyJSON::parse_options options = {};
+  options.specification = TinyJSON::parse_options::rfc4627;
+  options.max_depth = 4;
+  ASSERT_FALSE(TinyJSON::TinyJSON::is_valid("true", options));
+}
+
+TEST(TestBasic, SimpleObjectIsValid) {
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("{}"));
+}
+
+TEST(TestBasic, TrueInRootIsValid) {
+  TinyJSON::parse_options options = {};
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("true"));
+}
+
+TEST(TestBasic, FalseInRootIsValid) {
+  TinyJSON::parse_options options = {};
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("false"));
+}
+
+TEST(TestBasic, NullInRootIsValid) {
+  TinyJSON::parse_options options = {};
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("null"));
+}
+
+TEST(TestBasic, ObjectIsValid) {
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("{\"a\" : 12}"));
+}
+
+TEST(TestBasic, ArrayIsValid) {
+  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("[12,13,14]"));
+}
