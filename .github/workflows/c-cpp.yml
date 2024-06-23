@@ -7,7 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  warning:
+  warnings:
+    name: Build Warnings as Errors
     runs-on: ubuntu-latest
 
     steps:
