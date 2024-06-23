@@ -309,6 +309,6 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
   - [] string
   - [] numbers
 - [] Automated build
-- [] Run on linux/gcc/g++ or something other than visual studio.
+- [x] Run on linux/gcc/g++ or something other than visual studio.
      `g++ -std=c++11 -Wall -Wextra -Werror -O3 src/tinyJSON.cpp -o a.exe`
 - [] We need to add copy and move constructors to `TJValue` and the derived classes.

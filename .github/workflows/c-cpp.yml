@@ -7,6 +7,20 @@ on:
     branches: [ "main" ]
 
 jobs:
+  warning:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build basic with warnings
+      run: g++ -std=c++20 -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/basic_parse.cpp -o basic_parse
+
+    - name: run basic with warnings
+      run: |
+        set +e
+        ./basic_parse
+
   build20:
     name: Build C++ 20
     runs-on: ubuntu-latest
