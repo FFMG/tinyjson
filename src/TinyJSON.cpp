@@ -2408,7 +2408,7 @@ namespace TinyJSON
     WriteResult write_result(write_options);
 
     //  create the json first before we open anything.
-    auto json = root.dump(write_result.options().formating);
+    auto json = root.dump(write_result.options().write_formating);
     if (nullptr == json)
     {
       write_result.assign_exception_message("Unable to dump the json.");

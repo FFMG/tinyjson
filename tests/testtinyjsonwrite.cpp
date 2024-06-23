@@ -101,7 +101,7 @@ TEST_F(TestWrite, ArrayWithValuesIsIndented)
 TEST_F(TestWrite, ArrayWithValuesNotIndented)
 {
   TinyJSON::write_options options = {};
-  options.formating = TinyJSON::formating::none;
+  options.write_formating = TinyJSON::formating::none;
   auto json = TinyJSON::TinyJSON::parse("[1,2,3,4]");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(TinyJSON::TinyJSON::write_file(filename, *json, options));
@@ -112,7 +112,7 @@ TEST_F(TestWrite, ArrayWithValuesNotIndented)
 TEST_F(TestWrite, ArrayWithValuesNotIndentedWithUtf8Bom)
 {
   TinyJSON::write_options options = {};
-  options.formating = TinyJSON::formating::none;
+  options.write_formating = TinyJSON::formating::none;
   options.byte_order_mark = TinyJSON::write_options::utf8;
   auto json = TinyJSON::TinyJSON::parse("[1,2,3,4]");
   ASSERT_NE(nullptr, json);
@@ -134,7 +134,7 @@ TEST_F(TestWrite, ArrayWithValuesNotIndentedWithUtf8Bom)
 TEST_F(TestWrite, ObjectWithValuesNotIndentedWithUtf8Bom)
 {
   TinyJSON::write_options options = {};
-  options.formating = TinyJSON::formating::none;
+  options.write_formating = TinyJSON::formating::none;
   options.byte_order_mark = TinyJSON::write_options::utf8;
   auto json = TinyJSON::TinyJSON::parse(R"({"a":12, "b" : {}})");
   ASSERT_NE(nullptr, json);

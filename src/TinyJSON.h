@@ -91,7 +91,7 @@ namespace TinyJSON
     /// <summary>
     /// The formating type we want to use.
     /// </summary>
-    formating formating = formating::indented;
+    formating write_formating = formating::indented;
 
     /// <summary>
     /// The byte order mark we will be using.
