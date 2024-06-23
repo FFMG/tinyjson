@@ -18,14 +18,14 @@ int main()
   }
 
   auto tjjson = TinyJSON::TinyJSON::parse(json);
-  if(nullptr == json)
+  if(nullptr == tjjson)
   {
     return -1;
   }
 
-  if(json->is_object())
+  if(tjjson->is_object())
   {
-    auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+    auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
     std::cout << "Parsed an object with " << tjobject->get_number_of_items() << " item(s)\n";
 
     std::cout << "\nPretty dump:\n" << tjobject->dump() << "\n";
