@@ -49,7 +49,7 @@ namespace TinyJSON
   // the various types of formating.
   enum class formating
   {
-    none,
+    minify,
     indented
   };
 
@@ -533,6 +533,21 @@ namespace TinyJSON
     delete tj;
     return json;
   }  
+
+  inline std::string operator ""_tj_minify(const TJCHAR * source, std::size_t)
+  {
+    parse_options options = {};
+    options.throw_exception = true;
+    auto* tj = TJ::parse(source, options);
+    if (nullptr == tj)
+    {
+      //  exception will throw.
+      return TJCHARPREFIX("");
+    }
+    std::string json(tj->dump(formating::minify));
+    delete tj;
+    return json;
+  }
   #endif
 } // TinyJSON
 #endif // !TJ_INCLUDED 

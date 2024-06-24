@@ -20,7 +20,7 @@ int main()
     auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
     std::cout << "Parsed an object with " << tjobject->get_number_of_items() << " item(s)\n";
 
-    std::cout << "\nNo Indent dump:\n" << tjobject->dump(TinyJSON::formating::none) << "\n";
+    std::cout << "\nNo Indent dump:\n" << tjobject->dump(TinyJSON::formating::minify) << "\n";
   }
   else
   {

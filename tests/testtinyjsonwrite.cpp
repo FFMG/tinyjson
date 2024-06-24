@@ -101,7 +101,7 @@ TEST_F(TestWrite, ArrayWithValuesIsIndented)
 TEST_F(TestWrite, ArrayWithValuesNotIndented)
 {
   TinyJSON::write_options options = {};
-  options.write_formating = TinyJSON::formating::none;
+  options.write_formating = TinyJSON::formating::minify;
   auto json = TinyJSON::TJ::parse("[1,2,3,4]");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(TinyJSON::TJ::write_file(filename, *json, options));
@@ -112,7 +112,7 @@ TEST_F(TestWrite, ArrayWithValuesNotIndented)
 TEST_F(TestWrite, ArrayWithValuesNotIndentedWithUtf8Bom)
 {
   TinyJSON::write_options options = {};
-  options.write_formating = TinyJSON::formating::none;
+  options.write_formating = TinyJSON::formating::minify;
   options.byte_order_mark = TinyJSON::write_options::utf8;
   auto json = TinyJSON::TJ::parse("[1,2,3,4]");
   ASSERT_NE(nullptr, json);
@@ -126,7 +126,7 @@ TEST_F(TestWrite, ArrayWithValuesNotIndentedWithUtf8Bom)
   options_parse.throw_exception = true;
   auto parse = TinyJSON::TJ::parse_file(filename, options_parse);
   ASSERT_NE(nullptr, parse);
-  ASSERT_STREQ(R"([1,2,3,4])", parse->dump(TinyJSON::formating::none));
+  ASSERT_STREQ(R"([1,2,3,4])", parse->dump(TinyJSON::formating::minify));
   delete json;
   delete parse;
 }
@@ -134,7 +134,7 @@ TEST_F(TestWrite, ArrayWithValuesNotIndentedWithUtf8Bom)
 TEST_F(TestWrite, ObjectWithValuesNotIndentedWithUtf8Bom)
 {
   TinyJSON::write_options options = {};
-  options.write_formating = TinyJSON::formating::none;
+  options.write_formating = TinyJSON::formating::minify;
   options.byte_order_mark = TinyJSON::write_options::utf8;
   auto json = TinyJSON::TJ::parse(R"({"a":12, "b" : {}})");
   ASSERT_NE(nullptr, json);
@@ -148,7 +148,7 @@ TEST_F(TestWrite, ObjectWithValuesNotIndentedWithUtf8Bom)
   options_parse.throw_exception = true;
   auto parse = TinyJSON::TJ::parse_file(filename, options_parse);
   ASSERT_NE(nullptr, parse);
-  ASSERT_STREQ(R"({"a":12,"b":{}})", parse->dump(TinyJSON::formating::none));
+  ASSERT_STREQ(R"({"a":12,"b":{}})", parse->dump(TinyJSON::formating::minify));
   delete json;
   delete parse;
 }

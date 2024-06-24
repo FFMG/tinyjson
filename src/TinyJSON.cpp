@@ -2592,7 +2592,7 @@ namespace TinyJSON
     free_last_dump();
     switch (formating)
     {
-    case formating::none:
+    case formating::minify:
       {
         internal_dump_configuration configuration(formating, nullptr, 
           TJCHARPREFIX(","), 
@@ -2622,7 +2622,7 @@ namespace TinyJSON
   const TJCHAR* TJValue::dump_string() const
   {
     free_last_dump();
-    internal_dump_configuration configuration(formating::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
+    internal_dump_configuration configuration(formating::minify, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
     internal_dump(configuration, nullptr);
     _last_dump = configuration._buffer;
     return _last_dump;
@@ -2946,7 +2946,7 @@ namespace TinyJSON
     }
 
     delete [] value->_last_dump;
-    internal_dump_configuration configuration(formating::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
+    internal_dump_configuration configuration(formating::minify, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
     value->internal_dump(configuration, nullptr);
     value->_last_dump = configuration._buffer;
 

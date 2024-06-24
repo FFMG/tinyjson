@@ -105,7 +105,7 @@ For example ...
 ```cpp
 TinyJSON::write_options options = {};
 options.throw_exception = true;
-options.write_formating = TinyJSON::formating::none;
+options.write_formating = TinyJSON::formating::minify;
 
 try
 {
@@ -151,7 +151,7 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
 ```cpp
   TinyJSON::write_options options = {};
   options.throw_exception = true;
-  options.write_formating = TinyJSON::formating::none;
+  options.write_formating = TinyJSON::formating::minify;
 
   try
   {
@@ -277,7 +277,7 @@ The formating types are
 
 ```cpp
   TinyJSON::formating::indented
-  TinyJSON::formating::none
+  TinyJSON::formating::minify
 ```
 
 ### Objects

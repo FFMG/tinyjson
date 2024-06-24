@@ -432,7 +432,7 @@ TEST(TestStrings, ADumpedWithAReverseSolidusKeepsReverseSolidus) {
   auto json = TinyJSON::TJ::parse(R"("This is a string.\\And this is after a reverse solidus")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\\And this is after a reverse solidus")", text);
@@ -443,7 +443,7 @@ TEST(TestStrings, ADumpedWithABackSpaceKeepsTheBackSpace) {
   auto json = TinyJSON::TJ::parse(R"("This is a string.\bAnd this is after a backspace")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\bAnd this is after a backspace")", text);
@@ -454,7 +454,7 @@ TEST(TestStrings, ADumpedWithAFormFeedKeepsTheFormFeed) {
   auto json = TinyJSON::TJ::parse(R"("This is a string.\fAnd this is after a form feed")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\fAnd this is after a form feed")", text);
@@ -465,7 +465,7 @@ TEST(TestStrings, ADumpedWithANewLineKeepsTheNewLine) {
   auto json = TinyJSON::TJ::parse(R"("This is a string.\nAnd this is a new line")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\nAnd this is a new line")", text);
@@ -476,7 +476,7 @@ TEST(TestStrings, ADumpedWithACarriageReturnKeepsTheCarriageReturn) {
   auto json = TinyJSON::TJ::parse(R"("This is a string.\rAnd this is after a carriage return")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\rAnd this is after a carriage return")", text);
@@ -487,7 +487,7 @@ TEST(TestStrings, ADumpedWithATabKeepsTheTab) {
   auto json = TinyJSON::TJ::parse(R"("This is a string.\tAnd this is after a tab")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\tAnd this is after a tab")", text);
