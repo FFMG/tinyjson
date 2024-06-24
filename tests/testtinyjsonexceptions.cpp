@@ -9,7 +9,7 @@ TEST(TestException, IfWeHaveNoExceptionWeDoNotThrow) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
   TinyJSON::TJValue* json = nullptr;
-  EXPECT_NO_THROW( json = TinyJSON::TinyJSON::parse("[12,13,14]", options));
+  EXPECT_NO_THROW( json = TinyJSON::TJ::parse("[12,13,14]", options));
   delete json;
 }
 
@@ -17,7 +17,7 @@ TEST(TestException, ParseExceptionMessageIsSetProperly) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
   TinyJSON::TJValue* json = nullptr;
-  EXPECT_NO_THROW(json = TinyJSON::TinyJSON::parse("[12,13,14]", options));
+  EXPECT_NO_THROW(json = TinyJSON::TJ::parse("[12,13,14]", options));
   delete json;
 }
 
@@ -43,134 +43,134 @@ TEST(TestException, CopyConstructorParseException) {
 TEST(TestException, EscapedTabCharacterInString) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[\"Tab\tin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[\"Tab\tin string\"]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, EscapedReturnCharacterInString) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[\"Return\rin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[\"Return\rin string\"]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, EscapedLineFeedCharacterInString) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[\"Line Feed\nin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[\"Line Feed\nin string\"]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, EscapedFormFeedCharacterInString) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[\"Form Feed\fin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[\"Form Feed\fin string\"]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, EscapedBackSpaceCharacterInString) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[\"BackSpace\bin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[\"BackSpace\bin string\"]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, SingleEscapeCharacterInString) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[\"Single Escape \\ \"]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[\"Single Escape \\ \"]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, TheStringIsNotClosed) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("\"Not Closedd", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("\"Not Closedd", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, CommaAtTheEndOfObject) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("{\"a\" : 12,}", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("{\"a\" : 12,}", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, CommaAtTheEndOfArray) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[12,]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[12,]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, UnExpectedCommaInObject) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("{,}", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("{,}", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, UnExpectedCommaInArray) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[,]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[,]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, MissingCommaBetweenItemsInObject) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("{\"a\" : 12 \"b\" : 12}", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("{\"a\" : 12 \"b\" : 12}", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, MissingCommaBetweenItemsInArray) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[12 \"a\"]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[12 \"a\"]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, UnExpectedCharacterInObject) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("{ % }", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("{ % }", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, UnExpectedEndOfStringWhileParsingObject) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("{", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("{", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, UnExpectedEndOfStringWhileParsingArray) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, BadTrue) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[tru]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[tru]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, BadFalse) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[fals]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[fals]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, BadNull) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[nul]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[nul]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, MissingColonInObject) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse(R"({ "Missing colon" null })", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse(R"({ "Missing colon" null })", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, InvalidNumberWithLeadingZero) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[0123]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[0123]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, ExponentsWithZeroDoNotThrow) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
   TinyJSON::TJValue* json = nullptr;
-  EXPECT_NO_THROW(json = TinyJSON::TinyJSON::parse("[1e00]", options));
+  EXPECT_NO_THROW(json = TinyJSON::TJ::parse("[1e00]", options));
   delete json;
 }
 
@@ -179,7 +179,7 @@ TEST(TestException, WeReachedMaxDepthOfObjects) {
   options.throw_exception = true;
   options.max_depth = 4;
   TinyJSON::TJValue* json = nullptr;
-  EXPECT_THROW(json = TinyJSON::TinyJSON::parse(R"({"a":{"b":{"c":{}}}})", options), TinyJSON::TJParseException);
+  EXPECT_THROW(json = TinyJSON::TJ::parse(R"({"a":{"b":{"c":{}}}})", options), TinyJSON::TJParseException);
   delete json;
 }
 
@@ -188,7 +188,7 @@ TEST(TestException, WeReachedMaxDepthOfArrays) {
   options.throw_exception = true;
   options.max_depth = 4;
   TinyJSON::TJValue* json = nullptr;
-  EXPECT_THROW(json = TinyJSON::TinyJSON::parse("[12,[13,[14,[]]]]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(json = TinyJSON::TJ::parse("[12,[13,[14,[]]]]", options), TinyJSON::TJParseException);
   delete json;
 }
 
@@ -197,7 +197,7 @@ TEST(TestException, WeReachedMaxDepthMixed) {
   options.throw_exception = true;
   options.max_depth = 4;
   TinyJSON::TJValue* json = nullptr;
-  EXPECT_THROW(json = TinyJSON::TinyJSON::parse(R"({"a":[12,{"c":{}}]})", options), TinyJSON::TJParseException);
+  EXPECT_THROW(json = TinyJSON::TJ::parse(R"({"a":[12,{"c":{}}]})", options), TinyJSON::TJParseException);
   delete json;
 }
 
@@ -206,48 +206,48 @@ TEST(TestException, Rfc4627WantsAnObjectOrAnArray) {
   options.throw_exception = true;
   options.specification = TinyJSON::parse_options::rfc4627;
   TinyJSON::TJValue* json = nullptr;
-  EXPECT_THROW(json = TinyJSON::TinyJSON::parse("true", options), TinyJSON::TJParseException);
+  EXPECT_THROW(json = TinyJSON::TJ::parse("true", options), TinyJSON::TJParseException);
   delete json;
 }
 
 TEST(TestException, WeCannotHaveMoreThanOneItemInRoot) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("{},[]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("{},[]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, UnexpectedTokenWhileLookingForValue) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse(R"({"a" : Value)", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse(R"({"a" : Value)", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, ExponentDoesNotHaveANumber) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[0e]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[0e]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, ExponentDoesNotHaveANumberButHasNegativeSign) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[0e-]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[0e-]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, ExponentDoesNotHaveANumberButHasPositiveSign) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("[0e+]", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("[0e+]", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, FractionIsMissingNumberBeforExponent) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("12.e2", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("12.e2", options), TinyJSON::TJParseException);
 }
 
 TEST(TestException, FractionIsMissingNumber) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  EXPECT_THROW(TinyJSON::TinyJSON::parse("12.", options), TinyJSON::TJParseException);
+  EXPECT_THROW(TinyJSON::TJ::parse("12.", options), TinyJSON::TJParseException);
 }

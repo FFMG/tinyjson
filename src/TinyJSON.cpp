@@ -406,7 +406,7 @@ namespace TinyJSON
   /// Protected Helper class
   class TJHelper
   {
-    friend TinyJSON;
+    friend TJ;
     friend TJMember;
     friend TJValue;
     friend TJValueArray;
@@ -2237,7 +2237,7 @@ namespace TinyJSON
   };  // Helper class
 
   ///////////////////////////////////////
-  /// TinyJSON
+  /// TJ
 
   /// <summary>
   /// Write a value to a file.
@@ -2246,7 +2246,7 @@ namespace TinyJSON
   /// <param name="root">the value we are writting</param>
   /// <param name="write_options">The options we will be using to write</param>
   /// <returns></returns>
-  bool TinyJSON::write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
+  bool TJ::write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
   {
     return internal_write_file(file_path, root, write_options);
   }
@@ -2257,7 +2257,7 @@ namespace TinyJSON
   /// <param name="source">The source file we are trying to parse.</param>
   /// <param name="parse_options">The option we want to use when parsing this.</param>
   /// <returns></returns>
-  TJValue* TinyJSON::parse_file(const TJCHAR* file_path, const parse_options& parse_options)
+  TJValue* TJ::parse_file(const TJCHAR* file_path, const parse_options& parse_options)
   {
     // sanity check
     if (nullptr == file_path)
@@ -2313,7 +2313,7 @@ namespace TinyJSON
   /// <param name="source">The source we are trying to parse.</param>
   /// <param name="options">The option we want to use when parsing this.</param>
   /// <returns></parse_options>
-  TJValue* TinyJSON::parse(const TJCHAR* source, const parse_options& parse_options)
+  TJValue* TJ::parse(const TJCHAR* source, const parse_options& parse_options)
   {
     return internal_parse(source, parse_options);
   }
@@ -2324,7 +2324,7 @@ namespace TinyJSON
   /// <param name="source"></param>
   /// <param name="parse_options"></param>
   /// <returns></returns>
-  bool TinyJSON::is_valid(const TJCHAR* source, const parse_options& parse_options)
+  bool TJ::is_valid(const TJCHAR* source, const parse_options& parse_options)
   {
     auto* tj_value = internal_parse(source, parse_options);
     auto is_valid = tj_value != nullptr;
@@ -2339,7 +2339,7 @@ namespace TinyJSON
   /// <param name="source"></param>
   /// <param name="parse_options"></param>
   /// <returns></returns>
-  TJValue* TinyJSON::internal_parse(const TJCHAR* source, const parse_options& parse_options)
+  TJValue* TJ::internal_parse(const TJCHAR* source, const parse_options& parse_options)
   {
     // sanity check
     ParseResult parse_result(parse_options);
@@ -2417,7 +2417,7 @@ namespace TinyJSON
   /// <param name="root">the value we are writting</param>
   /// <param name="write_options">The options we will be using to write</param>
   /// <returns></returns>
-  bool TinyJSON::internal_write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
+  bool TJ::internal_write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
   {
     WriteResult write_result(write_options);
 

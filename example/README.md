@@ -17,7 +17,7 @@ This shows how to pass options while parsing.
 
 ```cpp
 ...
-  auto jsonex = TinyJSON::TinyJSON::parse(R"({"number" : 12.e00})", {.throw_exception = true  });
+  auto jsonex = TinyJSON::TJ::parse(R"({"number" : 12.e00})", {.throw_exception = true  });
 ...
 ```
 
@@ -29,6 +29,6 @@ This test that the build works with c++ 11
 ...
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  auto jsonex = TinyJSON::TinyJSON::parse(R"({"number" : 12.e00})", options);
+  auto jsonex = TinyJSON::TJ::parse(R"({"number" : 12.e00})", options);
 ...
 ```

@@ -45,6 +45,14 @@ jobs:
         set +e
         ./options
 
+    - name: user literals
+      run: g++ -std=c++20 src/TinyJSON.cpp example/user_literals.cpp -o user_literals
+
+    - name: run user literals
+      run: |
+        set +e
+        ./options
+      
   build11:
     name: Build C++ 11
     runs-on: ubuntu-latest

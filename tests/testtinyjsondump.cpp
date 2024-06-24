@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestDump, EmptyArray) {
-  auto json = TinyJSON::TinyJSON::parse("[]");
+  auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::indented);
@@ -18,7 +18,7 @@ TEST(TestDump, EmptyArray) {
 }
 
 TEST(TestDump, EmptyObject) {
-  auto json = TinyJSON::TinyJSON::parse("{}");
+  auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::indented);
@@ -30,7 +30,7 @@ TEST(TestDump, EmptyObject) {
 }
 
 TEST(TestDump, EmptyArrayNoIndent) {
-  auto json = TinyJSON::TinyJSON::parse("[]");
+  auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::none);
@@ -42,7 +42,7 @@ TEST(TestDump, EmptyArrayNoIndent) {
 }
 
 TEST(TestDump, EmptyObjectNoIndent) {
-  auto json = TinyJSON::TinyJSON::parse("{}");
+  auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::none);
@@ -54,7 +54,7 @@ TEST(TestDump, EmptyObjectNoIndent) {
 }
 
 TEST(TestDump, EmptyArrayOfNumbersNoIndent) {
-  auto json = TinyJSON::TinyJSON::parse("[12,13,14]");
+  auto json = TinyJSON::TJ::parse("[12,13,14]");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::none);
@@ -65,7 +65,7 @@ TEST(TestDump, EmptyArrayOfNumbersNoIndent) {
 }
 
 TEST(TestDump, EmptyArrayOfFloatNumbersNoIndent) {
-  auto json = TinyJSON::TinyJSON::parse("[  1.2,  1.03 , 0.14 ]");
+  auto json = TinyJSON::TJ::parse("[  1.2,  1.03 , 0.14 ]");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::none);
@@ -76,7 +76,7 @@ TEST(TestDump, EmptyArrayOfFloatNumbersNoIndent) {
 }
 
 TEST(TestDump, EmptyArrayOfFloatNumbers) {
-  auto json = TinyJSON::TinyJSON::parse("[  1.2,  1.03 , 0.14 ]");
+  auto json = TinyJSON::TJ::parse("[  1.2,  1.03 , 0.14 ]");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::indented);
@@ -91,7 +91,7 @@ TEST(TestDump, EmptyArrayOfFloatNumbers) {
 }
 
 TEST(TestDump, EmptyArrayOfNumbers) {
-  auto json = TinyJSON::TinyJSON::parse("[12,13,14]");
+  auto json = TinyJSON::TJ::parse("[12,13,14]");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::indented);
@@ -115,7 +115,7 @@ TEST(TestDump, AnIntNumberByItSelf) {
   values.push_back("-1");
   for (auto& value : values)
   {
-    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
 
     const auto& text = json->dump(TinyJSON::formating::indented);
@@ -145,7 +145,7 @@ TEST(TestDump, AnIntNumberByItSelf2) {
 }
 
 TEST(TestDump, EmptyArrayOfVariousValues) {
-  auto json = TinyJSON::TinyJSON::parse("[ 12,true,null, false ]");
+  auto json = TinyJSON::TJ::parse("[ 12,true,null, false ]");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::indented);
@@ -162,7 +162,7 @@ TEST(TestDump, EmptyArrayOfVariousValues) {
 }
 
 TEST(TestDump, EmptyArrayOfVariousNotIndented) {
-  auto json = TinyJSON::TinyJSON::parse(R"([
+  auto json = TinyJSON::TJ::parse(R"([
   12,
   true,
   null,
@@ -184,7 +184,7 @@ TEST(TestDump, BooleanByItSelf) {
   values.push_back("false");
   for (auto& value : values)
   {
-    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
 
     const auto& text = json->dump(TinyJSON::formating::indented);
@@ -196,7 +196,7 @@ TEST(TestDump, BooleanByItSelf) {
 }
 
 TEST(TestDump, SimpleObjectWithNumbersNoIntent) {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = TinyJSON::TJ::parse(R"({
   "a"  : 12,
   "b" : 14
 })");
@@ -210,7 +210,7 @@ TEST(TestDump, SimpleObjectWithNumbersNoIntent) {
 }
 
 TEST(TestDump, SimpleObjectWithNumbers) {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = TinyJSON::TJ::parse(R"({
   "a"  : 12,
   "b" : 14
 })");
@@ -227,7 +227,7 @@ TEST(TestDump, SimpleObjectWithNumbers) {
 }
 
 TEST(TestDump, ObjectInObjectWithNumbers) {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = TinyJSON::TJ::parse(R"({
   "a"  : 12,
   "b" : {
     "aa"  : 12,
@@ -250,7 +250,7 @@ TEST(TestDump, ObjectInObjectWithNumbers) {
 }
 
 TEST(TestDump, ArrayInArrayWithNumbers) {
-  auto json = TinyJSON::TinyJSON::parse(R"([
+  auto json = TinyJSON::TJ::parse(R"([
   12,
   [12,13]
 ])");
@@ -270,7 +270,7 @@ TEST(TestDump, ArrayInArrayWithNumbers) {
 }
 
 TEST(TestDump, ThreeDeepArrayWithNumbersAndString) {
-  auto json = TinyJSON::TinyJSON::parse(R"([
+  auto json = TinyJSON::TJ::parse(R"([
   12,
   [13,
   [14,15,"Hello"]
@@ -299,7 +299,7 @@ TEST(TestDump, ThreeDeepArrayWithNumbersAndString) {
 }
 
 TEST(TestDump, ThreeDeepArrayWithNumbersAndStringNotIndented) {
-  auto json = TinyJSON::TinyJSON::parse(R"([
+  auto json = TinyJSON::TJ::parse(R"([
   12,
   [13,
   [14,15,"Hello"]
@@ -316,7 +316,7 @@ TEST(TestDump, ThreeDeepArrayWithNumbersAndStringNotIndented) {
 }
 
 TEST(TestDump, ThreeDeepObjectWithNumbersAndString) {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = TinyJSON::TJ::parse(R"({
   "a":12,
   "b":{"aa":13,
   "bb":{"aaa":14,"bbb":15,"ccc": "Hello"}
@@ -349,7 +349,7 @@ TEST(TestDump, StringByItSelf) {
   values.push_back(R"("Hello With Spaces")");
   for (auto& value : values)
   {
-    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
 
     const auto& text = json->dump(TinyJSON::formating::indented);
@@ -372,7 +372,7 @@ TEST(TestDump, AFloatNumberByItSelf) {
   values.push_back("-42.789");
   for (auto& value : values)
   {
-    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
     const auto& text = json->dump(TinyJSON::formating::indented);
     ASSERT_NE(nullptr, text);
@@ -392,7 +392,7 @@ TEST(TestDump, AnExponentNumberByItSelf) {
   values.push_back("-2.00001e+24");
   for (auto& value : values)
   {
-    auto json = TinyJSON::TinyJSON::parse(value.c_str());
+    auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
     const auto& text = json->dump(TinyJSON::formating::indented);
     ASSERT_NE(nullptr, text);
@@ -403,7 +403,7 @@ TEST(TestDump, AnExponentNumberByItSelf) {
 }
 
 TEST(TestDump, DumpOfAStringWillExcapeTheNewLine) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\nAnd this is a new line")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\nAnd this is a new line")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump(TinyJSON::formating::indented);

@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestExponents, FractionsWithLeadingZeros) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 62001e-3,
   "b" : 120012e-4,
@@ -39,7 +39,7 @@ TEST(TestExponents, FractionsWithLeadingZeros) {
 }
 
 TEST(TestExponents, InvalidWholeNumberWithExponent) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.e2
 }
@@ -49,7 +49,7 @@ TEST(TestExponents, InvalidWholeNumberWithExponent) {
 }
 
 TEST(TestExponents, InvalidMissingPositiveExponent) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.2e
 }
@@ -59,7 +59,7 @@ TEST(TestExponents, InvalidMissingPositiveExponent) {
 }
 
 TEST(TestExponents, InvalidMissingNegativeExponent) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.2-e
 }
@@ -71,7 +71,7 @@ TEST(TestExponents, InvalidMissingNegativeExponent) {
 TEST(TestExponents, ExponentCanBeZero) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "number" : 12e0
 }
@@ -92,7 +92,7 @@ TEST(TestExponents, ExponentCanBeZero) {
 TEST(TestExponents, NegativeExponentCanBeZero) {
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "number" : 12e-000
 }
@@ -111,7 +111,7 @@ TEST(TestExponents, NegativeExponentCanBeZero) {
 }
 
 TEST(TestExponents, FractionNUmbersWithExponentIsActuallyWholeNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.3e1,
   "b" : 12.1e2,
@@ -139,7 +139,7 @@ TEST(TestExponents, FractionNUmbersWithExponentIsActuallyWholeNumber) {
 }
 
 TEST(TestExponents, FractionNUmbersWithExponentIsActuallyWholeNumberWithPlusSign) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.1e+1,
   "b" : 12.1e+2,
@@ -167,7 +167,7 @@ TEST(TestExponents, FractionNUmbersWithExponentIsActuallyWholeNumberWithPlusSign
 }
 
 TEST(TestExponents, FractionNUmbersWithExponentRemoveUnusedExponent) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 123.456e2,
   "b" : -123.456e2,
@@ -200,7 +200,7 @@ TEST(TestExponents, FractionNUmbersWithExponentRemoveUnusedExponent) {
 }
 
 TEST(TestExponents, ExponentWithNoFraction) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12e3
 }
@@ -218,7 +218,7 @@ TEST(TestExponents, ExponentWithNoFraction) {
 }
 
 TEST(TestExponents, NegativeExponentDoesNotAlwaysMakeFraction) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12000e-3
 }
@@ -236,7 +236,7 @@ TEST(TestExponents, NegativeExponentDoesNotAlwaysMakeFraction) {
 }
 
 TEST(TestExponents, LargeExponentIsConvertedToSingleWholeNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 123.045e+25,
   "b" : 678.09e+25,
@@ -269,7 +269,7 @@ TEST(TestExponents, LargeExponentIsConvertedToSingleWholeNumber) {
 }
 
 TEST(TestExponents, TinyNumberWithLargeExponentShiftsEnoughToBecomeANumberAgain) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.00000000000000000001e+24
 }
@@ -287,7 +287,7 @@ TEST(TestExponents, TinyNumberWithLargeExponentShiftsEnoughToBecomeANumberAgain)
 }
 
 TEST(TestExponents, TinyNumberWithLargeExponentShiftsEnoughToBecomeFloatNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.00000000000000000001e+18
 }
@@ -305,7 +305,7 @@ TEST(TestExponents, TinyNumberWithLargeExponentShiftsEnoughToBecomeFloatNumber) 
 }
 
 TEST(TestExponents, NumberJustShiftsEnoughToBecomeANumberAgain) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.00001000000000000001e+18
 }
@@ -323,7 +323,7 @@ TEST(TestExponents, NumberJustShiftsEnoughToBecomeANumberAgain) {
 }
 
 TEST(TestExponents, ShortNumberWithLongPositiveExponentShiftsEnoughToBecomeANumberAgain) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.00001e+24
 }
@@ -341,7 +341,7 @@ TEST(TestExponents, ShortNumberWithLongPositiveExponentShiftsEnoughToBecomeANumb
 }
 
 TEST(TestExponents, PositiveExponentNumberCannotBeConvertedToWholeNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 2.00001e+24
 }
@@ -359,7 +359,7 @@ TEST(TestExponents, PositiveExponentNumberCannotBeConvertedToWholeNumber) {
 }
 
 TEST(TestExponents, PositiveExponentOfNegativeNumberNumberCannotBeConvertedToWholeNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : -2.00001e+24
 }
@@ -377,7 +377,7 @@ TEST(TestExponents, PositiveExponentOfNegativeNumberNumberCannotBeConvertedToWho
 }
 
 TEST(TestExponents, NegativeExponentNumberCannotBeConvertedToWholeNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.00001e-24,
   "b" : 10.00001000000000000001e-18
@@ -400,7 +400,7 @@ TEST(TestExponents, NegativeExponentNumberCannotBeConvertedToWholeNumber) {
 }
 
 TEST(TestExponents, NegativeExponentNumberShiftsEnoughToBecomeANumberAgain) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 1.00001e-24
 }
@@ -418,7 +418,7 @@ TEST(TestExponents, NegativeExponentNumberShiftsEnoughToBecomeANumberAgain) {
 }
 
 TEST(TestExponents, NegativeExponentNumberWithZeroWholeNumberShiftsEnoughToBecomeANumberAgain) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.00003000000000000002e-18
 }
@@ -436,7 +436,7 @@ TEST(TestExponents, NegativeExponentNumberWithZeroWholeNumberShiftsEnoughToBecom
 }
 
 TEST(TestExponents, FractionShiftExactlyToTheLeft) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.123e3
 }
@@ -454,7 +454,7 @@ TEST(TestExponents, FractionShiftExactlyToTheLeft) {
 }
 
 TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractions) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.123e2
 }
@@ -472,7 +472,7 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractions) {
 }
 
 TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractionsButHasNoLeadingZeros) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.123e2
 }
@@ -490,7 +490,7 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractionsButHasNoLe
 }
 
 TEST(TestExponents, FractionShiftToTheLeftLessThanTheTotalNumberOfFractionsButHasLeadingZeros) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.0012e2,
   "b" : 0.00012e3,
@@ -518,7 +518,7 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheTotalNumberOfFractionsButHa
 }
 
 TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractionsButHasLeadingZeros) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0.0123e3
 }

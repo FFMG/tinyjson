@@ -81,7 +81,7 @@ options.max_depth = 10;
 
 try
 {
-  auto blah = TinyJSON::TinyJSON::parse("[0123]", options)
+  auto blah = TinyJSON::TJ::parse("[0123]", options)
   ...
 }
 catch(TinyJSON::TJParseException ex)
@@ -112,7 +112,7 @@ try
   ...
   // get JSON somewhere or create it.
   ...
-  if( TinyJSON::TinyJSON::write_file("file.json", *json, options))
+  if( TinyJSON::TJ::write_file("file.json", *json, options))
   {
     // all good
   }
@@ -135,7 +135,7 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
   options.throw_exception = true;
   try
   {
-    auto blah = TinyJSON::TinyJSON::parse("[0123]", options)
+    auto blah = TinyJSON::TJ::parse("[0123]", options)
     ...
   }
   catch(TinyJSON::TJParseException ex)
@@ -155,8 +155,8 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
 
   try
   {
-    auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
-    TinyJSON::TinyJSON::write_file("file.json", *json, options)
+    auto json = TinyJSON::TJ::parse( "{ \"Hello\" : \"World\" }" );
+    TinyJSON::TJ::write_file("file.json", *json, options)
     ...
   }
   catch(TinyJSON::TJWriteException ex)
@@ -167,10 +167,10 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
 
 ### Check if JSON is valid
 
-You can simply call the `TinyJSON::TinyJSON::is_valid(...)` method
+You can simply call the `TinyJSON::TJ::is_valid(...)` method
 
 ```cpp
-    if(TinyJSON::TinyJSON::parse("[123,456]"))
+    if(TinyJSON::TJ::parse("[123,456]"))
     {
       // do this
     }
@@ -185,7 +185,7 @@ You can simply call the `TinyJSON::TinyJSON::is_valid(...)` method
 To read a JSON file you simply need to call the static method `parse_file`, the extention does not have to be `.json`
 
 ```cpp
-  auto json = TinyJSON::TinyJSON::parse_file( "myfile.json" );
+  auto json = TinyJSON::TJ::parse_file( "myfile.json" );
   ...
   delete json;
 ```
@@ -197,7 +197,7 @@ This will then return an object that you can inspect as per normal.
 To read a JSON string you simply need to call the static method `parse`
 
 ```cpp
-  auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
+  auto json = TinyJSON::TJ::parse( "{ \"Hello\" : \"World\" }" );
   ...
   delete json;
 ```
@@ -211,13 +211,28 @@ This will then return an object that you can inspect.
   ...
 ```
 
+You can also use a literal
+
+```cpp
+using namespace TinyJSON;
+...
+auto json = "[12,13,14]"_tj;
+
+// use it.
+
+...
+delete json;
+...
+
+```
+
 ### Write a JSON string
 
 To write a JSON string you simply need to call the method `write_file` on the JSON object returned.
 
 ```cpp
-  auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
-  if( TinyJSON::TinyJSON::write_file("file.json", *json))
+  auto json = TinyJSON::TJ::parse( "{ \"Hello\" : \"World\" }" );
+  if( TinyJSON::TJ::write_file("file.json", *json))
   {
     // all good
   }
@@ -238,7 +253,7 @@ Regardless if you are parsing a file or parsing a string, TinyJSON will parse th
 While you can `dump` a string to (re)write a json string you might want to use it directly in your code.
 
 ```cpp
-  auto json = TinyJSON::TinyJSON::parse( R"("This is a test \" with a quote")" );
+  auto json = TinyJSON::TJ::parse( R"("This is a test \" with a quote")" );
   auto actual_string = json->dump_string(); 
   /*
     This is a test " with a quote
@@ -259,7 +274,7 @@ The formating types are
 Each objects are read into `TJValue*` classes of type `TJValueObject`.
 
 ```cpp
-  auto json = TinyJSON::TinyJSON::parse( "{ \"Hello\" : \"World\" }" );
+  auto json = TinyJSON::TJ::parse( "{ \"Hello\" : \"World\" }" );
   auto value = json->try_get_string("Hello"); //  "World"
   auto no_value = json->try_get_string("Life"); //  null
 
@@ -272,7 +287,7 @@ Each arrays are read into `TJValue*` classes of type `TJValueArray`.
 Then each items in the array are also `TJValue*` of type string, number and so on.
 
 ```cpp
-  auto json = TinyJSON::TinyJSON::parse( "[ 12, 14, 16 ]" );
+  auto json = TinyJSON::TJ::parse( "[ 12, 14, 16 ]" );
   auto array_of_values = dynamic_cast<TinyJSON::TJValueArray*>(json);
   auto number_of_items = array_of_values->get_number_of_items();  // 3
 
@@ -290,7 +305,7 @@ Each `TJValue*` item can be of different type
 Assuming the array below with multiple items, you can query the type of each `TJValue*` and do something accordingly.
 
 ```cpp
-  auto json = TinyJSON::TinyJSON::parse( "[ ... ]" );
+  auto json = TinyJSON::TJ::parse( "[ ... ]" );
   auto array_of_values = dynamic_cast<TinyJSON::TJValueArray*>(json);
 
   auto value = array_of_values->at(0);

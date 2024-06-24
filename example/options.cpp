@@ -6,7 +6,7 @@
  
 int main()
 {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = TinyJSON::TJ::parse(R"({
     "number" : 12,
     "string" : "Hello world"
   })");
@@ -35,7 +35,7 @@ int main()
   // throw an exception
   try
   {
-    auto jsonex = TinyJSON::TinyJSON::parse(R"({"number" : 12.e00})", {.throw_exception = true  });
+    auto jsonex = TinyJSON::TJ::parse(R"({"number" : 12.e00})", {.throw_exception = true  });
     std::cout << "There was an issue throwing an exceptions!";
     delete jsonex;  
     return -1;

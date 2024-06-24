@@ -11,13 +11,13 @@ int main()
     "string" : "Hello world"
   })";
 
-  if (!TinyJSON::TinyJSON::is_valid(json))
+  if (!TinyJSON::TJ::is_valid(json))
   {
     // this should have been valid!
     return -1;
   }
 
-  auto tjjson = TinyJSON::TinyJSON::parse(json);
+  auto tjjson = TinyJSON::TJ::parse(json);
   if(nullptr == tjjson)
   {
     return -1;

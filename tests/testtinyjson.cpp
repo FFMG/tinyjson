@@ -27,17 +27,17 @@ bool IsDerivedFrom() {
 }
 
 TEST(TestBasic, WeCanPassANullString) {
-  auto json = TinyJSON::TinyJSON::parse(nullptr);
+  auto json = TinyJSON::TJ::parse(nullptr);
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, WeCanPassANullFileName) {
-  auto json = TinyJSON::TinyJSON::parse_file(nullptr);
+  auto json = TinyJSON::TJ::parse_file(nullptr);
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, TheObjectInsideTheObjectDoesNotCloseProperly) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
    {
      "a" : { 
         "a" : "b"
@@ -47,7 +47,7 @@ TEST(TestBasic, TheObjectInsideTheObjectDoesNotCloseProperly) {
 }
 
 TEST(TestBasic, HaveEnEmptyObjectWithNothing) {
-  auto json = TinyJSON::TinyJSON::parse("{}");
+  auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValueObject*>(json));
 
@@ -55,7 +55,7 @@ TEST(TestBasic, HaveEnEmptyObjectWithNothing) {
 }
 
 TEST(TestBasic, SpacesAreIgnored) {
-  auto json = TinyJSON::TinyJSON::parse(" {  }  ");
+  auto json = TinyJSON::TJ::parse(" {  }  ");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValueObject*>(json));
 
@@ -63,12 +63,12 @@ TEST(TestBasic, SpacesAreIgnored) {
 }
 
 TEST(TestBasic, InvalidCommaAfterTheClosedObject) {
-  auto json = TinyJSON::TinyJSON::parse("{},");
+  auto json = TinyJSON::TJ::parse("{},");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, CommaBeforeTheStringIsNotAllowed) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   ,"a" : "a"
 }
@@ -80,7 +80,7 @@ TEST(TestBasic, CommaBeforeTheStringIsNotAllowed) {
 }
 
 TEST(TestBasic, CommaAfterTheLastStringIsNotAllowed) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : "a",
 }
@@ -92,7 +92,7 @@ TEST(TestBasic, CommaAfterTheLastStringIsNotAllowed) {
 }
 
 TEST(TestBasic, CheckForNull) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : null
 }
@@ -110,7 +110,7 @@ TEST(TestBasic, CheckForNull) {
 }
 
 TEST(TestBasic, WeRequireACommaBetweenStringValues) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : "a",
   "b" : "b"
@@ -124,7 +124,7 @@ TEST(TestBasic, WeRequireACommaBetweenStringValues) {
 TEST(TestBasic, WeRequireACommaBetweenValuesOfNumbersAndObjects) {
 
   // missing a comma after the number
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12,
   "b" : {}
@@ -138,7 +138,7 @@ TEST(TestBasic, WeRequireACommaBetweenValuesOfNumbersAndObjects) {
 TEST(TestBasic, TwoCommaBetweenElementsIsNotValid) {
 
   // missing a comma after the number
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12,,
   "b" : 13
@@ -149,7 +149,7 @@ TEST(TestBasic, TwoCommaBetweenElementsIsNotValid) {
 }
 
 TEST(TestBasic, CheckForDifferentValueTypes) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : null,
   "b" : true,
@@ -188,7 +188,7 @@ TEST(TestBasic, CheckForDifferentValueTypes) {
 }
 
 TEST(TestBasic, ObjectInsideAnObject) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : {
     "b" : true
@@ -218,7 +218,7 @@ TEST(TestBasic, ObjectInsideAnObject) {
 }
 
 TEST(TestBasic, ObjectMultipleDepth) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : true,
   "b" : {
@@ -257,7 +257,7 @@ TEST(TestBasic, ObjectMultipleDepth) {
 // this is the test data take from https://github.com/stephenberry/json_performance/blob/main/README.md
 // we have to be able to read this ...
 TEST(TestBasic, ReadPerformanceBlob) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
    "fixed_object": {
       "int_array": [0, 1, 2, 3, 4, 5, 6],
@@ -306,7 +306,7 @@ TEST(TestBasic, ReadPerformanceBlob) {
 }
 
 TEST(TestBasic, TrueBooleanInStringIsValid) {
-  auto json = TinyJSON::TinyJSON::parse("true");
+  auto json = TinyJSON::TJ::parse("true");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_true());
 
@@ -323,7 +323,7 @@ TEST(TestBasic, IntNumberInStringIsValid) {
   for (auto& number : values)
   {
     std::string s_json = " " + number + " ";
-    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+    auto json = TinyJSON::TJ::parse(s_json.c_str());
     ASSERT_NE(nullptr, json);
     ASSERT_TRUE(json->is_number());
 
@@ -335,7 +335,7 @@ TEST(TestBasic, IntNumberInStringIsValid) {
 }
 
 TEST(TestBasic, FalseBooleanInStringIsValid) {
-  auto json = TinyJSON::TinyJSON::parse("false");
+  auto json = TinyJSON::TJ::parse("false");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_false());
 
@@ -343,7 +343,7 @@ TEST(TestBasic, FalseBooleanInStringIsValid) {
 }
 
 TEST(TestBasic, NullInStringIsValid) {
-  auto json = TinyJSON::TinyJSON::parse("null");
+  auto json = TinyJSON::TJ::parse("null");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_null());
 
@@ -351,7 +351,7 @@ TEST(TestBasic, NullInStringIsValid) {
 }
 
 TEST(TestBasic, NothingIsJustAnEmptyString) {
-  auto json = TinyJSON::TinyJSON::parse("");
+  auto json = TinyJSON::TJ::parse("");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_string());
   ASSERT_STREQ("", json->dump_string());
@@ -360,7 +360,7 @@ TEST(TestBasic, NothingIsJustAnEmptyString) {
 }
 
 TEST(TestBasic, NothingIsJustAnEmptyStringWithSpaces) {
-  auto json = TinyJSON::TinyJSON::parse(R"(   
+  auto json = TinyJSON::TJ::parse(R"(   
 
 
 
@@ -376,7 +376,7 @@ TEST(TestBasic, NothingIsJustAnEmptyStringWithSpaces) {
 }
 
 TEST(TestBasic, StringValueIsValid) {
-  auto json = TinyJSON::TinyJSON::parse(R"("Hello")");
+  auto json = TinyJSON::TJ::parse(R"("Hello")");
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_string());
   ASSERT_STREQ("Hello", json->dump_string());
@@ -385,7 +385,7 @@ TEST(TestBasic, StringValueIsValid) {
 }
 
 TEST(TestBasic, StringValueIsValidWithSpaces) {
-  auto json = TinyJSON::TinyJSON::parse(R"(   
+  auto json = TinyJSON::TJ::parse(R"(   
 
 
 
@@ -401,7 +401,7 @@ TEST(TestBasic, StringValueIsValidWithSpaces) {
 }
 
 TEST(TestBasic, ValueInObjectOverwriteEachother) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
    {
 "a" : 12,
 "a" : 24
@@ -423,7 +423,7 @@ TEST(TestBasic, ValueInObjectOverwriteEachother) {
 }
 
 TEST(TestBasic, ValueInObjectOverwriteEachotherInsideArray) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
    {
 "a" : [12,24,48],
 "a" : 24
@@ -445,7 +445,7 @@ TEST(TestBasic, ValueInObjectOverwriteEachotherInsideArray) {
 }
 
 TEST(TestBasic, ValueInObjectOverwriteEachotherInsideArray2) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   { 
     "a" : 12,
@@ -476,28 +476,28 @@ TEST(TestBasic, WeReachedMaxDepthMixed) {
   TinyJSON::parse_options options = {};
   options.throw_exception = false;
   options.max_depth = 4;
-  auto json = TinyJSON::TinyJSON::parse(R"({"a":[12,{"c":{}}]})", options);
+  auto json = TinyJSON::TJ::parse(R"({"a":[12,{"c":{}}]})", options);
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsNeither) {
   TinyJSON::parse_options options = {};
   options.specification = TinyJSON::parse_options::rfc4627;
-  auto json = TinyJSON::TinyJSON::parse("true", options);
+  auto json = TinyJSON::TJ::parse("true", options);
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsEmpty) {
   TinyJSON::parse_options options = {};
   options.specification = TinyJSON::parse_options::rfc4627;
-  auto json = TinyJSON::TinyJSON::parse("     ", options);
+  auto json = TinyJSON::TJ::parse("     ", options);
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnObject) {
   TinyJSON::parse_options options = {};
   options.specification = TinyJSON::parse_options::rfc4627;
-  auto json = TinyJSON::TinyJSON::parse("{}", options);
+  auto json = TinyJSON::TJ::parse("{}", options);
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_object());
   delete json;
@@ -507,7 +507,7 @@ TEST(TestBasic, Rfc4627WantsAnObjectOrAnArrayAndThisIsAnArray) {
   TinyJSON::parse_options options = {};
   options.specification = TinyJSON::parse_options::rfc4627;
   options.max_depth = 4;
-  auto json = TinyJSON::TinyJSON::parse("[12,13,14]", options);
+  auto json = TinyJSON::TJ::parse("[12,13,14]", options);
   ASSERT_NE(nullptr, json);
   ASSERT_TRUE(json->is_array());
   delete json;
@@ -517,46 +517,64 @@ TEST(TestBasic, Rfc4627ArrayIsValid) {
   TinyJSON::parse_options options = {};
   options.specification = TinyJSON::parse_options::rfc4627;
   options.max_depth = 4;
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("[12,13,14]", options));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("[12,13,14]", options));
 }
 
 TEST(TestBasic, Rfc4627ObjectIsValid) {
   TinyJSON::parse_options options = {};
   options.specification = TinyJSON::parse_options::rfc4627;
   options.max_depth = 4;
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("{\"a\" : 12}", options));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("{\"a\" : 12}", options));
 }
 
 TEST(TestBasic, Rfc4627IsNotValidAsItMustBeAnArrayOrObject) {
   TinyJSON::parse_options options = {};
   options.specification = TinyJSON::parse_options::rfc4627;
   options.max_depth = 4;
-  ASSERT_FALSE(TinyJSON::TinyJSON::is_valid("true", options));
+  ASSERT_FALSE(TinyJSON::TJ::is_valid("true", options));
 }
 
 TEST(TestBasic, SimpleObjectIsValid) {
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("{}"));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("{}"));
 }
 
 TEST(TestBasic, TrueInRootIsValid) {
   TinyJSON::parse_options options = {};
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("true"));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("true"));
 }
 
 TEST(TestBasic, FalseInRootIsValid) {
   TinyJSON::parse_options options = {};
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("false"));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("false"));
 }
 
 TEST(TestBasic, NullInRootIsValid) {
   TinyJSON::parse_options options = {};
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("null"));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("null"));
 }
 
 TEST(TestBasic, ObjectIsValid) {
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("{\"a\" : 12}"));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("{\"a\" : 12}"));
 }
 
 TEST(TestBasic, ArrayIsValid) {
-  ASSERT_TRUE(TinyJSON::TinyJSON::is_valid("[12,13,14]"));
+  ASSERT_TRUE(TinyJSON::TJ::is_valid("[12,13,14]"));
+}
+
+TEST(TestBasic, UserLiteralsArray)
+{
+  using namespace TinyJSON;
+  auto json = "[12,13,14]"_tj;
+  ASSERT_NE(nullptr, json);
+  ASSERT_TRUE(json->is_array());
+
+  const auto tjarray = dynamic_cast<TJValueArray*>(json);
+  ASSERT_NE(nullptr, tjarray);
+
+  ASSERT_EQ(3, tjarray->get_number_of_items());
+  ASSERT_TRUE(12, tjarray->at(0)->is_number());
+  ASSERT_TRUE(13, tjarray->at(1)->is_number());
+  ASSERT_TRUE(4, tjarray->at(2)->is_number());
+
+  delete json;
 }

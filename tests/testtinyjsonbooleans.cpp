@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestBooleans, BooleanIsAfterMissingColon) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" true
     }
@@ -16,7 +16,7 @@ TEST(TestBooleans, BooleanIsAfterMissingColon) {
 }
 
 TEST(TestBooleans, CheckForTrue) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : true
 }
@@ -37,7 +37,7 @@ TEST(TestBooleans, CheckForTrue) {
 }
 
 TEST(TestBooleans, CheckForFalse) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : false
 }
@@ -58,7 +58,7 @@ TEST(TestBooleans, CheckForFalse) {
 }
 
 TEST(TestBooleans, TrueBooleanNotSpelledProperly1) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : t
     }
@@ -68,7 +68,7 @@ TEST(TestBooleans, TrueBooleanNotSpelledProperly1) {
 }
 
 TEST(TestBooleans, TrueBooleanNotSpelledProperly2) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : tr
     }
@@ -78,7 +78,7 @@ TEST(TestBooleans, TrueBooleanNotSpelledProperly2) {
 }
 
 TEST(TestBooleans, TrueBooleanNotSpelledProperly3) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : tru
     }
@@ -88,7 +88,7 @@ TEST(TestBooleans, TrueBooleanNotSpelledProperly3) {
 }
 
 TEST(TestBooleans, FalseBooleanNotSpelledProperly1) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : f
     }
@@ -98,7 +98,7 @@ TEST(TestBooleans, FalseBooleanNotSpelledProperly1) {
 }
 
 TEST(TestBooleans, FalseBooleanNotSpelledProperly2) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : fa
     }
@@ -108,7 +108,7 @@ TEST(TestBooleans, FalseBooleanNotSpelledProperly2) {
 }
 
 TEST(TestBooleans, FalseBooleanNotSpelledProperly3) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : fal
     }
@@ -118,7 +118,7 @@ TEST(TestBooleans, FalseBooleanNotSpelledProperly3) {
 }
 
 TEST(TestBooleans, FalseBooleanNotSpelledProperly4) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : fals
     }
@@ -128,7 +128,7 @@ TEST(TestBooleans, FalseBooleanNotSpelledProperly4) {
 }
 
 TEST(TestBooleans, CheckThatValueIsBooleanAndCorrectValue) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : false,
       "b" : true
@@ -166,7 +166,7 @@ TEST(TestBooleans, CheckThatValueIsBooleanAndCorrectValue) {
 }
 
 TEST(TestBooleans, CheckThatValueIsBooleanAndCorrectValueInArray) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     [
       false,
       true

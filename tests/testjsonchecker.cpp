@@ -67,7 +67,7 @@ TEST(JSONchecker, AllFiles)
     const auto& filename = file.path().string();
     try
     {
-      auto json = TinyJSON::TinyJSON::parse_file(filename.c_str(), options);
+      auto json = TinyJSON::TJ::parse_file(filename.c_str(), options);
       if (is_fail && json != nullptr)
       {
         EXPECT_TRUE(false) << "Expected Fail: " << std::filesystem::path(file.path()).filename();

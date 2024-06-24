@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestObjects, MakeSureThatEmptyStringIsKinkOfValueObject) {
-  auto json = TinyJSON::TinyJSON::parse("{}");
+  auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValueObject*>(json));
@@ -15,7 +15,7 @@ TEST(TestObjects, MakeSureThatEmptyStringIsKinkOfValueObject) {
 }
 
 TEST(TestObjects, EmptyObjectHasNoItemsInIt) {
-  auto json = TinyJSON::TinyJSON::parse("{}");
+  auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
 
@@ -27,7 +27,7 @@ TEST(TestObjects, EmptyObjectHasNoItemsInIt) {
 }
 
 TEST(TestObjects, EmptyObjectInSideObectHasNoItemsInIt) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : {
       }
@@ -50,7 +50,7 @@ TEST(TestObjects, EmptyObjectInSideObectHasNoItemsInIt) {
 }
 
 TEST(TestObjects, GetItemByIndex) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : {
         "aa" : {}
@@ -78,12 +78,12 @@ TEST(TestObjects, GetItemByIndex) {
 }
 
 TEST(TestObjects, ClosedObjectTwice) {
-  auto json = TinyJSON::TinyJSON::parse("{}}");
+  auto json = TinyJSON::TJ::parse("{}}");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestObjects, ObjectIsAfterMissingColon) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" {
         "b" : 12
@@ -95,19 +95,19 @@ TEST(TestObjects, ObjectIsAfterMissingColon) {
 }
 
 TEST(TestObjects, ObjectOpensButNeverCloses) {
-  auto json = TinyJSON::TinyJSON::parse("{");
+  auto json = TinyJSON::TJ::parse("{");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestObjects, ObjectOpensAndHasValuesButNeverCloses) {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = TinyJSON::TJ::parse(R"({
     "a" : "b"
     )");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestObjects, CheckThatValueIsObject) {
-  auto json = TinyJSON::TinyJSON::parse("{}");
+  auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
 
   ASSERT_TRUE(json->is_object());
@@ -121,7 +121,7 @@ TEST(TestObjects, CheckThatValueIsObject) {
 }
 
 TEST(TestObjects, TryingToGetAnItemThatDoesNotExitReturnsNull) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12, "b" : 13, "c" : 14
 }
@@ -137,7 +137,7 @@ TEST(TestObjects, TryingToGetAnItemThatDoesNotExitReturnsNull) {
 }
 
 TEST(TestObjects, TryingToGetANegativeItemReturnsNull) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12, "b" : 13, "c" : 14
 }
@@ -154,7 +154,7 @@ TEST(TestObjects, TryingToGetANegativeItemReturnsNull) {
 }
 
 TEST(TestObjects, ObjectHasAValidStringJustNoColon) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" 
     }
@@ -164,7 +164,7 @@ TEST(TestObjects, ObjectHasAValidStringJustNoColon) {
 }
 
 TEST(TestObjects, ItemsInArrayMustBeSeparatedByComma) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12
   "b" : 13
@@ -175,7 +175,7 @@ TEST(TestObjects, ItemsInArrayMustBeSeparatedByComma) {
 }
 
 TEST(TestObjects, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : "A"
   "b" : "B"
@@ -186,7 +186,7 @@ TEST(TestObjects, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
 }
 
 TEST(TestObjects, ItemsInArrayMustBeSeparatedByCommaWithNumberAndStrings) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12
   "b" : "B"
@@ -197,7 +197,7 @@ TEST(TestObjects, ItemsInArrayMustBeSeparatedByCommaWithNumberAndStrings) {
 }
 
 TEST(TestObjects, ObjectHasACommaButThenTheObjectEnds) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "a" : 12,
   "b" : "B",
@@ -208,7 +208,7 @@ TEST(TestObjects, ObjectHasACommaButThenTheObjectEnds) {
 }
 
 TEST(TestObjects, TheLastItemInOurBrokenJsonIsAnEscape) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
  "a" : "test1"
  "b" : "tes2\)"
