@@ -211,7 +211,7 @@ This will then return an object that you can inspect.
   ...
 ```
 
-You can also use a literal
+You can also use literals
 
 ```cpp
 using namespace TinyJSON;
@@ -223,7 +223,18 @@ auto json = "[12,13,14]"_tj;
 ...
 delete json;
 ...
+```
 
+Or just use the string directly
+
+```cpp
+#define TJ_INCLUDE_STD_STRING 1
+#include "TinyJSON.h"
+using namespace TinyJSON;
+...
+// output a pretty JSON
+std::cout << "[12,13,14]"_tj_indent;
+...
 ```
 
 ### Write a JSON string
@@ -363,3 +374,4 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 - [x] Run on linux/gcc/g++ or something other than visual studio.
      `g++ -std=c++11 -Wall -Wextra -Werror -O3 src/tinyJSON.cpp -o a.exe`
 - [] We need to add copy and move constructors to `TJValue` and the derived classes.
+- [] Add Macro(s) definitions like `TJ_INCLUDE_STD_STRING` for example.

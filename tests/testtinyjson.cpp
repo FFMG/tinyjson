@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <type_traits>
 
+#define TJ_INCLUDE_STD_STRING 1
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
@@ -577,4 +578,16 @@ TEST(TestBasic, UserLiteralsArray)
   ASSERT_TRUE(4, tjarray->at(2)->is_number());
 
   delete json;
+}
+
+TEST(TestBasic, UserLiteralsArrayOutputToIndented)
+{
+  using namespace TinyJSON;
+  auto json = "[12,13,14]"_tj_indent;
+
+  ASSERT_STREQ(R"([
+  12,
+  13,
+  14
+])", json.c_str());
 }

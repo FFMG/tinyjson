@@ -5,6 +5,15 @@
 #ifndef TJ_INCLUDED 
 #define TJ_INCLUDED
 
+// Assume that we do not want std::string
+#ifndef TJ_INCLUDE_STD_STRING
+#define TJ_INCLUDE_STD_STRING 0
+#endif
+
+#if TJ_INCLUDE_STD_STRING == 1
+#include <string>
+#endif
+
 // https://semver.org/
 // Semantic Versioning 2.0.0
 //   MAJOR version when you make incompatible API changes
@@ -502,11 +511,28 @@ namespace TinyJSON
 
 
   // user_literals
-  inline TJValue* operator ""_tj(const char* source, std::size_t)
+  inline TJValue* operator ""_tj(const TJCHAR * source, std::size_t)
   {
     parse_options options = {};
     options.throw_exception = true;
     return TJ::parse(source, options);
   }
+
+  #if TJ_INCLUDE_STD_STRING == 1
+  inline std::string operator ""_tj_indent(const TJCHAR * source, std::size_t)
+  {
+    parse_options options = {};
+    options.throw_exception = true;
+    auto* tj = TJ::parse(source, options);
+    if (nullptr == tj)
+    {
+      //  exception will throw.
+      return TJCHARPREFIX("");
+    }
+    std::string json(tj->dump(formating::indented));
+    delete tj;
+    return json;
+  }  
+  #endif
 } // TinyJSON
 #endif // !TJ_INCLUDED 
