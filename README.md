@@ -227,6 +227,8 @@ delete json;
 
 Or just use the string directly
 
+You can convert the json to 'pretty' indented json
+
 ```cpp
 #define TJ_INCLUDE_STD_STRING 1
 #include "TinyJSON.h"
@@ -234,6 +236,18 @@ using namespace TinyJSON;
 ...
 // output a pretty JSON
 std::cout << "[12,13,14]"_tj_indent;
+...
+```
+
+Or `minify` code.
+
+```cpp
+#define TJ_INCLUDE_STD_STRING 1
+#include "TinyJSON.h"
+using namespace TinyJSON;
+...
+// output a pretty JSON
+std::cout << "[12 , 13 , 14]"_tj_minify;
 ...
 ```
 
