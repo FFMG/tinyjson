@@ -368,14 +368,14 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 
 ## TODO
 
-- [] Make sure that all the code follow our own coding standards.
+- [x] Make sure that all the code follow our own coding standards.
 - [] Update comments
-- [] Finish documentation how to use the code.
+- [x] Finish documentation how to use the code.
 - [] Run/Create some benchmark tests, make sure they are up to date.
 - [x] Arrays
 - [x] Objects
 - [x] Values
-- [] More tests!
+- [x] More tests!
 - [x] Add version number (started at version 0.0.1)
 - [x] Copyright
 - [x] Add 2 kinds of error handling, either throw or return an error structure.
@@ -388,4 +388,4 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 - [x] Run on linux/gcc/g++ or something other than visual studio.
      `g++ -std=c++11 -Wall -Wextra -Werror -O3 src/tinyJSON.cpp -o a.exe`
 - [] We need to add copy and move constructors to `TJValue` and the derived classes.
-- [] Add Macro(s) definitions like `TJ_INCLUDE_STD_STRING` for example.
+- [] Add Macro(s) explaination like `TJ_INCLUDE_STD_STRING` for example.
