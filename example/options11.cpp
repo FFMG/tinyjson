@@ -6,7 +6,7 @@
  
 int main()
 {
-  auto json = TinyJSON::TinyJSON::parse(R"({
+  auto json = TinyJSON::TJ::parse(R"({
     "number" : 12,
     "string" : "Hello world"
   })");
@@ -20,7 +20,7 @@ int main()
     auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
     std::cout << "Parsed an object with " << tjobject->get_number_of_items() << " item(s)\n";
 
-    std::cout << "\nNo Indent dump:\n" << tjobject->dump(TinyJSON::formating::none) << "\n";
+    std::cout << "\nNo Indent dump:\n" << tjobject->dump(TinyJSON::formating::minify) << "\n";
   }
   else
   {
@@ -37,7 +37,7 @@ int main()
   {
     TinyJSON::parse_options options = {};
     options.throw_exception = true;
-    auto* jsonex = TinyJSON::TinyJSON::parse(R"({"number" : 12.e00})", options);
+    auto* jsonex = TinyJSON::TJ::parse(R"({"number" : 12.e00})", options);
     std::cout << "There was an issue throwing an exceptions!";
     delete jsonex;  
     return -1;

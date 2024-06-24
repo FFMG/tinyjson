@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestArrays, MakeSureThatEmptyStringIsKinkOfValueArray) {
-  auto json = TinyJSON::TinyJSON::parse("[]");
+  auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
@@ -16,29 +16,29 @@ TEST(TestArrays, MakeSureThatEmptyStringIsKinkOfValueArray) {
 }
 
 TEST(TestArrays, ArrayOpensButNeverCloses) {
-  auto json = TinyJSON::TinyJSON::parse("[");
+  auto json = TinyJSON::TJ::parse("[");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestArrays, ArrayOpensAndHasValuesButNeverCloses) {
-  auto json = TinyJSON::TinyJSON::parse(R"([
+  auto json = TinyJSON::TJ::parse(R"([
     "a", "b"
     )");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestArrays, ArrayHasTwoColons) {
-  auto json = TinyJSON::TinyJSON::parse("[ 1,2,3,,4,5]");
+  auto json = TinyJSON::TJ::parse("[ 1,2,3,,4,5]");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestArrays, ArrayHasTwoColonsAtTheEnd) {
-  auto json = TinyJSON::TinyJSON::parse("[ 1,2,3,,]");
+  auto json = TinyJSON::TJ::parse("[ 1,2,3,,]");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestArrays, EmptyArrayInObject) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" : []
 }
@@ -56,7 +56,7 @@ TEST(TestArrays, EmptyArrayInObject) {
 }
 
 TEST(TestArrays, ArrayInObjectIsAfterMissingColon) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" [
         42, 12
@@ -68,7 +68,7 @@ TEST(TestArrays, ArrayInObjectIsAfterMissingColon) {
 }
 
 TEST(TestArrays, EmptyArrayOfNumbersHasNoItems) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
 ]
 )"
@@ -80,7 +80,7 @@ TEST(TestArrays, EmptyArrayOfNumbersHasNoItems) {
 }
 
 TEST(TestArrays, ArrayOfNumbersHasCorrectNumberOfItems) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   12, 13, 14
 ]
@@ -93,7 +93,7 @@ TEST(TestArrays, ArrayOfNumbersHasCorrectNumberOfItems) {
 }
 
 TEST(TestArrays, EmptyArrayInSideArrayHasNoItemsInIt) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     [
       [
       ]
@@ -116,7 +116,7 @@ TEST(TestArrays, EmptyArrayInSideArrayHasNoItemsInIt) {
 }
 
 TEST(TestArrays, CheckThatValueIsArray) {
-  auto json = TinyJSON::TinyJSON::parse("[]");
+  auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
 
   ASSERT_FALSE(json->is_object());
@@ -130,7 +130,7 @@ TEST(TestArrays, CheckThatValueIsArray) {
 }
 
 TEST(TestArrays, TryingToGetAnItemThatDoesNotExitReturnsNull) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   12, 13, 14
 ]
@@ -146,7 +146,7 @@ TEST(TestArrays, TryingToGetAnItemThatDoesNotExitReturnsNull) {
 }
 
 TEST(TestArrays, TryingToGetANegativeItemReturnsNull) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   12, 13, 14
 ]
@@ -163,7 +163,7 @@ TEST(TestArrays, TryingToGetANegativeItemReturnsNull) {
 }
 
 TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaNumbers) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   12
   13
@@ -174,7 +174,7 @@ TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaNumbers) {
 }
 
 TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "A"
   "B"
@@ -185,7 +185,7 @@ TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
 }
 
 TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithNumbersAndStrings) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   12
   "B"
@@ -196,7 +196,7 @@ TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithNumbersAndStrings) {
 }
 
 TEST(TestArrays, ArrayHasACommaButThenTheArrayEnds) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   12,
   "B",

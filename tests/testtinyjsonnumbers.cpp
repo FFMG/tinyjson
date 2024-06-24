@@ -7,7 +7,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestNumbers, NumberIsAfterMissingColon) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" 42
     }
@@ -17,7 +17,7 @@ TEST(TestNumbers, NumberIsAfterMissingColon) {
 }
 
 TEST(TestNumbers, WholeNumbers) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12,
   "b" : -42,
@@ -46,7 +46,7 @@ TEST(TestNumbers, WholeNumbers) {
 }
 
 TEST(TestNumbers, FractionsWithLeadingZeros) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 1.0001,
   "b" : 0.00002
@@ -69,7 +69,7 @@ TEST(TestNumbers, FractionsWithLeadingZeros) {
 }
 
 TEST(TestNumbers, WholeNumbersWithZeroDecimals) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.10000,
   "b" : -42.000,
@@ -98,7 +98,7 @@ TEST(TestNumbers, WholeNumbersWithZeroDecimals) {
 }
 
 TEST(TestNumbers, WholeNumbersIsZero) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0,
   "b" : -0,
@@ -127,7 +127,7 @@ TEST(TestNumbers, WholeNumbersIsZero) {
 }
 
 TEST(TestNumbers, FractionNUmbers) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.1,
   "b" : -42.6,
@@ -160,7 +160,7 @@ TEST(TestNumbers, FractionNUmbers) {
 }
 
 TEST(TestNumbers, MaxPositiveNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 9223372036854775807,
   "b" : -9223372036854775806
@@ -183,7 +183,7 @@ TEST(TestNumbers, MaxPositiveNumber) {
 }
 
 TEST(TestNumbers, InvalidWholeNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12.
 }
@@ -199,7 +199,7 @@ TEST(TestNumbers, TestManyWholeNumbers) {
     std::string value = std::to_string(s);
 
     std::string s_json = "{ \"a\" :" + value + "}";
-    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+    auto json = TinyJSON::TJ::parse(s_json.c_str());
 
     ASSERT_NE(nullptr, json);
     auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -237,7 +237,7 @@ TEST(TestNumbers, TestManyFloatNumbers) {
   for (auto value : values)
   {
     std::string s_json = "{ \"a\" : " + value.given + "}";
-    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+    auto json = TinyJSON::TJ::parse(s_json.c_str());
 
     ASSERT_NE(nullptr, json);
     auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -275,7 +275,7 @@ TEST(TestNumbers, TestManyComplexFloatNumbers) {
   for (auto value : values)
   {
     std::string s_json = "{ \"a\" : " + value.given + "}";
-    auto json = TinyJSON::TinyJSON::parse(s_json.c_str());
+    auto json = TinyJSON::TJ::parse(s_json.c_str());
 
     ASSERT_NE(nullptr, json);
     auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -291,7 +291,7 @@ TEST(TestNumbers, TestManyComplexFloatNumbers) {
 }
 
 TEST(TestNumbers, CheckThatValueIsNumber) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 123
 }
@@ -316,7 +316,7 @@ TEST(TestNumbers, CheckThatValueIsNumber) {
 }
 
 TEST(TestNumbers, CheckThatValueIsNumberInArray) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   42
 ]
@@ -342,7 +342,7 @@ TEST(TestNumbers, CheckThatValueIsNumberInArray) {
 }
 
 TEST(TestNumbers, InvalidWholeNumber2) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 12as
 }
@@ -352,7 +352,7 @@ TEST(TestNumbers, InvalidWholeNumber2) {
 }
 
 TEST(TestNumbers, UnexpectedSpaceInTheNumbers) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   12,14,1 5
 ]
@@ -378,7 +378,7 @@ TEST(TestBooleans, CloneInt) {
 }
 
 TEST(TestNumbers, NumberCannotHaveALeadingZero) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0123
 }
@@ -388,7 +388,7 @@ TEST(TestNumbers, NumberCannotHaveALeadingZero) {
 }
 
 TEST(TestNumbers, NegativeNumberCannotHaveALeadingZero) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : -0123
 }
@@ -398,7 +398,7 @@ TEST(TestNumbers, NegativeNumberCannotHaveALeadingZero) {
 }
 
 TEST(TestNumbers, NumberCannotHaveALeadingZeroEvenIfDecimal) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : 0123.45
 }
@@ -408,7 +408,7 @@ TEST(TestNumbers, NumberCannotHaveALeadingZeroEvenIfDecimal) {
 }
 
 TEST(TestNumbers, JustZero) {
-  auto json = TinyJSON::TinyJSON::parse( "0");
+  auto json = TinyJSON::TJ::parse( "0");
 
   ASSERT_NE(nullptr, json);
   auto value = dynamic_cast<const TinyJSON::TJValueNumberInt*>(json);
@@ -419,7 +419,7 @@ TEST(TestNumbers, JustZero) {
 }
 
 TEST(TestNumbers, JustZeroDecimal) {
-  auto json = TinyJSON::TinyJSON::parse("0.0");
+  auto json = TinyJSON::TJ::parse("0.0");
 
   ASSERT_NE(nullptr, json);
   auto value = dynamic_cast<const TinyJSON::TJValueNumberInt*>(json);

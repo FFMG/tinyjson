@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestStrings, StringIsAfterMissingColon) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" "b"
     }
@@ -16,7 +16,7 @@ TEST(TestStrings, StringIsAfterMissingColon) {
 }
 
 TEST(TestStrings, TheStringNameValueIsSaved) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" : "World"
 }
@@ -33,7 +33,7 @@ TEST(TestStrings, TheStringNameValueIsSaved) {
 }
 
 TEST(TestStrings, TheStringNameValueIsSavedMultiLine) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" 
     : 
@@ -51,7 +51,7 @@ TEST(TestStrings, TheStringNameValueIsSavedMultiLine) {
 }
 
 TEST(TestStrings, TheStringNameValueIsSavedNultiplItems) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a name" : "a value",
   "b name" : "b value",
@@ -71,7 +71,7 @@ TEST(TestStrings, TheStringNameValueIsSavedNultiplItems) {
 }
 
 TEST(TestStrings, ArrayOfString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "Hello" , "World"
 ]
@@ -90,7 +90,7 @@ TEST(TestStrings, ArrayOfString) {
 }
 
 TEST(TestStrings, CheckThatValueWithAVeryLongKeyValuePair) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "ThisIsALongStringThatIsNormallyLongerThanTheDefault" : "The longest word is Pneumonoultramicroscopicsilicovolcanoconiosis"
 }
@@ -110,7 +110,7 @@ TEST(TestStrings, CheckThatValueWithAVeryLongKeyValuePair) {
 }
 
 TEST(TestStrings, CheckThatValueIsString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" : "World"
 }
@@ -136,7 +136,7 @@ TEST(TestStrings, CheckThatValueIsString) {
 }
 
 TEST(TestStrings, CheckThatValueIsStringInArray) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "Hello", "World"
 ]
@@ -162,7 +162,7 @@ TEST(TestStrings, CheckThatValueIsStringInArray) {
 }
 
 TEST(TestStrings, DifferentEscapeTypes) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "\\\"Hello\\\"",
   "\/\"Hello\/\""
@@ -181,7 +181,7 @@ TEST(TestStrings, DifferentEscapeTypes) {
 }
 
 TEST(TestStrings, EscapeQuoteInString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "\\\"Escape Then quote\\\"",
   "\"Quote\""
@@ -200,7 +200,7 @@ TEST(TestStrings, EscapeQuoteInString) {
 }
 
 TEST(TestStrings, EscapeFormFeedInString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "This is a \fA Form feed"
 ]
@@ -217,7 +217,7 @@ TEST(TestStrings, EscapeFormFeedInString) {
 }
 
 TEST(TestStrings, EscapeBackSpaceInString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "This is a \bA backspace"
 ]
@@ -234,7 +234,7 @@ TEST(TestStrings, EscapeBackSpaceInString) {
 }
 
 TEST(TestStrings, EscapeNewLineInString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "This is a \nNew Line"
 ]
@@ -251,7 +251,7 @@ TEST(TestStrings, EscapeNewLineInString) {
 }
 
 TEST(TestStrings, EscapeCarriageReturnInString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "This is a \rCarriage return"
 ]
@@ -268,7 +268,7 @@ TEST(TestStrings, EscapeCarriageReturnInString) {
 }
 
 TEST(TestStrings, EscapeTabInString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "This is a \tTab"
 ]
@@ -285,7 +285,7 @@ TEST(TestStrings, EscapeTabInString) {
 }
 
 TEST(TestStrings, EscapeQuoteInStringKeyValuePair) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "\\\"Hello\\\"" : "\"World\""
 }
@@ -302,7 +302,7 @@ TEST(TestStrings, EscapeQuoteInStringKeyValuePair) {
 }
 
 TEST(TestStrings, TheLastItemInOurBrokenJsonIsAnEscape) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
 "test1"
 "tes2\)"
@@ -312,7 +312,7 @@ TEST(TestStrings, TheLastItemInOurBrokenJsonIsAnEscape) {
 }
 
 TEST(TestStrings, ADumpedStringWithAReverseSolidusKeepsReverseSolidus) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\\And this is after a reverse solidus")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\\And this is after a reverse solidus")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -323,7 +323,7 @@ TEST(TestStrings, ADumpedStringWithAReverseSolidusKeepsReverseSolidus) {
 }
 
 TEST(TestStrings, ADumpedStringWithABackSpaceKeepsTheBackSpace) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\bAnd this is after a backspace")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\bAnd this is after a backspace")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -334,7 +334,7 @@ TEST(TestStrings, ADumpedStringWithABackSpaceKeepsTheBackSpace) {
 }
 
 TEST(TestStrings, ADumpedStringWithAFormFeedKeepsTheFormFeed) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\fAnd this is after a form feed")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\fAnd this is after a form feed")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -345,7 +345,7 @@ TEST(TestStrings, ADumpedStringWithAFormFeedKeepsTheFormFeed) {
 }
 
 TEST(TestStrings, ADumpedStringWithANewLineKeepsTheNewLine) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\nAnd this is a new line")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\nAnd this is a new line")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -356,7 +356,7 @@ TEST(TestStrings, ADumpedStringWithANewLineKeepsTheNewLine) {
 }
 
 TEST(TestStrings, ADumpedStringWithACarriageReturnKeepsTheCarriageReturn) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\rAnd this is after a carriage return")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\rAnd this is after a carriage return")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -367,7 +367,7 @@ TEST(TestStrings, ADumpedStringWithACarriageReturnKeepsTheCarriageReturn) {
 }
 
 TEST(TestStrings, ADumpedStringWithATabKeepsTheTab) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\tAnd this is after a tab")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\tAnd this is after a tab")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -378,7 +378,7 @@ TEST(TestStrings, ADumpedStringWithATabKeepsTheTab) {
 }
 
 TEST(TestStrings, ItemInAnObjectHasALineFeed) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" : "Line 1\nLine2"
 }
@@ -395,7 +395,7 @@ TEST(TestStrings, ItemInAnObjectHasALineFeed) {
 }
 
 TEST(TestStrings, ItemInAnObjectHasAFormFeed) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" : "Item 1\fItem2"
 }
@@ -412,7 +412,7 @@ TEST(TestStrings, ItemInAnObjectHasAFormFeed) {
 }
 
 TEST(TestStrings, ItemInAnObjectHasACarriageReturnAndLineFeed) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" : "Item 1\r\nItem2"
 }
@@ -429,10 +429,10 @@ TEST(TestStrings, ItemInAnObjectHasACarriageReturnAndLineFeed) {
 }
 
 TEST(TestStrings, ADumpedWithAReverseSolidusKeepsReverseSolidus) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\\And this is after a reverse solidus")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\\And this is after a reverse solidus")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\\And this is after a reverse solidus")", text);
@@ -440,10 +440,10 @@ TEST(TestStrings, ADumpedWithAReverseSolidusKeepsReverseSolidus) {
 }
 
 TEST(TestStrings, ADumpedWithABackSpaceKeepsTheBackSpace) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\bAnd this is after a backspace")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\bAnd this is after a backspace")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\bAnd this is after a backspace")", text);
@@ -451,10 +451,10 @@ TEST(TestStrings, ADumpedWithABackSpaceKeepsTheBackSpace) {
 }
 
 TEST(TestStrings, ADumpedWithAFormFeedKeepsTheFormFeed) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\fAnd this is after a form feed")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\fAnd this is after a form feed")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\fAnd this is after a form feed")", text);
@@ -462,10 +462,10 @@ TEST(TestStrings, ADumpedWithAFormFeedKeepsTheFormFeed) {
 }
 
 TEST(TestStrings, ADumpedWithANewLineKeepsTheNewLine) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\nAnd this is a new line")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\nAnd this is a new line")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\nAnd this is a new line")", text);
@@ -473,10 +473,10 @@ TEST(TestStrings, ADumpedWithANewLineKeepsTheNewLine) {
 }
 
 TEST(TestStrings, ADumpedWithACarriageReturnKeepsTheCarriageReturn) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\rAnd this is after a carriage return")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\rAnd this is after a carriage return")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\rAnd this is after a carriage return")", text);
@@ -484,10 +484,10 @@ TEST(TestStrings, ADumpedWithACarriageReturnKeepsTheCarriageReturn) {
 }
 
 TEST(TestStrings, ADumpedWithATabKeepsTheTab) {
-  auto json = TinyJSON::TinyJSON::parse(R"("This is a string.\tAnd this is after a tab")");
+  auto json = TinyJSON::TJ::parse(R"("This is a string.\tAnd this is after a tab")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::none);
+  const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\tAnd this is after a tab")", text);
@@ -495,7 +495,7 @@ TEST(TestStrings, ADumpedWithATabKeepsTheTab) {
 }
 
 TEST(TestStrings, YouCannotHaveALineFeedInAString) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     [
       "This is
 Invalid"])"
@@ -504,22 +504,22 @@ Invalid"])"
 }
 
 TEST(TestStrings, YouCannotHaveAFormFeedInAString) {
-  auto json = TinyJSON::TinyJSON::parse("[   \"This is \fInvalid\"]   ");
+  auto json = TinyJSON::TJ::parse("[   \"This is \fInvalid\"]   ");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestStrings, YouCannotHaveASingleReverseSolidusInAString) {
-  auto json = TinyJSON::TinyJSON::parse("[\"This\\ is invalid\"]");
+  auto json = TinyJSON::TJ::parse("[\"This\\ is invalid\"]");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestStrings, YouCannotHaveATabInAString) {
-  auto json = TinyJSON::TinyJSON::parse("[   \"This is \\\tInvalid\"]   ");
+  auto json = TinyJSON::TJ::parse("[   \"This is \\\tInvalid\"]   ");
   ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestStrings, YouCanHaveATabBeforeAndAfterAString) {
-  auto json = TinyJSON::TinyJSON::parse("\t\"This is valid\"\t");
+  auto json = TinyJSON::TJ::parse("\t\"This is valid\"\t");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -531,7 +531,7 @@ TEST(TestStrings, YouCanHaveATabBeforeAndAfterAString) {
 }
 
 TEST(TestStrings, JustControls) {
-  auto json = TinyJSON::TinyJSON::parse(R"("\b\f\n\r\t")");
+  auto json = TinyJSON::TJ::parse(R"("\b\f\n\r\t")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -543,7 +543,7 @@ TEST(TestStrings, JustControls) {
 }
 
 TEST(TestStrings, JustControlsInObject) {
-  auto json = TinyJSON::TinyJSON::parse(R"({"controls": "\b\f\n\r\t"})");
+  auto json = TinyJSON::TJ::parse(R"({"controls": "\b\f\n\r\t"})");
   ASSERT_NE(nullptr, json);
 
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -561,7 +561,7 @@ TEST(TestStrings, JustControlsInObject) {
 }
 
 TEST(TestStrings, JustSlash) {
-  auto json = TinyJSON::TinyJSON::parse(R"("/ & \/")");
+  auto json = TinyJSON::TJ::parse(R"("/ & \/")");
   ASSERT_NE(nullptr, json);
 
   const auto& text = json->dump_string();
@@ -573,7 +573,7 @@ TEST(TestStrings, JustSlash) {
 }
 
 TEST(TestStrings, JustSlashInObject) {
-  auto json = TinyJSON::TinyJSON::parse(R"({"slash": "/ & \/"})");
+  auto json = TinyJSON::TJ::parse(R"({"slash": "/ & \/"})");
   ASSERT_NE(nullptr, json);
 
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -591,7 +591,7 @@ TEST(TestStrings, JustSlashInObject) {
 }
 
 TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
-  auto json = TinyJSON::TinyJSON::parse("{\"a\" : \t\"This is valid\"\t}");
+  auto json = TinyJSON::TJ::parse("{\"a\" : \t\"This is valid\"\t}");
   ASSERT_NE(nullptr, json);
 
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -604,7 +604,7 @@ TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
 }
 
 TEST(TestStrings, ValidHexValues) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   "\u0123\u4567\u89AB\uCDEF\uabcd\uef4A"
 ]

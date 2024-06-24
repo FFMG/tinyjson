@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 
 TEST(TestNulls, NullIsAfterMissingColon) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" null
     }
@@ -16,7 +16,7 @@ TEST(TestNulls, NullIsAfterMissingColon) {
 }
 
 TEST(TestNulls, CheckForNull) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : null
 }
@@ -36,7 +36,7 @@ TEST(TestNulls, CheckForNull) {
 }
 
 TEST(TestNulls, CheckForNullInsideAnArray) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 [
   null, null
 ]
@@ -56,7 +56,7 @@ TEST(TestNulls, CheckForNullInsideAnArray) {
 }
 
 TEST(TestNulls, NullNotSpelledProperly1) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : n
     }
@@ -66,7 +66,7 @@ TEST(TestNulls, NullNotSpelledProperly1) {
 }
 
 TEST(TestNulls, NullNotSpelledProperly2) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : nu
     }
@@ -76,7 +76,7 @@ TEST(TestNulls, NullNotSpelledProperly2) {
 }
 
 TEST(TestNulls, NullNotSpelledProperly3) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : nul
     }
@@ -86,7 +86,7 @@ TEST(TestNulls, NullNotSpelledProperly3) {
 }
 
 TEST(TestNulls, NullWordIsNotNull) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
 {
   "a" : "null"
 }
@@ -109,7 +109,7 @@ TEST(TestNulls, NullWordIsNotNull) {
 }
 
 TEST(TestNulls, CheckThatValueIsNullValue) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     {
       "a" : null
     }
@@ -135,7 +135,7 @@ TEST(TestNulls, CheckThatValueIsNullValue) {
 }
 
 TEST(TestNulls, CheckThatValueIsNullValueInArray) {
-  auto json = TinyJSON::TinyJSON::parse(R"(
+  auto json = TinyJSON::TJ::parse(R"(
     [
       null
     ]

@@ -5,6 +5,15 @@
 #ifndef TJ_INCLUDED 
 #define TJ_INCLUDED
 
+// Assume that we do not want std::string
+#ifndef TJ_INCLUDE_STD_STRING
+#define TJ_INCLUDE_STD_STRING 0
+#endif
+
+#if TJ_INCLUDE_STD_STRING == 1
+#include <string>
+#endif
+
 // https://semver.org/
 // Semantic Versioning 2.0.0
 //   MAJOR version when you make incompatible API changes
@@ -40,7 +49,7 @@ namespace TinyJSON
   // the various types of formating.
   enum class formating
   {
-    none,
+    minify,
     indented
   };
 
@@ -175,11 +184,12 @@ namespace TinyJSON
     void free_last_dump() const;
   };
 
+
   // The parser class
-  class TinyJSON
+  class TJ
   {
   public:
-    virtual ~TinyJSON() = default;
+    virtual ~TJ() = default;
 
     /// <summary>
     /// Return if the given source is valid or not.
@@ -234,11 +244,11 @@ namespace TinyJSON
     static bool internal_write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options);
 
   private:
-    TinyJSON() = delete;
-    TinyJSON(TinyJSON&&) = delete;
-    TinyJSON(const TinyJSON&) = delete;
-    TinyJSON& operator=(const TinyJSON&) = delete;
-    TinyJSON& operator=(TinyJSON&&) = delete;
+    TJ() = delete;
+    TJ(TJ&&) = delete;
+    TJ(const TJ&) = delete;
+    TJ& operator=(const TJ&) = delete;
+    TJ& operator=(TJ&&) = delete;
   };
 
   // A TJMember is a key value pair, (name/value), that belong to an object.
@@ -498,5 +508,46 @@ namespace TinyJSON
     const unsigned int _fraction_exponent;
     const int _exponent;
   };
+
+
+  // user_literals
+  inline TJValue* operator ""_tj(const TJCHAR * source, std::size_t)
+  {
+    parse_options options = {};
+    options.throw_exception = true;
+    return TJ::parse(source, options);
+  }
+
+  #if TJ_INCLUDE_STD_STRING == 1
+  inline std::string operator ""_tj_indent(const TJCHAR * source, std::size_t)
+  {
+    parse_options options = {};
+    options.throw_exception = true;
+    auto* tj = TJ::parse(source, options);
+    if (nullptr == tj)
+    {
+      //  exception will throw.
+      return TJCHARPREFIX("");
+    }
+    std::string json(tj->dump(formating::indented));
+    delete tj;
+    return json;
+  }  
+
+  inline std::string operator ""_tj_minify(const TJCHAR * source, std::size_t)
+  {
+    parse_options options = {};
+    options.throw_exception = true;
+    auto* tj = TJ::parse(source, options);
+    if (nullptr == tj)
+    {
+      //  exception will throw.
+      return TJCHARPREFIX("");
+    }
+    std::string json(tj->dump(formating::minify));
+    delete tj;
+    return json;
+  }
+  #endif
 } // TinyJSON
 #endif // !TJ_INCLUDED 
