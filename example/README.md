@@ -32,3 +32,15 @@ This test that the build works with c++ 11
   auto jsonex = TinyJSON::TJ::parse(R"({"number" : 12.e00})", options);
 ...
 ```
+
+## User literals
+
+User Literals are like shortcuts to the code, the user_literals code shows how to use it.
+
+```cpp
+  std::cout << "[  12,   13,  14]"_tj_minify;
+
+  // or indent
+
+  std::cout << "[12,13,14]"_tj_indent;
+```
