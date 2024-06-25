@@ -405,6 +405,245 @@ namespace TinyJSON
     }
   }
 
+#if TJ_INCLUDE_STDVECTOR != 1
+  ///////////////////////////////////////
+  /// Protected Array class.
+  template <class T>
+  class TJList
+  {
+  public:
+    static_assert(std::is_pointer<T>::value, "Expected a pointer");
+
+    TJList()
+      :
+      _values(nullptr),
+      _number_of_items(0),
+      _capacity(10)
+    {
+    }
+
+    virtual ~TJList()
+    {
+      clean();
+    }
+
+    void add(T value)
+    {
+      if (nullptr == _values)
+      {
+        _values = new T[_capacity];
+      }
+      if (_number_of_items == _capacity)
+      {
+        grow();
+      }
+      _values[_number_of_items++] = value;
+    }
+
+    /// <summary>
+    /// Get the size of the array, (not the capacity).
+    /// </summary>
+    /// <returns></returns>
+    unsigned int size() const
+    {
+      return _number_of_items;
+    }
+
+    /// <summary>
+    /// Get a value at an index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    const T& at(unsigned int index) const
+    {
+      if (index >= _number_of_items)
+      {
+        throw std::out_of_range("Trying to access an item out of range.");
+      }
+      return _values[index];
+    }
+  protected:
+  private:
+    T* _values;
+    unsigned int _number_of_items;
+    unsigned int _capacity;
+
+    /// <summary>
+    /// Delete all the pointers in the array and the array itself.
+    /// </summary>
+    void clean()
+    {
+      if (nullptr != _values)
+      {
+        for (unsigned int i = 0; i < _number_of_items; ++i)
+        {
+          delete _values[i];
+        }
+        delete[] _values;
+      }
+    }
+
+    /// <summary>
+    /// Grow the array by nultiplying the capacity by 2.
+    /// </summary>
+    void grow()
+    {
+      _capacity = _capacity << 1;
+
+      // create the new container
+      T* temp_values = new T[_capacity];
+
+      // copy the values.
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        temp_values[i] = _values[i];
+      }
+      delete[] _values;
+      _values = temp_values;
+    }
+
+    // no copies.
+    TJList(const TJList&) = delete;
+    TJList& operator=(const TJList&) = delete;
+    TJList& operator=(TJList&&) = delete;
+  };
+
+  ///////////////////////////////////////
+  /// Protected Array class.
+  template <class T>
+  class TJDictionary
+  {
+  public:
+    static_assert(std::is_pointer<T>::value, "Expected a pointer");
+
+    TJDictionary()
+      :
+      _values(nullptr),
+      _number_of_items(0),
+      _capacity(10)
+    {
+    }
+
+    virtual ~TJDictionary()
+    {
+      clean();
+    }
+
+    /// <summary>
+    /// Find a single value using the given lambda function to compare,
+    /// </summary>
+    /// <typeparam name="Compare"></typeparam>
+    /// <param name="compare"></param>
+    /// <returns></returns>
+    template<typename Compare>
+    int find(Compare compare)
+    {
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        if (compare(_values[i]) == 0)
+        {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    void replace(unsigned int index, T value)
+    {
+      if (nullptr == _values)
+      {
+        throw std::invalid_argument("Trying to replace an item that does not exist!");
+      }
+      if (index >= _number_of_items)
+      {
+        throw std::out_of_range("Trying to replace an item that does not exist!");
+      }
+      delete _values[index];
+      _values[index] = value;
+    }
+
+    void add(T value)
+    {
+      if (nullptr == _values)
+      {
+        _values = new T[_capacity];
+      }
+      if (_number_of_items == _capacity)
+      {
+        grow();
+      }
+      _values[_number_of_items++] = value;
+    }
+
+    /// <summary>
+    /// Get the size of the array, (not the capacity).
+    /// </summary>
+    /// <returns></returns>
+    unsigned int size() const
+    {
+      return _number_of_items;
+    }
+
+    /// <summary>
+    /// Get a value at an index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    const T& at(unsigned int index) const
+    {
+      if (index >= _number_of_items)
+      {
+        throw std::out_of_range("Trying to access an item out of range.");
+      }
+      return _values[index];
+    }
+  protected:
+  private:
+    T* _values;
+    unsigned int _number_of_items;
+    unsigned int _capacity;
+
+    /// <summary>
+    /// Delete all the pointers in the array and the array itself.
+    /// </summary>
+    void clean()
+    {
+      if (nullptr != _values)
+      {
+        for (unsigned int i = 0; i < _number_of_items; ++i)
+        {
+          delete _values[i];
+        }
+        delete[] _values;
+      }
+    }
+
+    /// <summary>
+    /// Grow the array by nultiplying the capacity by 2.
+    /// </summary>
+    void grow()
+    {
+      _capacity = _capacity << 1;
+
+      // create the new container
+      T* temp_values = new T[_capacity];
+
+      // copy the values.
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        temp_values[i] = _values[i];
+      }
+      delete[] _values;
+      _values = temp_values;
+    }
+
+    // no copies.
+    TJDictionary(const TJDictionary&) = delete;
+    TJDictionary& operator=(const TJDictionary&) = delete;
+    TJDictionary& operator=(TJDictionary&&) = delete;
+  };
+#endif
+
   ///////////////////////////////////////
   /// Protected Helper class
   class TJHelper
@@ -870,7 +1109,7 @@ namespace TinyJSON
       return true;
     }
 
-    static void free_members(TJARRAY<TJMember*>* members)
+    static void free_members(TJDICTIONARY<TJMember*>* members)
     {
       if (members == nullptr)
       {
@@ -886,7 +1125,7 @@ namespace TinyJSON
       members = nullptr;
     }
 
-    static void free_values(TJARRAY<TJValue*>* values)
+    static void free_values(TJLIST<TJValue*>* values)
     {
       if (values == nullptr)
       {
@@ -1846,11 +2085,11 @@ namespace TinyJSON
     /// </summary>
     /// <param name="member"></param>
     /// <param name="members"></param>
-    static void move_member_to_members(TJMember* member, TJARRAY<TJMember*>*& members)
+    static void move_member_to_members(TJMember* member, TJDICTIONARY<TJMember*>*& members)
     {
       if (nullptr == members)
       {
-        members = new TJARRAY<TJMember*>();
+        members = new TJDICTIONARY<TJMember*>();
       }
 #if TJ_INCLUDE_STDVECTOR == 1
       else
@@ -1900,7 +2139,7 @@ namespace TinyJSON
       }
       //  assume no members in that object.
       bool found_comma = false;
-      TJARRAY<TJMember*>* members = nullptr;
+      TJDICTIONARY<TJMember*>* members = nullptr;
       bool after_string = false;
       bool waiting_for_a_string = false;
       while (*p != TJ_NULL_TERMINATOR)
@@ -2009,7 +2248,7 @@ namespace TinyJSON
       }
 
       //  assume no values in that array
-      TJARRAY<TJValue*>* values = nullptr;
+      TJLIST<TJValue*>* values = nullptr;
       bool waiting_for_a_value = true;
       bool found_comma = false;
       while (*p != TJ_NULL_TERMINATOR)
@@ -2060,7 +2299,7 @@ namespace TinyJSON
           }
           if (nullptr == values)
           {
-            values = new TJARRAY<TJValue*>();
+            values = new TJLIST<TJValue*>();
           }
           else if (found_comma == false && values->size() > 0)
           {
@@ -2833,7 +3072,7 @@ namespace TinyJSON
     free_members();
   }
 
-  TJValueObject* TJValueObject::move(TJARRAY<TJMember*>*& members)
+  TJValueObject* TJValueObject::move(TJDICTIONARY<TJMember*>*& members)
   {
     auto object = new TJValueObject();
     object->_members = members;
@@ -2846,7 +3085,7 @@ namespace TinyJSON
     auto object = new TJValueObject();
     if (_members != nullptr)
     {
-      auto members = new TJARRAY<TJMember*>();
+      auto members = new TJDICTIONARY<TJMember*>();
 #if TJ_INCLUDE_STDVECTOR == 1
       for (auto& member : *_members)
       {
@@ -3026,7 +3265,7 @@ namespace TinyJSON
     free_values();
   }
 
-  TJValueArray* TJValueArray::move(TJARRAY<TJValue*>*& values)
+  TJValueArray* TJValueArray::move(TJLIST<TJValue*>*& values)
   {
     auto value = new TJValueArray();
     value->_values = values;
@@ -3083,7 +3322,7 @@ namespace TinyJSON
     auto array = new TJValueArray();
     if (_values != nullptr)
     {
-      auto values = new TJARRAY<TJValue*>();
+      auto values = new TJLIST<TJValue*>();
 #if TJ_INCLUDE_STDVECTOR == 1
       for (const auto& value : *_values)
       {

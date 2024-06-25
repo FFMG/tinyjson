@@ -216,3 +216,31 @@ TEST(TestObjects, TheLastItemInOurBrokenJsonIsAnEscape) {
   ASSERT_EQ(nullptr, json);
   delete json;
 }
+
+TEST(TestObjects, DeepQueries)
+{
+  auto json = R"({
+    "number" : 12,
+    "string" : "Hello world 0",
+    "object" : {
+      "number" : 12,
+      "string" : "Hello world 1",
+      "object" : {
+        "number" : 12,
+        "string" : "Hello world 2"
+      }
+    }
+  })";
+  auto tjjson = TinyJSON::TJ::parse(json);
+  ASSERT_NE(nullptr, tjjson);
+  auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
+  auto o1 = dynamic_cast<const TinyJSON::TJValueObject*>(tjobject->try_get_value("object"));
+  ASSERT_NE(nullptr, o1);
+  auto o2 = dynamic_cast<const TinyJSON::TJValueObject*>(o1->try_get_value("object"));
+  ASSERT_NE(nullptr, o2);
+  auto o3 = o2->try_get_value("string");
+  ASSERT_NE(nullptr, o3);
+  ASSERT_STREQ("Hello world 2", o3->dump_string());
+
+  delete tjjson;
+}

@@ -12,17 +12,15 @@
 
 // use the std vector or not, (use the custom array).
 #ifndef TJ_INCLUDE_STDVECTOR
-#define TJ_INCLUDE_STDVECTOR 1
+#define TJ_INCLUDE_STDVECTOR 0
 #endif
 
 #include <exception>
 
 #if TJ_INCLUDE_STDVECTOR == 1
 #include <vector>
-#define TJARRAY std::vector
 #else
 #include <stdexcept>
-#define TJARRAY TJValue::TJArray
 #endif
 
 #if TJ_INCLUDE_STD_STRING == 1
@@ -59,6 +57,17 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 
 namespace TinyJSON
 {
+#if TJ_INCLUDE_STDVECTOR == 1
+#define TJLIST std::vector
+#else
+template <class T>
+class TJList;
+template <class T>
+class TJDictionary;
+#define TJDICTIONARY TJDictionary
+#define TJLIST TJList
+#endif
+
   // the various types of formating.
   enum class formating
   {
@@ -186,109 +195,6 @@ namespace TinyJSON
 
   protected:
     virtual void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const = 0;
-
-#if TJ_INCLUDE_STDVECTOR != 1
-    template <class T>
-    class TJArray
-    {
-    public:
-      static_assert(std::is_pointer<T>::value, "Expected a pointer");
-
-      TJArray()
-        :
-        _values(nullptr),
-        _number_of_items(0),
-        _capacity(10)
-      {
-      }
-      virtual ~TJArray()
-      {
-        if (nullptr != _values)
-        {
-          for (unsigned int i = 0; i < _number_of_items; ++i)
-          {
-            delete _values[i];
-          }
-          delete[] _values;
-        }
-      }
-
-      template<typename Compare>
-      int find( Compare compare)
-      {
-        for (unsigned int i = 0; i < _number_of_items; ++i)
-        {
-          if (compare(_values[i]) == 0)
-          {
-            return i;
-          }
-        }
-        return -1;
-      }
-
-      void replace(unsigned int index, T value)
-      {
-        if (nullptr == _values)
-        {
-          throw std::invalid_argument("Trying to replace an item that does not exist!");
-        }
-        if (index >= _number_of_items )
-        {
-          throw std::out_of_range("Trying to replace an item that does not exist!");
-        }
-        delete _values[index];
-        _values[index] = value;
-      }
-
-      void add(T value )
-      {
-        if (nullptr == _values)
-        {
-          _values = new T[_capacity];
-        }
-        if (_number_of_items == _capacity)
-        {
-          grow();
-        }
-        _values[_number_of_items++] = value;
-      }
-
-      unsigned int size() const
-      {
-        return _number_of_items;
-      }
-
-      const T& at(unsigned int index) const
-      {
-        if (index >= _number_of_items)
-        {
-          throw std::out_of_range("Trying to access an item out of range.");
-        }
-        return _values[index];
-      }
-    protected:
-    private:
-      T* _values;
-      unsigned int _number_of_items;
-      unsigned int _capacity;
-
-      void grow()
-      {
-        _capacity  = _capacity << 1;
-        T* temp_values = new T[_capacity];
-        for (unsigned int i = 0; i < _number_of_items; ++i)
-        {
-          temp_values[i] = _values[i];
-        }
-        delete[] _values;
-        _values = temp_values;
-      }
-
-      TJArray(const TJArray&) = delete;
-      TJArray& operator=(const TJArray&) = delete;
-      TJArray& operator=(TJArray&&) = delete;
-    };
-#endif
 
   private:
     TJValue(const TJValue&) = delete;
@@ -437,13 +343,13 @@ namespace TinyJSON
     /// </summary>
     /// <param name="members"></param>
     /// <returns></returns>
-    static TJValueObject* move(TJARRAY<TJMember*>*& members);
+    static TJValueObject* move(TJDICTIONARY<TJMember*>*& members);
 
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
-    TJARRAY<TJMember*>* _members;
+    TJDICTIONARY<TJMember*>* _members;
 
     void free_members();
   };
@@ -476,13 +382,13 @@ namespace TinyJSON
     /// </summary>
     /// <param name="values"></param>
     /// <returns></returns>
-    static TJValueArray* move(TJARRAY<TJValue*>*& values);
+    static TJValueArray* move(TJLIST<TJValue*>*& values);
 
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
-    TJARRAY<TJValue*>* _values;
+    TJLIST<TJValue*>* _values;
 
     void free_values();
   };
