@@ -3,7 +3,10 @@
 // See the LICENSE file in the project root for more information.
 #include "TinyJSON.h"
 
+#if TJ_INCLUDE_STDVECTOR == 1
 #include <algorithm>
+#endif
+
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -867,32 +870,35 @@ namespace TinyJSON
       return true;
     }
 
-    static void free_members(std::vector<TJMember*>* members)
+    static void free_members(TJARRAY<TJMember*>* members)
     {
       if (members == nullptr)
       {
         return;
       }
-
+#if TJ_INCLUDE_STDVECTOR == 1
       for (auto var : *members)
       {
         delete var;
       }
+#endif
       delete members;
       members = nullptr;
     }
 
-    static void free_values(std::vector<TJValue*>* values)
+    static void free_values(TJARRAY<TJValue*>* values)
     {
       if (values == nullptr)
       {
         return;
       }
 
+#if TJ_INCLUDE_STDVECTOR == 1
       for (auto var : *values)
       {
         delete var;
       }
+#endif
       delete values;
       values = nullptr;
     }
@@ -1834,18 +1840,19 @@ namespace TinyJSON
     }
 
     /// <summary>
-    /// We are moving the owership of the TJMember to the vector.
-    /// If the vector is not created we will create it.
-    /// Duplicate values will be overwiten here.
+    /// We are moving the owership of the TJMember to the array.
+    /// If the array is not created we will create it and add the value.
+    /// Duplicate values will be overwiten here, the old value will be removed and the new one added.
     /// </summary>
     /// <param name="member"></param>
     /// <param name="members"></param>
-    static void move_member_to_members(TJMember* member, std::vector<TJMember*>*& members)
+    static void move_member_to_members(TJMember* member, TJARRAY<TJMember*>*& members)
     {
       if (nullptr == members)
       {
-        members = new std::vector<TJMember*>();
+        members = new TJARRAY<TJMember*>();
       }
+#if TJ_INCLUDE_STDVECTOR == 1
       else
       {
         auto current = std::find_if(members->begin(), members->end(), [&](TJMember*& elem) 
@@ -1860,6 +1867,21 @@ namespace TinyJSON
         }
       }
       members->push_back(member);
+#else
+      auto compareLambda = [&](TJMember*& elem) -> int {
+          return TJHelper::are_same(elem->name(), member->name()) ? 0 : -1;
+       };
+
+      auto index = members->find(compareLambda);
+      if (index == -1)
+      {
+        members->add(member);
+      }
+      else
+      {
+        members->replace(index, member);
+      }      
+#endif
     }
 
     /// <summary>
@@ -1878,7 +1900,7 @@ namespace TinyJSON
       }
       //  assume no members in that object.
       bool found_comma = false;
-      std::vector<TJMember*>* members = nullptr;
+      TJARRAY<TJMember*>* members = nullptr;
       bool after_string = false;
       bool waiting_for_a_string = false;
       while (*p != TJ_NULL_TERMINATOR)
@@ -1987,7 +2009,7 @@ namespace TinyJSON
       }
 
       //  assume no values in that array
-      std::vector<TJValue*>* values = nullptr;
+      TJARRAY<TJValue*>* values = nullptr;
       bool waiting_for_a_value = true;
       bool found_comma = false;
       while (*p != TJ_NULL_TERMINATOR)
@@ -2038,7 +2060,7 @@ namespace TinyJSON
           }
           if (nullptr == values)
           {
-            values = new std::vector<TJValue*>();
+            values = new TJARRAY<TJValue*>();
           }
           else if (found_comma == false && values->size() > 0)
           {
@@ -2048,7 +2070,11 @@ namespace TinyJSON
             parse_result.assign_exception_message("We found a value but we expected a comma.");
             return nullptr;
           }
+#if TJ_INCLUDE_STDVECTOR == 1
           values->push_back(value);
+#else
+          values->add(value);
+#endif
           waiting_for_a_value = false;
           found_comma = false;
           break;
@@ -2807,7 +2833,7 @@ namespace TinyJSON
     free_members();
   }
 
-  TJValueObject* TJValueObject::move(std::vector<TJMember*>*& members)
+  TJValueObject* TJValueObject::move(TJARRAY<TJMember*>*& members)
   {
     auto object = new TJValueObject();
     object->_members = members;
@@ -2820,11 +2846,20 @@ namespace TinyJSON
     auto object = new TJValueObject();
     if (_members != nullptr)
     {
-      auto members = new std::vector<TJMember*>();
+      auto members = new TJARRAY<TJMember*>();
+#if TJ_INCLUDE_STDVECTOR == 1
       for (auto& member : *_members)
       {
         members->push_back(new TJMember(member->name(), member->value()->clone()));
       }
+#else
+      auto size = _members->size();
+      for(unsigned int i = 0; i < size; ++i)
+      {
+        const auto& member = _members->at(i);
+        members->add(new TJMember(member->name(), member->value()->clone()));
+      }
+#endif
       object->_members = members;
     }
     return object;
@@ -2851,8 +2886,15 @@ namespace TinyJSON
       TJHelper::add_string_to_string(current_indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
       TJHelper::add_string_to_string(configuration._indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
 
+#if TJ_INCLUDE_STDVECTOR == 1
       for (const auto& member : *_members)
       {
+#else
+      auto size = _members->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& member = _members->at(i);
+#endif
         TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
 
         TJHelper::add_string_to_string(configuration._key_quote, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
@@ -2901,7 +2943,11 @@ namespace TinyJSON
     {
       return nullptr;
     }
+#if TJ_INCLUDE_STDVECTOR == 1
     return (*_members)[idx];
+#else
+    return _members->at(idx);
+#endif
   }
 
   void TJValueObject::free_members()
@@ -2911,10 +2957,12 @@ namespace TinyJSON
       return;
     }
 
+#if TJ_INCLUDE_STDVECTOR == 1
     for (auto var : *_members)
     {
       delete var;
     }
+#endif
     delete _members;
     _members = nullptr;
   }
@@ -2930,11 +2978,24 @@ namespace TinyJSON
       return nullptr;
     }
 
+#if TJ_INCLUDE_STDVECTOR == 1
     auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
       return TJHelper::are_same(name, value->name());
     });
 
     return (it == _members->end()) ? nullptr : (*it)->value();
+#else
+    auto compareLambda = [&](TJMember*& member) -> int {
+      return TJHelper::are_same(name, member->name()) ? 0 : -1;
+      };
+
+    auto index = _members->find(compareLambda);
+    if (index == -1)
+    {
+      return nullptr;
+    }
+    return _members->at(index)->value();
+#endif
   }
 
   const TJCHAR* TJValueObject::try_get_string(const TJCHAR* name) const
@@ -2965,7 +3026,7 @@ namespace TinyJSON
     free_values();
   }
 
-  TJValueArray* TJValueArray::move(std::vector<TJValue*>*& values)
+  TJValueArray* TJValueArray::move(TJARRAY<TJValue*>*& values)
   {
     auto value = new TJValueArray();
     value->_values = values;
@@ -2991,8 +3052,15 @@ namespace TinyJSON
       TJHelper::add_string_to_string(current_indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
       TJHelper::add_string_to_string(configuration._indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
 
+#if TJ_INCLUDE_STDVECTOR == 1
       for (const auto& value : *_values)
       {
+#else
+      auto size = _values->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& value = _values->at(i);
+#endif
         TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
         value->internal_dump(configuration, inner_current_indent);
 
@@ -3015,10 +3083,18 @@ namespace TinyJSON
     auto array = new TJValueArray();
     if (_values != nullptr)
     {
-      auto values = new std::vector<TJValue*>();
-      for (auto& value : *_values)
+      auto values = new TJARRAY<TJValue*>();
+#if TJ_INCLUDE_STDVECTOR == 1
+      for (const auto& value : *_values)
       {
         values->push_back(value->clone());
+#else
+      auto size = _values->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& value = _values->at(i);
+        values->add(value->clone());
+#endif
       }
       array->_values = values;
     }
@@ -3046,7 +3122,11 @@ namespace TinyJSON
     {
       return nullptr;
     }
+#if TJ_INCLUDE_STDVECTOR == 1
     return (*_values)[idx];
+#else
+    return _values->at(idx);
+#endif
   }
 
   void TJValueArray::free_values()
@@ -3056,10 +3136,12 @@ namespace TinyJSON
       return;
     }
 
+#if TJ_INCLUDE_STDVECTOR == 1
     for (auto var : *_values)
     {
       delete var;
     }
+#endif
     delete _values;
     _values = nullptr;
   }
