@@ -427,6 +427,10 @@ namespace TinyJSON
       clean();
     }
 
+    /// <summary>
+    /// Add an item to our array, grow if needed.
+    /// </summary>
+    /// <param name="value"></param>
     void add(T value)
     {
       if (nullptr == _values)
@@ -462,10 +466,20 @@ namespace TinyJSON
       }
       return _values[index];
     }
-  protected:
   private:
+    /// <summary>
+    /// The pointers we will take ownership of.
+    /// </summary>
     T* _values;
+
+    /// <summary>
+    /// The number of items in the array
+    /// </summary>
     unsigned int _number_of_items;
+
+    /// <summary>
+    /// The capacity
+    /// </summary>
     unsigned int _capacity;
 
     /// <summary>
@@ -473,14 +487,16 @@ namespace TinyJSON
     /// </summary>
     void clean()
     {
-      if (nullptr != _values)
+      if (nullptr == _values)
       {
-        for (unsigned int i = 0; i < _number_of_items; ++i)
-        {
-          delete _values[i];
-        }
-        delete[] _values;
+        return;
       }
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        delete _values[i];
+      }
+      delete[] _values;
+      _values = nullptr;
     }
 
     /// <summary>
@@ -513,13 +529,34 @@ namespace TinyJSON
   template <class T>
   class TJDictionary
   {
+  private:
+    /// <summary>
+    /// The dictionary data, the key and the index of the value
+    /// </summary>
+    struct dictionary_data
+    {
+      unsigned int _value_index;
+      TJCHAR* _key;
+    };
+
+    /// <summary>
+    /// Structure that return the dictionary index, (or the nearest one)
+    /// and the flag 'was_found' tells us if the actual value was located.
+    /// </summary>
+    struct search_result {
+      int _dictionary_index;
+      bool _was_found;
+    };
+
   public:
     static_assert(std::is_pointer<T>::value, "Expected a pointer");
 
     TJDictionary()
       :
       _values(nullptr),
+      _value_dictionary(nullptr),
       _number_of_items(0),
+      _number_of_items_dictionary(0),
       _capacity(10)
     {
     }
@@ -535,19 +572,18 @@ namespace TinyJSON
     /// <typeparam name="Compare"></typeparam>
     /// <param name="compare"></param>
     /// <returns></returns>
-    template<typename Compare>
-    int find(Compare compare)
+    int find(const TJCHAR* key)
     {
-      for (unsigned int i = 0; i < _number_of_items; ++i)
-      {
-        if (compare(_values[i]) == 0)
-        {
-          return i;
-        }
-      }
-      return -1;
+      auto binary_search_result = binary_search(key);
+      // if we found it, return the actual index value.
+      return binary_search_result._was_found ? _value_dictionary[binary_search_result._dictionary_index]._value_index : -1;
     }
 
+    /// <summary>
+    /// Replace a value at an index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="value"></param>
     void replace(unsigned int index, T value)
     {
       if (nullptr == _values)
@@ -562,17 +598,90 @@ namespace TinyJSON
       _values[index] = value;
     }
 
-    void add(T value)
+    /// <summary>
+    /// Add an item to our array, grow if needed.
+    /// </summary>
+    /// <param name="value"></param>
+    void add(const TJCHAR* key, T value)
     {
       if (nullptr == _values)
       {
         _values = new T[_capacity];
+        _value_dictionary = new dictionary_data[_capacity];
       }
       if (_number_of_items == _capacity)
       {
         grow();
       }
-      _values[_number_of_items++] = value;
+
+      auto binary_search_result = binary_search(key);
+      auto dictionary_index = binary_search_result._dictionary_index;
+      auto value_index = _number_of_items++;
+      _values[value_index] = value;
+
+      // we need to shift everything of the dictionary to the left.
+      for (int i = _number_of_items_dictionary -1; _number_of_items_dictionary > 0 && i >= (int)dictionary_index; --i)
+      {
+        _value_dictionary[i + 1] = _value_dictionary[i];
+      }
+
+      // build the dioctionary data
+      dictionary_data dictionary = {};
+      dictionary._value_index = value_index;
+      auto length = strlen(key);
+      dictionary._key = new TJCHAR[length + 1];
+      std::strcpy(dictionary._key, key);
+
+      // finally set the dictionary at the correct value
+      _value_dictionary[dictionary_index] = dictionary;
+      ++_number_of_items_dictionary;
+    }
+
+    unsigned int _number_of_items_dictionary;
+    dictionary_data* _value_dictionary;
+
+    search_result binary_search(const TJCHAR* key )
+    {
+      if (_number_of_items_dictionary == 0)
+      {
+        //  we have no data, so we have to put it in the first place.
+        search_result result = {};
+        result._was_found = false;
+        result._dictionary_index = 0;
+        return result;
+      }
+
+      int first = 0;
+      int last = _number_of_items_dictionary - 1;
+      int middle = 0;
+      int position = 0;
+      while (first <= last)
+      {
+        // the middle is the floor.
+        middle = static_cast<unsigned int>(first + (last - first) / 2);
+        auto compare = strcmpi(_value_dictionary[middle]._key, key);
+        if (compare == 0)
+        {
+          search_result result = {};
+          result._was_found = true;
+          result._dictionary_index = middle;
+          return result;
+        }
+        position = middle;
+        if (compare < 0)
+        {
+          first = middle + 1;
+        }
+        else
+        {
+          last = middle - 1;
+        }
+      }
+
+      search_result result = {};
+      result._was_found = false;
+      result._dictionary_index = first;
+      return result;
     }
 
     /// <summary>
@@ -597,10 +706,21 @@ namespace TinyJSON
       }
       return _values[index];
     }
-  protected:
+
   private:
+    /// <summary>
+    /// The pointers we will take ownership of.
+    /// </summary>
     T* _values;
+
+    /// <summary>
+    /// The number of items in the array
+    /// </summary>
     unsigned int _number_of_items;
+
+    /// <summary>
+    /// The capacity
+    /// </summary>
     unsigned int _capacity;
 
     /// <summary>
@@ -608,14 +728,22 @@ namespace TinyJSON
     /// </summary>
     void clean()
     {
-      if (nullptr != _values)
+      if (nullptr == _values)
       {
-        for (unsigned int i = 0; i < _number_of_items; ++i)
-        {
-          delete _values[i];
-        }
-        delete[] _values;
+        return;
       }
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        delete _values[i];
+      }
+      for (unsigned int i = 0; i < _number_of_items_dictionary; ++i)
+      {
+        delete[] _value_dictionary[i]._key;
+      }
+      delete[] _values;
+      _values = nullptr;
+      delete[] _value_dictionary;
+      _value_dictionary = nullptr;
     }
 
     /// <summary>
@@ -627,14 +755,20 @@ namespace TinyJSON
 
       // create the new container
       T* temp_values = new T[_capacity];
+      dictionary_data* temp_values_dictionary = new dictionary_data[_capacity];
 
       // copy the values.
       for (unsigned int i = 0; i < _number_of_items; ++i)
       {
         temp_values[i] = _values[i];
+        temp_values_dictionary[i] = { _value_dictionary[i]._value_index, _value_dictionary[i]._key };
       }
+
       delete[] _values;
       _values = temp_values;
+
+      delete[] _value_dictionary;
+      _value_dictionary = temp_values_dictionary;
     }
 
     // no copies.
@@ -2107,14 +2241,10 @@ namespace TinyJSON
       }
       members->push_back(member);
 #else
-      auto compareLambda = [&](TJMember*& elem) -> int {
-          return TJHelper::are_same(elem->name(), member->name()) ? 0 : -1;
-       };
-
-      auto index = members->find(compareLambda);
+      auto index = members->find(member->name());
       if (index == -1)
       {
-        members->add(member);
+        members->add(member->name(), member);
       }
       else
       {
@@ -3096,7 +3226,8 @@ namespace TinyJSON
       for(unsigned int i = 0; i < size; ++i)
       {
         const auto& member = _members->at(i);
-        members->add(new TJMember(member->name(), member->value()->clone()));
+        const auto& name = member->name();
+        members->add(name, new TJMember(name, member->value()->clone()));
       }
 #endif
       object->_members = members;
@@ -3224,11 +3355,7 @@ namespace TinyJSON
 
     return (it == _members->end()) ? nullptr : (*it)->value();
 #else
-    auto compareLambda = [&](TJMember*& member) -> int {
-      return TJHelper::are_same(name, member->name()) ? 0 : -1;
-      };
-
-    auto index = _members->find(compareLambda);
+    auto index = _members->find(name);
     if (index == -1)
     {
       return nullptr;
