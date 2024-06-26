@@ -11,8 +11,10 @@
 #endif
 
 // use the std vector or not, (use the custom array).
+// using the vector can cause performance issue as the
+// array is optimised for deep searches.
 #ifndef TJ_INCLUDE_STDVECTOR
-#define TJ_INCLUDE_STDVECTOR 1
+#define TJ_INCLUDE_STDVECTOR 0
 #endif
 
 #include <exception>

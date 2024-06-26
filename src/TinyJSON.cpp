@@ -619,11 +619,10 @@ namespace TinyJSON
       auto value_index = _number_of_items++;
       _values[value_index] = value;
 
-      // we need to shift everything of the dictionary to the left.
-      for (int i = _number_of_items_dictionary -1; _number_of_items_dictionary > 0 && i >= (int)dictionary_index; --i)
-      {
-        _values_dictionary[i + 1] = _values_dictionary[i];
-      }
+
+      //  shift everything to the left.
+      shift_dictionary_left(dictionary_index);
+
 
       // build the dioctionary data
       dictionary_data dictionary = {};
@@ -637,7 +636,113 @@ namespace TinyJSON
       ++_number_of_items_dictionary;
     }
 
-    search_result binary_search(const TJCHAR* key )
+    /// <summary>
+    /// Get the size of the array, (not the capacity).
+    /// </summary>
+    /// <returns></returns>
+    unsigned int size() const
+    {
+      return _number_of_items;
+    }
+
+    /// <summary>
+    /// Get a value at an index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    const T& at(unsigned int index) const
+    {
+      if (index >= _number_of_items)
+      {
+        throw std::out_of_range("Trying to access an item out of range.");
+      }
+      return _values[index];
+    }
+
+  private:
+    /// <summary>
+    /// The pointers we will take ownership of.
+    /// </summary>
+    T* _values;
+
+    /// <summary>
+    /// The key value pairs to help binary search.
+    /// </summary>
+    dictionary_data* _values_dictionary;
+
+    /// <summary>
+    /// The number of items in the array
+    /// </summary>
+    unsigned int _number_of_items;
+
+    /// <summary>
+    /// The current number of items in the dictionayr
+    /// This might not always be the same, (for a brief time)
+    /// As the number of items
+    /// </summary>
+    unsigned int _number_of_items_dictionary;
+
+    /// <summary>
+    /// The capacity of both the dictionary and the values.
+    /// </summary>
+    unsigned int _capacity;
+
+    /// <summary>
+    /// Delete all the pointers in the arrays and the array themselves.
+    /// </summary>
+    void clean()
+    {
+      if (nullptr == _values)
+      {
+        return;
+      }
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        delete _values[i];
+      }
+      for (unsigned int i = 0; i < _number_of_items_dictionary; ++i)
+      {
+        delete[] _values_dictionary[i]._key;
+      }
+      delete[] _values;
+      _values = nullptr;
+      delete[] _values_dictionary;
+      _values_dictionary = nullptr;
+    }
+
+    /// <summary>
+    /// Grow the array and the dictionary array by nultiplying the capacity by 2.
+    /// </summary>
+    void grow()
+    {
+      _capacity = _capacity << 1;
+
+      // create the new container
+      T* temp_values = new T[_capacity];
+      dictionary_data* temp_values_dictionary = new dictionary_data[_capacity];
+
+      // copy the values.
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        temp_values[i] = _values[i];
+        temp_values_dictionary[i] = { _values_dictionary[i]._value_index, _values_dictionary[i]._key };
+      }
+
+      delete[] _values;
+      _values = temp_values;
+
+      delete[] _values_dictionary;
+      _values_dictionary = temp_values_dictionary;
+    }
+
+    /// <summary>
+    /// Do a binary search and return either the exact location of the item
+    /// or the location of the item we should insert in the dictionary if we want to keep 
+    /// the key order valid.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    search_result binary_search(const TJCHAR* key)
     {
       if (_number_of_items_dictionary == 0)
       {
@@ -680,103 +785,21 @@ namespace TinyJSON
     }
 
     /// <summary>
-    /// Get the size of the array, (not the capacity).
+    /// Shift everything one position to the left from the index value given.
     /// </summary>
-    /// <returns></returns>
-    unsigned int size() const
+    /// <param name="dictionary_index"></param>
+    void shift_dictionary_left(int dictionary_index)
     {
-      return _number_of_items;
-    }
-
-    /// <summary>
-    /// Get a value at an index.
-    /// </summary>
-    /// <param name="index"></param>
-    /// <returns></returns>
-    const T& at(unsigned int index) const
-    {
-      if (index >= _number_of_items)
-      {
-        throw std::out_of_range("Trying to access an item out of range.");
-      }
-      return _values[index];
-    }
-
-  private:
-    /// <summary>
-    /// The pointers we will take ownership of.
-    /// </summary>
-    T* _values;
-
-    /// <summary>
-    /// The key value pairs to help binary search.
-    /// </summary>
-    dictionary_data* _values_dictionary;
-
-
-    /// <summary>
-    /// The number of items in the array
-    /// </summary>
-    unsigned int _number_of_items;
-
-    /// <summary>
-    /// The current number of items in the dictionayr
-    /// This might not always be the same, (for a brief time)
-    /// As the number of items
-    /// </summary>
-    unsigned int _number_of_items_dictionary;
-
-    /// <summary>
-    /// The capacity
-    /// </summary>
-    unsigned int _capacity;
-
-    /// <summary>
-    /// Delete all the pointers in the array and the array itself.
-    /// </summary>
-    void clean()
-    {
-      if (nullptr == _values)
+      if (_number_of_items_dictionary == 0)
       {
         return;
       }
-      for (unsigned int i = 0; i < _number_of_items; ++i)
+
+      // we need to shift everything of the dictionary to the left.
+      for (int i = _number_of_items_dictionary - 1; i >= dictionary_index; --i)
       {
-        delete _values[i];
+        _values_dictionary[i + 1] = _values_dictionary[i];
       }
-      for (unsigned int i = 0; i < _number_of_items_dictionary; ++i)
-      {
-        delete[] _values_dictionary[i]._key;
-      }
-      delete[] _values;
-      _values = nullptr;
-      delete[] _values_dictionary;
-      _values_dictionary = nullptr;
-    }
-
-    /// <summary>
-    /// Grow the array by nultiplying the capacity by 2.
-    /// </summary>
-    void grow()
-    {
-      _capacity = _capacity << 1;
-
-      // create the new container
-      T* temp_values = new T[_capacity];
-      dictionary_data* temp_values_dictionary = new dictionary_data[_capacity];
-
-      // copy the values.
-      for (unsigned int i = 0; i < _number_of_items; ++i)
-      {
-        temp_values[i] = _values[i];
-        temp_values_dictionary[i] = { _values_dictionary[i]._value_index, _values_dictionary[i]._key };
-      }
-
-      delete[] _values;
-      _values = temp_values;
-
-      delete[] _values_dictionary;
-      _values_dictionary = temp_values_dictionary;
     }
 
     // no copies.
