@@ -58,6 +58,7 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 namespace TinyJSON
 {
 #if TJ_INCLUDE_STDVECTOR == 1
+#define TJDICTIONARY std::vector
 #define TJLIST std::vector
 #else
 template <class T>
