@@ -60,12 +60,10 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 namespace TinyJSON
 {
 #if TJ_INCLUDE_STDVECTOR == 1
-#define TJDICTIONARY std::vector
-#define TJLIST std::vector
+#define TJDICTIONARY std::vector<TJMember*>
+#define TJLIST std::vector<TJValue*>
 #else
-template <class T>
 class TJList;
-template <class T>
 class TJDictionary;
 #define TJDICTIONARY TJDictionary
 #define TJLIST TJList
@@ -346,13 +344,13 @@ class TJDictionary;
     /// </summary>
     /// <param name="members"></param>
     /// <returns></returns>
-    static TJValueObject* move(TJDICTIONARY<TJMember*>*& members);
+    static TJValueObject* move(TJDICTIONARY*& members);
 
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
-    TJDICTIONARY<TJMember*>* _members;
+    TJDICTIONARY* _members;
 
     void free_members();
   };
@@ -385,13 +383,13 @@ class TJDictionary;
     /// </summary>
     /// <param name="values"></param>
     /// <returns></returns>
-    static TJValueArray* move(TJLIST<TJValue*>*& values);
+    static TJValueArray* move(TJLIST*& values);
 
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
-    TJLIST<TJValue*>* _values;
+    TJLIST* _values;
 
     void free_values();
   };
