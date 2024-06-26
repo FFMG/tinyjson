@@ -12,7 +12,7 @@
 
 // use the std vector or not, (use the custom array).
 #ifndef TJ_INCLUDE_STDVECTOR
-#define TJ_INCLUDE_STDVECTOR 0
+#define TJ_INCLUDE_STDVECTOR 1
 #endif
 
 #include <exception>
