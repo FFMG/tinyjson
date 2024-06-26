@@ -554,7 +554,7 @@ namespace TinyJSON
     TJDictionary()
       :
       _values(nullptr),
-      _value_dictionary(nullptr),
+      _values_dictionary(nullptr),
       _number_of_items(0),
       _number_of_items_dictionary(0),
       _capacity(10)
@@ -576,7 +576,7 @@ namespace TinyJSON
     {
       auto binary_search_result = binary_search(key);
       // if we found it, return the actual index value.
-      return binary_search_result._was_found ? _value_dictionary[binary_search_result._dictionary_index]._value_index : -1;
+      return binary_search_result._was_found ? _values_dictionary[binary_search_result._dictionary_index]._value_index : -1;
     }
 
     /// <summary>
@@ -607,7 +607,7 @@ namespace TinyJSON
       if (nullptr == _values)
       {
         _values = new T[_capacity];
-        _value_dictionary = new dictionary_data[_capacity];
+        _values_dictionary = new dictionary_data[_capacity];
       }
       if (_number_of_items == _capacity)
       {
@@ -622,7 +622,7 @@ namespace TinyJSON
       // we need to shift everything of the dictionary to the left.
       for (int i = _number_of_items_dictionary -1; _number_of_items_dictionary > 0 && i >= (int)dictionary_index; --i)
       {
-        _value_dictionary[i + 1] = _value_dictionary[i];
+        _values_dictionary[i + 1] = _values_dictionary[i];
       }
 
       // build the dioctionary data
@@ -633,12 +633,9 @@ namespace TinyJSON
       std::strcpy(dictionary._key, key);
 
       // finally set the dictionary at the correct value
-      _value_dictionary[dictionary_index] = dictionary;
+      _values_dictionary[dictionary_index] = dictionary;
       ++_number_of_items_dictionary;
     }
-
-    unsigned int _number_of_items_dictionary;
-    dictionary_data* _value_dictionary;
 
     search_result binary_search(const TJCHAR* key )
     {
@@ -654,12 +651,11 @@ namespace TinyJSON
       int first = 0;
       int last = _number_of_items_dictionary - 1;
       int middle = 0;
-      int position = 0;
       while (first <= last)
       {
         // the middle is the floor.
         middle = static_cast<unsigned int>(first + (last - first) / 2);
-        auto compare = strcmpi(_value_dictionary[middle]._key, key);
+        auto compare = strcmpi(_values_dictionary[middle]._key, key);
         if (compare == 0)
         {
           search_result result = {};
@@ -667,7 +663,6 @@ namespace TinyJSON
           result._dictionary_index = middle;
           return result;
         }
-        position = middle;
         if (compare < 0)
         {
           first = middle + 1;
@@ -714,9 +709,22 @@ namespace TinyJSON
     T* _values;
 
     /// <summary>
+    /// The key value pairs to help binary search.
+    /// </summary>
+    dictionary_data* _values_dictionary;
+
+
+    /// <summary>
     /// The number of items in the array
     /// </summary>
     unsigned int _number_of_items;
+
+    /// <summary>
+    /// The current number of items in the dictionayr
+    /// This might not always be the same, (for a brief time)
+    /// As the number of items
+    /// </summary>
+    unsigned int _number_of_items_dictionary;
 
     /// <summary>
     /// The capacity
@@ -738,12 +746,12 @@ namespace TinyJSON
       }
       for (unsigned int i = 0; i < _number_of_items_dictionary; ++i)
       {
-        delete[] _value_dictionary[i]._key;
+        delete[] _values_dictionary[i]._key;
       }
       delete[] _values;
       _values = nullptr;
-      delete[] _value_dictionary;
-      _value_dictionary = nullptr;
+      delete[] _values_dictionary;
+      _values_dictionary = nullptr;
     }
 
     /// <summary>
@@ -761,14 +769,14 @@ namespace TinyJSON
       for (unsigned int i = 0; i < _number_of_items; ++i)
       {
         temp_values[i] = _values[i];
-        temp_values_dictionary[i] = { _value_dictionary[i]._value_index, _value_dictionary[i]._key };
+        temp_values_dictionary[i] = { _values_dictionary[i]._value_index, _values_dictionary[i]._key };
       }
 
       delete[] _values;
       _values = temp_values;
 
-      delete[] _value_dictionary;
-      _value_dictionary = temp_values_dictionary;
+      delete[] _values_dictionary;
+      _values_dictionary = temp_values_dictionary;
     }
 
     // no copies.
