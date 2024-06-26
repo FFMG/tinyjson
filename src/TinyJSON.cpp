@@ -580,51 +580,50 @@ namespace TinyJSON
     }
 
     /// <summary>
-    /// Replace a value at an index.
-    /// </summary>
-    /// <param name="index"></param>
-    /// <param name="value"></param>
-    void replace(unsigned int index, T value)
-    {
-      if (nullptr == _values)
-      {
-        throw std::invalid_argument("Trying to replace an item that does not exist!");
-      }
-      if (index >= _number_of_items)
-      {
-        throw std::out_of_range("Trying to replace an item that does not exist!");
-      }
-      delete _values[index];
-      _values[index] = value;
-    }
-
-    /// <summary>
     /// Add an item to our array, grow if needed.
     /// </summary>
     /// <param name="value"></param>
-    void add(const TJCHAR* key, T value)
+    void set(const TJCHAR* key, T value)
     {
       if (nullptr == _values)
       {
         _values = new T[_capacity];
         _values_dictionary = new dictionary_data[_capacity];
       }
+
+      auto binary_search_result = binary_search(key);
+      if (true == binary_search_result._was_found)
+      {
+        auto index = _values_dictionary[binary_search_result._dictionary_index]._value_index;
+        if (_values[index] == value)
+        {
+          // trying to add the same value twice.
+          return;
+        }
+        delete _values[index];
+        _values[index] = value;
+        return;
+      }
+
       if (_number_of_items == _capacity)
       {
         grow();
       }
 
-      auto binary_search_result = binary_search(key);
       auto dictionary_index = binary_search_result._dictionary_index;
       auto value_index = _number_of_items++;
       _values[value_index] = value;
 
-
       //  shift everything to the left.
       shift_dictionary_left(dictionary_index);
 
+      // add the dictionary index value
+      add_dictionary_data(key, value_index, dictionary_index);
+    }
 
-      // build the dioctionary data
+    void add_dictionary_data(const TJCHAR* key, unsigned int value_index, unsigned int dictionary_index)
+    {
+      // build the new dictionary dta data
       dictionary_data dictionary = {};
       dictionary._value_index = value_index;
       auto length = strlen(key);
@@ -2276,15 +2275,7 @@ namespace TinyJSON
       }
       members->push_back(member);
 #else
-      auto index = members->find(member->name());
-      if (index == -1)
-      {
-        members->add(member->name(), member);
-      }
-      else
-      {
-        members->replace(index, member);
-      }      
+      members->set(member->name(), member);
 #endif
     }
 
@@ -3262,7 +3253,7 @@ namespace TinyJSON
       {
         const auto& member = _members->at(i);
         const auto& name = member->name();
-        members->add(name, new TJMember(name, member->value()->clone()));
+        members->set(name, new TJMember(name, member->value()->clone()));
       }
 #endif
       object->_members = members;
