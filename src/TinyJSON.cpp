@@ -1307,20 +1307,24 @@ namespace TinyJSON
       values = nullptr;
     }
 
+    /// <summary>
+    /// Fast(ish) Calculate the number of digits in a whole unsigned number.
+    /// </summary>
+    /// <param name="number"></param>
+    /// <returns></returns>
     static unsigned long long get_number_of_digits(const unsigned long long& number)
     {
       if (number == 0)
       {
         return 0ull;
       }
-      unsigned long long truncated_number = number;
-      unsigned long long count = 0;
-      do
+      unsigned long long digit = 0;
+      for (unsigned long long i = 0; i <= number; ++digit)
       {
-        truncated_number /= 10;
-        ++count;
-      } while (truncated_number != 0);
-      return count;
+        //  multiply by 10
+        i = i == 0 ? 10 : (i << 3) + (i << 1);
+      }
+      return digit;
     }
 
     static TJCHAR* resize_string(TJCHAR*& source, int length, int resize_length)

@@ -268,6 +268,18 @@ TEST(TestExponents, LargeExponentIsConvertedToSingleWholeNumber) {
   delete json;
 }
 
+TEST(TestExponents, LargeExponentIsConvertedToSingleWholeNumberInAStandAloneString) {
+  auto json = TinyJSON::TJ::parse("100.09e+25");
+
+  ASSERT_NE(nullptr, json);
+
+  auto a = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(json);
+  ASSERT_NE(nullptr, a);
+  ASSERT_STREQ("1.0009e+27", a->dump(TinyJSON::formating::minify));
+  
+  delete json;
+}
+
 TEST(TestExponents, TinyNumberWithLargeExponentShiftsEnoughToBecomeANumberAgain) {
   auto json = TinyJSON::TJ::parse(R"(
 {
