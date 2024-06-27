@@ -741,6 +741,26 @@ namespace TinyJSON
     }
 
     /// <summary>
+    /// Custom case compare that probably will not work with
+    /// locals and so on.
+    /// </summary>
+    /// <param name="s1"></param>
+    /// <param name="s2"></param>
+    /// <returns></returns>
+    int case_compare(const TJCHAR* s1, const TJCHAR* s2) const
+    {
+      while (tolower(*s1) == tolower(*s2))
+      {
+        if (*s1++ == TJ_NULL_TERMINATOR)
+        {
+          return 0;
+        }
+        ++s2;
+      }
+      return tolower(*s1) - tolower(*s2);
+    }
+
+    /// <summary>
     /// Do a binary search and return either the exact location of the item
     /// or the location of the item we should insert in the dictionary if we want to keep 
     /// the key order valid.
@@ -765,7 +785,7 @@ namespace TinyJSON
       {
         // the middle is the floor.
         middle = static_cast<unsigned int>(first + (last - first) / 2);
-        auto compare = strcmpi(_values_dictionary[middle]._key, key);
+        auto compare = case_compare(_values_dictionary[middle]._key, key);
         if (compare == 0)
         {
           search_result result = {};
