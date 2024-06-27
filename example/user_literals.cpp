@@ -3,7 +3,10 @@
 // See the LICENSE file in the project root for more information.
 #include <iostream>
 
+#ifndef TJ_INCLUDE_STD_STRING
 #define TJ_INCLUDE_STD_STRING 1
+#endif // !TJ_INCLUDE_STD_STRING
+
 #include "../src/TinyJSON.h"
 
 using namespace TinyJSON; 

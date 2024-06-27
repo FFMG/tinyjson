@@ -415,7 +415,7 @@ namespace TinyJSON
       :
       _values(nullptr),
       _number_of_items(0),
-      _capacity(10)
+      _capacity(1)
     {
     }
 
@@ -432,6 +432,7 @@ namespace TinyJSON
     {
       if (nullptr == _values)
       {
+        //  first time using the array.
         _values = new TJValue*[_capacity];
       }
       if (_number_of_items == _capacity)
@@ -547,7 +548,7 @@ namespace TinyJSON
       _values_dictionary(nullptr),
       _number_of_items(0),
       _number_of_items_dictionary(0),
-      _capacity(10)
+      _capacity(1)
     {
     }
 
@@ -2912,6 +2913,19 @@ namespace TinyJSON
     }
   }
 
+  /// <summary>
+  /// Move a value to the member
+  /// </summary>
+  void TJMember::move_value(TJValue*& value)
+  {
+    if (_value != nullptr)
+    {
+      delete _value;
+    }
+    _value = value;
+    value = nullptr;
+  }
+
   TJMember* TJMember::move(TJCHAR*& string, TJValue*& value)
   {
     auto member = new TJMember(nullptr, nullptr);
@@ -3228,6 +3242,25 @@ namespace TinyJSON
   TJValueObject::~TJValueObject()
   {
     free_members();
+  }
+
+  /// <summary>
+  /// Set the value of a number
+  /// </summary>
+  /// <param name="key"></param>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  void TJValueObject::set(const TJCHAR* key, const long long& value)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_int = new TJValueNumberInt(value);
+    member->move_value(value_int);
+    TJHelper::move_member_to_members(member, _members);
   }
 
   TJValueObject* TJValueObject::move(TJDICTIONARY*& members)

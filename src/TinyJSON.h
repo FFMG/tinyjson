@@ -278,6 +278,7 @@ class TJDictionary;
   class TJMember
   {
     friend TJHelper;
+    friend TJValueObject;
   public:
     TJMember(const TJCHAR* string, const TJValue* value);
     virtual ~TJMember();
@@ -294,6 +295,11 @@ class TJDictionary;
     /// <param name="value"></param>
     /// <returns></returns>
     static TJMember* move(TJCHAR*& string, TJValue*& value);
+
+    /// <summary>
+    /// Move a value to the member
+    /// </summary>
+    void move_value(TJValue*& value);
 
   private:
     TJCHAR* _string;
@@ -330,12 +336,34 @@ class TJDictionary;
     /// <returns></returns>
     virtual const TJValue* try_get_value(const TJCHAR* name) const;
 
+#if TJ_INCLUDE_STD_STRING == 1
+    /// <summary>
+    /// Try and get the value of this member if it exists.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+#if TJ_INCLUDE_STD_STRING == 1
+    inline const TJValue* try_get_value(const std::string& name) const
+    {
+      return try_get_value(name.c_str());
+    }
+#endif
+#endif
+
     TJValue* clone() const;
 
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
 
     bool is_object() const;
+
+    /// <summary>
+    /// Set the value of a number
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    void set(const TJCHAR* key, const long long& value);
 
   protected:
     /// <summary>
