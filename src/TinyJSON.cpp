@@ -503,11 +503,10 @@ namespace TinyJSON
       // create the new container
       TJValue** temp_values = new TJValue*[_capacity];
 
-      // copy the values.
-      for (unsigned int i = 0; i < _number_of_items; ++i)
-      {
-        temp_values[i] = _values[i];
-      }
+      // just move the data from one to the other as we wil take ownership of it.
+      memmove(temp_values, _values, _number_of_items * sizeof(TJValue*));
+
+      // clean up the old value and point it to the temp value.
       delete[] _values;
       _values = temp_values;
     }
@@ -558,11 +557,12 @@ namespace TinyJSON
     }
 
     /// <summary>
-    /// Add an item to our array, grow if needed.
+    /// set a value in our dictionary, if the value exists, (by name)
+    /// we will replace the old value with the new value.
     /// </summary>
-    /// <param name="value"></param>
-    void set(const TJCHAR* key, TJMember* value)
+    void set(TJMember* value)
     {
+      auto key = value->name();
       if (nullptr == _values)
       {
         _values = new TJMember*[_capacity];
@@ -678,16 +678,18 @@ namespace TinyJSON
       {
         return;
       }
+
+      TJASSERT(_number_of_items == _number_of_items_dictionary);
       for (unsigned int i = 0; i < _number_of_items; ++i)
       {
         delete _values[i];
-      }
-      for (unsigned int i = 0; i < _number_of_items_dictionary; ++i)
-      {
         delete[] _values_dictionary[i]._key;
       }
+
+      // clean up the old values and point it to the temp values.
       delete[] _values;
       _values = nullptr;
+
       delete[] _values_dictionary;
       _values_dictionary = nullptr;
     }
@@ -697,22 +699,23 @@ namespace TinyJSON
     /// </summary>
     void grow()
     {
+      // grow the capacity
       _capacity = _capacity << 1;
+      TJASSERT(_capacity > _number_of_items);
 
-      // create the new container
-      TJMember** temp_values = new TJMember*[_capacity];
-      dictionary_data* temp_values_dictionary = new dictionary_data[_capacity];
+      // create the new containers as temp containers
+      auto temp_values = new TJMember*[_capacity];
+      auto temp_values_dictionary = new dictionary_data[_capacity];
 
-      // copy the values.
-      for (unsigned int i = 0; i < _number_of_items; ++i)
-      {
-        temp_values[i] = _values[i];
-        temp_values_dictionary[i] = { _values_dictionary[i]._value_index, _values_dictionary[i]._key };
-      }
+      // just move the data from one to the other as we will take ownership of it.
+      memmove(temp_values, _values, _number_of_items * sizeof(TJMember*));
+      memmove(temp_values_dictionary, _values_dictionary, _number_of_items_dictionary * sizeof(dictionary_data));
 
+      // replace the old values
       delete[] _values;
       _values = temp_values;
 
+      // replace the old dictionary values.
       delete[] _values_dictionary;
       _values_dictionary = temp_values_dictionary;
     }
@@ -726,11 +729,11 @@ namespace TinyJSON
     void add_dictionary_data(const TJCHAR* key, unsigned int value_index, unsigned int dictionary_index)
     {
       // build the new dictionary dta data
-      dictionary_data dictionary = {};
-      dictionary._value_index = value_index;
       auto length = strlen(key);
-      dictionary._key = new TJCHAR[length + 1];
-      std::strcpy(dictionary._key, key);
+      auto key_copy = new TJCHAR[length + 1];
+      memcpy(key_copy, key, length);
+      key_copy[length] = TJ_NULL_TERMINATOR;
+      dictionary_data dictionary = { value_index, key_copy };
 
       // finally set the dictionary at the correct value
       _values_dictionary[dictionary_index] = dictionary;
@@ -797,11 +800,13 @@ namespace TinyJSON
         return;
       }
 
-      // we need to shift everything of the dictionary to the left.
-      for (int i = _number_of_items_dictionary - 1; i >= dictionary_index; --i)
-      {
-        _values_dictionary[i + 1] = _values_dictionary[i];
-      }
+      // check that we will have space.
+      TJASSERT((_number_of_items_dictionary + 1) >= _capacity);
+      // shift everything in memory a little to the left.
+      memmove(
+        &_values_dictionary[dictionary_index + 1],                                  // we are moving +1 to the left
+        &_values_dictionary[dictionary_index],                                      // we are moving from here.
+        (_number_of_items_dictionary- dictionary_index) * sizeof(dictionary_data)); // we are moving the total number of elements less were we are shifting from.
     }
 
     // no copies.
@@ -2278,7 +2283,7 @@ namespace TinyJSON
       }
       members->push_back(member);
 #else
-      members->set(member->name(), member);
+      members->set(member);
 #endif
     }
 
@@ -3288,7 +3293,7 @@ namespace TinyJSON
       {
         const auto& member = _members->at(i);
         const auto& name = member->name();
-        members->set(name, new TJMember(name, member->value()->clone()));
+        members->set(new TJMember(name, member->value()->clone()));
       }
 #endif
       object->_members = members;
