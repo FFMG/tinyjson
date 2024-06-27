@@ -16,7 +16,7 @@
 #include <random>
 
 std::string generateRandomString(size_t length) {
-  const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const std::string characters = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   std::random_device rd;
   std::mt19937 generator(rd());
   std::uniform_int_distribution<> distribution(0, characters.size() - 1);
@@ -114,7 +114,7 @@ TEST(JSONchecker, AllFiles)
 TEST(JSONchecker, LargeShallowObjectCheck)
 {
   // Get the start time
-  auto start = std::chrono::high_resolution_clock::now();
+  auto start1 = std::chrono::high_resolution_clock::now();
 
   // create an empty object and add some items to it.
   auto object = new TinyJSON::TJValueObject();
@@ -124,12 +124,18 @@ TEST(JSONchecker, LargeShallowObjectCheck)
   const int numbers_to_add = 10000;
   for (auto i = 0; i < numbers_to_add; ++i)
   {
-    auto key = generateRandomString(5);
-    auto value = generateRandomNumber(0, 1000);
+    auto key = generateRandomString(7);
+    auto value = generateRandomNumber(0, 5000);
     object->set(key.c_str(), value);
     data.insert({ key, value });
   }
   ASSERT_EQ(numbers_to_add, object->get_number_of_items());
+
+  auto end1 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration1 = end1 - start1;
+  GTEST_LOG_(INFO) << "Insert: " << duration1.count() << " seconds";
+
+  auto start2 = std::chrono::high_resolution_clock::now();
 
   // then search each and every item
   for (auto d : data)
@@ -143,14 +149,10 @@ TEST(JSONchecker, LargeShallowObjectCheck)
     ASSERT_EQ(value, number->get_number());
   }
 
+  auto end2 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration2 = end2 - start2;
+  GTEST_LOG_(INFO) << "Search: " << duration2.count() << " seconds";
+
   delete object;
 
-  // Get the end time
-  auto end = std::chrono::high_resolution_clock::now();
-
-  // Calculate the duration
-  std::chrono::duration<double> duration = end - start;
-
-  // Print the duration in seconds
-  GTEST_LOG_(INFO) << "Function execution time: " << duration.count() << " seconds" << std::endl;
 }
