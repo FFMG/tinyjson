@@ -10,8 +10,9 @@
 #include <gtest/gtest.h>
 #include <type_traits>
 
+#ifndef TJ_INCLUDE_STD_STRING
 #define TJ_INCLUDE_STD_STRING 1
-#define TJ_USE_CHAR 1
+#endif // !TJ_INCLUDE_STD_STRING
 #include "../src/TinyJSON.h"
 
 int main(int argc, char** argv) {

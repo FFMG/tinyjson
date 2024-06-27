@@ -2493,6 +2493,19 @@ namespace TinyJSON
     }
   }
 
+  /// <summary>
+  /// Move a value to the member
+  /// </summary>
+  void TJMember::move_value(TJValue*& value)
+  {
+    if (_value != nullptr)
+    {
+      delete _value;
+    }
+    _value = value;
+    value = nullptr;
+  }
+
   TJMember* TJMember::move(TJCHAR*& string, TJValue*& value)
   {
     auto member = new TJMember(nullptr, nullptr);
@@ -2809,6 +2822,25 @@ namespace TinyJSON
   TJValueObject::~TJValueObject()
   {
     free_members();
+  }
+
+  /// <summary>
+  /// Set the value of a number
+  /// </summary>
+  /// <param name="key"></param>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  void TJValueObject::set(const TJCHAR* key, const long long& value)
+  {
+    if (nullptr == _members)
+    {
+      _members = new std::vector<TJMember*>();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_int = new TJValueNumberInt(value);
+    member->move_value(value_int);
+    TJHelper::move_member_to_members(member, _members);
   }
 
   TJValueObject* TJValueObject::move(std::vector<TJMember*>*& members)
