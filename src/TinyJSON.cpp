@@ -3369,7 +3369,18 @@ namespace TinyJSON
     {
       return;
     }
+#if TJ_INCLUDE_STDVECTOR == 1
+    auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
+      return TJHelper::are_same(key, value->name());
+      });
+    if (it != _members->end())
+    {
+      delete* it;
+      _members->erase(it);
+    }
+#else
     _members->pop(key);
+#endif
   }
 
   /// <summary>
