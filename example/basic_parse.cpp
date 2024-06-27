@@ -72,7 +72,7 @@ bool object_shallow()
 
   auto end2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration2 = end2 - start2;
-  std::cout << "Search: " << duration2.count() << " seconds << "\n";
+  std::cout << "Search: " << duration2.count() << " seconds\n";
 
   delete object;
   return true;
