@@ -52,7 +52,7 @@ bool object_shallow()
 
   auto end1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration1 = end1 - start1;
-  std::cout << "Insert: " << duration1.count() << " seconds";
+  std::cout << "Insert: " << duration1.count() << " seconds" << "\n";
 
   auto start2 = std::chrono::high_resolution_clock::now();
 
@@ -65,14 +65,14 @@ bool object_shallow()
     auto number = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tj);
     if (number->get_number() != value)
     {
-      std::cout << "  Error! Values mismatch";
+      std::cout << "  Error! Values mismatch\n";
       return false;
     }
   }
 
   auto end2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration2 = end2 - start2;
-  std::cout << "Search: " << duration2.count() << " seconds";
+  std::cout << "Search: " << duration2.count() << " seconds << "\n";
 
   delete object;
   return true;
