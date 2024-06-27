@@ -16,6 +16,16 @@
 #include <random>
 #include <chrono>
 
+double calculateSizeInMegabytes(const char* str) {
+  // Get the length of the string in bytes
+  size_t lengthInBytes = std::strlen(str);
+
+  // Convert bytes to megabytes
+  double lengthInMegabytes = static_cast<double>(lengthInBytes) / (1024 * 1024);
+
+  return lengthInMegabytes;
+}
+
 std::string generateRandomString(size_t length) {
   const std::string characters = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   std::random_device rd;
@@ -128,10 +138,11 @@ TEST(JSONchecker, LargeShallowObjectCheck)
     auto key = generateRandomString(10);  //  long string to prevent colisions.
     auto value = generateRandomNumber(0, 5000);
     object->set(key.c_str(), value);
-    data.insert({ key, value });
+    data[ key ] = value;
   }
-  ASSERT_EQ(numbers_to_add, object->get_number_of_items());
 
+  // we don't check for file size in case of colisions.
+  
   auto end1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration1 = end1 - start1;
   GTEST_LOG_(INFO) << "Insert: " << duration1.count() << " seconds";
@@ -153,6 +164,8 @@ TEST(JSONchecker, LargeShallowObjectCheck)
   auto end2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration2 = end2 - start2;
   GTEST_LOG_(INFO) << "Search: " << duration2.count() << " seconds";
+
+  GTEST_LOG_(INFO) << "Size: " << calculateSizeInMegabytes(object->dump()) << " mb";
 
   delete object;
 }
