@@ -251,7 +251,50 @@ std::cout << "[12 , 13 , 14]"_tj_minify;
 ...
 ```
 
+### How to create a JSON value?
+
+```cpp
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "Hello");
+  object->set("b", "World");
+  object->set("c", "Bye");
+  object->set("d", true);
+
+  auto dump = object->dump();
+
+  /*
+  {
+    "a": "Hello",
+    "b": "World",
+    "c": "Bye",
+    "d": true
+  }
+  */
+```
+
+You can also remove a value
+
 ### Write a JSON string
+
+```cpp
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "Hello");
+  object->set("b", "World");
+  object->set("c", "Bye");
+  object->set("d", true);
+
+  object->pop("b");
+
+  auto dump = object->dump();
+
+  /*
+  {
+    "a": "Hello",
+    "c": "Bye",
+    "d": true
+  }
+  */
+```
 
 To write a JSON string you simply need to call the method `write_file` on the JSON object returned.
 
