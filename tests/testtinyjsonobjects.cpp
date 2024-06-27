@@ -372,3 +372,99 @@ TEST(TestObjects, SetAValueDirectlyAsPointers)
 })");
   delete object;
 }
+
+TEST(TestObjects, PopWithNoItems)
+{
+  auto object = new TinyJSON::TJValueObject();
+  ASSERT_NO_THROW(object->pop("a"));
+
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({})");
+  delete object;
+}
+
+TEST(TestObjects, PopAKeyThatDoesNotExist)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "World");
+
+  ASSERT_NO_THROW(object->pop("b"));
+
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": "World"
+})");
+  delete object;
+}
+
+TEST(TestObjects, PopAKeyThatDoesExist)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "Hello");
+  object->set("b", "World");
+  object->set("c", "Bye");
+
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": "Hello",
+  "b": "World",
+  "c": "Bye"
+})");
+
+  ASSERT_NO_THROW(object->pop("b"));
+
+  dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": "Hello",
+  "c": "Bye"
+})");
+  delete object;
+}
+
+TEST(TestObjects, PopAllTheItems)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "Hello");
+  object->set("b", "World");
+  object->set("c", "Bye");
+
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": "Hello",
+  "b": "World",
+  "c": "Bye"
+})");
+
+  ASSERT_NO_THROW(object->pop("b"));
+  ASSERT_NO_THROW(object->pop("a"));
+  ASSERT_NO_THROW(object->pop("c"));
+
+  dump = object->dump();
+  ASSERT_STREQ(dump, R"({})");
+  delete object;
+}
+
+
+TEST(TestObjects, PopTheLastItem)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "Hello");
+  object->set("b", "World");
+  object->set("c", "Bye");
+
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": "Hello",
+  "b": "World",
+  "c": "Bye"
+})");
+
+  ASSERT_NO_THROW(object->pop("c"));
+
+  dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": "Hello",
+  "b": "World"
+})");
+  delete object;
+}

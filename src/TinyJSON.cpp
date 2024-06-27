@@ -557,6 +557,33 @@ namespace TinyJSON
     }
 
     /// <summary>
+    /// Remove a value at a certain value.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    bool pop(const TJCHAR* key)
+    {
+      auto binary_search_result = binary_search(key);
+      if (false == binary_search_result._was_found)
+      {
+        return false;
+      }
+      auto index = _values_dictionary[binary_search_result._dictionary_index]._value_index;
+      shift_dictionary_right(binary_search_result._dictionary_index);
+      shift_value_right(index);
+
+      // finally we need to move all the index _after_ the dictionary index down by one.
+      for (auto i = 0; i < _number_of_items_dictionary; ++i)
+      {
+        if (_values_dictionary[i]._value_index >= index)
+        {
+          --_values_dictionary[i]._value_index;
+        }
+      }
+      return true;
+    }
+
+    /// <summary>
     /// set a value in our dictionary, if the value exists, (by name)
     /// we will replace the old value with the new value.
     /// </summary>
@@ -807,6 +834,48 @@ namespace TinyJSON
       result._was_found = false;
       result._dictionary_index = first;
       return result;
+    }
+
+    /// <summary>
+    /// Shift everything one position to the right from the index value given.
+    /// </summary>
+    /// <param name="dictionary_index"></param>
+    void shift_dictionary_right(int dictionary_index)
+    {
+      if (_number_of_items_dictionary == 0)
+      {
+        return;
+      }
+
+      delete[] _values_dictionary[dictionary_index]._key;
+
+      // shift everything in memory a little to the left.
+      memmove(
+        &_values_dictionary[dictionary_index],                                  // we are moving +1 to the left
+        &_values_dictionary[dictionary_index+1],                                      // we are moving from here.
+        (_number_of_items_dictionary - dictionary_index -1) * sizeof(dictionary_data)); // we are moving the total number of elements less were we are shifting from.
+      --_number_of_items_dictionary;
+    }
+
+    /// <summary>
+    /// Shift everything one position to the right from the index value given.
+    /// </summary>
+    /// <param name="value_index"></param>
+    void shift_value_right(int value_index)
+    {
+      if (_number_of_items == 0)
+      {
+        return;
+      }
+
+      delete _values[value_index];
+
+      // shift everything in memory a little to the left.
+      memmove(
+        &_values[value_index],                                  // we are moving +1 to the left
+        &_values[value_index + 1],                                      // we are moving from here.
+        (_number_of_items - value_index - 1) * sizeof(TJMember*)); // we are moving the total number of elements less were we are shifting from.
+      --_number_of_items;
     }
 
     /// <summary>
@@ -3288,6 +3357,19 @@ namespace TinyJSON
   TJValueObject::~TJValueObject()
   {
     free_members();
+  }
+
+  /// <summary>
+  /// Pop a value out of the list of items
+  /// </summary>
+  /// <param name="key"></param>
+  void TJValueObject::pop(const TJCHAR* key)
+  {
+    if (nullptr == _members)
+    {
+      return;
+    }
+    _members->pop(key);
   }
 
   /// <summary>

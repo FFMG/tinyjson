@@ -435,6 +435,23 @@ class TJDictionary;
       return set(key.c_str(), value.c_str());
     }
 #endif
+
+    /// <summary>
+    /// Pop a value out of the list of items
+    /// </summary>
+    /// <param name="key"></param>
+    void pop(const TJCHAR* key);
+
+#if TJ_INCLUDE_STD_STRING == 1
+    /// <summary>
+    /// Pop a value out of the list of items
+    /// </summary>
+    /// <param name="key"></param>
+    inline void pop(const std::string& key)
+    {
+      pop(key.c_str());
+    }
+#endif
   protected:
     /// <summary>
     /// Clone an array into an identical array
