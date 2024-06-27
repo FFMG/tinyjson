@@ -573,7 +573,7 @@ namespace TinyJSON
       shift_value_right(index);
 
       // finally we need to move all the index _after_ the dictionary index down by one.
-      for (auto i = 0; i < _number_of_items_dictionary; ++i)
+      for (unsigned int i = 0; i < _number_of_items_dictionary; ++i)
       {
         if (_values_dictionary[i]._value_index >= index)
         {
