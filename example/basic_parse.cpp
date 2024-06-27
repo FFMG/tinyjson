@@ -44,11 +44,13 @@ bool object_shallow()
   const int numbers_to_add = 100000;
   for (auto i = 0; i < numbers_to_add; ++i)
   {
-    auto key = generateRandomString(10);  //  long string to prevent colisions.
+    auto key = generateRandomString(20);  //  long string to prevent colisions.
     auto value = generateRandomNumber(0, 5000);
     object->set(key.c_str(), value);
-    data.insert({ key, value });
+    data[key] = value;
   }
+
+  std::cout << "Added: " << data.size() << " items." << "\n";
 
   auto end1 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration1 = end1 - start1;
