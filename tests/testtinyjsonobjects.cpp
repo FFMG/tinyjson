@@ -304,3 +304,38 @@ TEST(TestObjects, DeepQueries)
 
   delete tjjson;
 }
+
+TEST(TestObjects, SetInteger)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", 42);
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": 42
+})");
+  delete object;
+}
+
+TEST(TestObjects, SetString)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "World");
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": "World"
+})");
+  delete object;
+}
+
+TEST(TestObjects, SetBoolean)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", true);
+  object->set("b", false);
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": true,
+  "b": false
+})");
+  delete object;
+}

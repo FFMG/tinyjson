@@ -177,12 +177,6 @@ class TJDictionary;
     TJValue();
     virtual ~TJValue();
 
-    /// <summary>
-    /// Allow each derived class to create a copy of itself.
-    /// </summary>
-    /// <returns></returns>
-    virtual TJValue* clone() const = 0;
-
     virtual bool is_object() const;
     virtual bool is_array() const;
     virtual bool is_string() const;
@@ -194,7 +188,19 @@ class TJDictionary;
     const TJCHAR* dump(formating formating = formating::indented, const TJCHAR* indent = TJCHARPREFIX("  ")) const;
     const TJCHAR* dump_string() const;
 
+    /// <summary>
+    /// Allow each derived class to create a copy of itself.
+    /// </summary>
+    /// <returns></returns>
+    TJValue* clone() const;
+
   protected:
+    /// <summary>
+    /// Allow each derived class to create a copy of itself.
+    /// </summary>
+    /// <returns></returns>
+    virtual TJValue* internal_clone() const = 0;
+
     virtual void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const = 0;
 
   private:
@@ -342,15 +348,11 @@ class TJDictionary;
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-#if TJ_INCLUDE_STD_STRING == 1
     inline const TJValue* try_get_value(const std::string& name) const
     {
       return try_get_value(name.c_str());
     }
 #endif
-#endif
-
-    TJValue* clone() const;
 
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
@@ -363,9 +365,64 @@ class TJDictionary;
     /// <param name="key"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    void set(const TJCHAR* key, const long long& value);
+    void set(const TJCHAR* key, long long value);
 
+    /// <summary>
+    /// Set the value of a number
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    inline void set(const TJCHAR* key, long value)
+    {
+      set(key, static_cast<long long>(value));
+    }
+
+    /// <summary>
+    /// Set the value of a number
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    inline void set(const TJCHAR* key, int value)
+    {
+      set(key, static_cast<long long>(value));
+    }
+
+    /// <summary>
+    /// Set the value a boolean
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    void set(const TJCHAR* key, bool value);
+
+    /// <summary>
+    /// Set the value of a string.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    void set(const TJCHAR* key, const char* value);
+
+#if TJ_INCLUDE_STD_STRING == 1
+    /// <summary>
+    /// Set the value of a string.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    inline void set(const std::string& key, const std::string& value) const
+    {
+      return set(key.c_str(), value.c_str());
+    }
+#endif
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     /// <summary>
     /// Move the value ownership to the members.
     /// The caller will _not_ delete!
@@ -397,14 +454,17 @@ class TJDictionary;
     /// <returns></returns>
     int get_number_of_items() const;
 
-    TJValue* clone() const;
-
     TJValue* operator [](int idx) const;
     TJValue* at(int idx) const;
 
     bool is_array() const;
 
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     /// <summary>
     /// Move the value ownership to the values.
     /// The caller will _not_ delete!
@@ -430,10 +490,13 @@ class TJDictionary;
     TJValueString(const TJCHAR* value);
     virtual ~TJValueString();
 
-    TJValue* clone() const;
-
     bool is_string() const;
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     /// <summary>
     /// Move the value ownership of the string.
     /// The caller will _not_ delete!
@@ -459,9 +522,12 @@ class TJDictionary;
     bool is_true() const;
     bool is_false() const;
 
-    TJValue* clone() const;
-
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
@@ -475,11 +541,14 @@ class TJDictionary;
     TJValueNull();
     virtual ~TJValueNull() = default;
 
-    TJValue* clone() const;
-
     bool is_null() const;
 
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
   };
 
@@ -507,9 +576,12 @@ class TJDictionary;
 
     long long get_number() const;
 
-    TJValue* clone() const;
-
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
@@ -525,9 +597,12 @@ class TJDictionary;
 
     long double get_number() const;
 
-    TJValue* clone() const;
-
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
@@ -546,9 +621,12 @@ class TJDictionary;
     TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const int& exponent,bool is_negative);
     virtual ~TJValueNumberExponent();
 
-    TJValue* clone() const;
-
   protected:
+    /// <summary>
+    /// Clone an array into an identical array
+    /// </summary>
+    TJValue* internal_clone() const;
+
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:

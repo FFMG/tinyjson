@@ -16,16 +16,6 @@
 #include <random>
 #include <chrono>
 
-double calculateSizeInMegabytes(const char* str) {
-  // Get the length of the string in bytes
-  size_t lengthInBytes = std::strlen(str);
-
-  // Convert bytes to megabytes
-  double lengthInMegabytes = static_cast<double>(lengthInBytes) / (1024 * 1024);
-
-  return lengthInMegabytes;
-}
-
 std::string generateRandomString(size_t length) {
   const std::string characters = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   std::random_device rd;
@@ -164,8 +154,6 @@ TEST(JSONchecker, LargeShallowObjectCheck)
   auto end2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration2 = end2 - start2;
   GTEST_LOG_(INFO) << "Search: " << duration2.count() << " seconds";
-
-  GTEST_LOG_(INFO) << "Size: " << calculateSizeInMegabytes(object->dump()) << " mb";
 
   delete object;
 }

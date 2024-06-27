@@ -3014,6 +3014,15 @@ namespace TinyJSON
     }
   }
 
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValue::clone() const
+  {
+    return internal_clone();
+  }
+
   bool TJValue::is_object() const
   {
     return false;
@@ -3116,7 +3125,11 @@ namespace TinyJSON
     return string;
   }
 
-  TJValue* TJValueString::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueString::internal_clone() const
   {
     return new TJValueString(_value);
   }
@@ -3208,7 +3221,11 @@ namespace TinyJSON
   {
   }
 
-  TJValue* TJValueBoolean::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueBoolean::internal_clone() const
   {
     return new TJValueBoolean(_is_true);
   }
@@ -3238,7 +3255,11 @@ namespace TinyJSON
   {
   }
 
-  TJValue* TJValueNull::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueNull::internal_clone() const
   {
     return new TJValueNull();
   }
@@ -3270,12 +3291,31 @@ namespace TinyJSON
   }
 
   /// <summary>
+  /// Set the value of a string.
+  /// </summary>
+  /// <param name="key"></param>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  void TJValueObject::set(const TJCHAR* key, const char* value)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_string = new TJValueString(value);
+    member->move_value(value_string);
+    TJHelper::move_member_to_members(member, _members);
+  }
+
+  /// <summary>
   /// Set the value of a number
   /// </summary>
   /// <param name="key"></param>
   /// <param name="value"></param>
   /// <returns></returns>
-  void TJValueObject::set(const TJCHAR* key, const long long& value)
+  void TJValueObject::set(const TJCHAR* key, long long value)
   {
     if (nullptr == _members)
     {
@@ -3288,6 +3328,25 @@ namespace TinyJSON
     TJHelper::move_member_to_members(member, _members);
   }
 
+  /// <summary>
+  /// Set the value a boolean
+  /// </summary>
+  /// <param name="key"></param>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  void TJValueObject::set(const TJCHAR* key, bool value)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_boolean = new TJValueBoolean(value);
+    member->move_value(value_boolean);
+    TJHelper::move_member_to_members(member, _members);
+  }
+
   TJValueObject* TJValueObject::move(TJDICTIONARY*& members)
   {
     auto object = new TJValueObject();
@@ -3296,7 +3355,11 @@ namespace TinyJSON
     return object;
   }
 
-  TJValue* TJValueObject::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueObject::internal_clone() const
   {
     auto object = new TJValueObject();
     if (_members != nullptr)
@@ -3530,7 +3593,11 @@ namespace TinyJSON
     TJHelper::add_char_to_string(']', configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
   }
 
-  TJValue* TJValueArray::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueArray::internal_clone() const
   {
     auto array = new TJValueArray();
     if (_values != nullptr)
@@ -3624,7 +3691,11 @@ namespace TinyJSON
   {
   }
 
-  TJValue* TJValueNumberInt::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueNumberInt::internal_clone() const
   {
     return new TJValueNumberInt(_number, _is_negative);
   }
@@ -3677,7 +3748,11 @@ namespace TinyJSON
     _string = TJHelper::fast_number_and_fraction_to_string(_number, _fraction, _fraction_exponent, _is_negative);
   }
 
-  TJValue* TJValueNumberFloat::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueNumberFloat::internal_clone() const
   {
     return new TJValueNumberFloat(_number, _fraction, _fraction_exponent, _is_negative);
   }
@@ -3728,7 +3803,11 @@ namespace TinyJSON
     }
   }
 
-  TJValue* TJValueNumberExponent::clone() const
+  /// <summary>
+  /// Allow each derived class to create a copy of itself.
+  /// </summary>
+  /// <returns></returns>
+  TJValue* TJValueNumberExponent::internal_clone() const
   {
     return new TJValueNumberExponent(_number, _fraction, _fraction_exponent, _exponent, _is_negative);
   }
