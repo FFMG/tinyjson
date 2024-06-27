@@ -3310,6 +3310,25 @@ namespace TinyJSON
   }
 
   /// <summary>
+  /// Set the value of a ... value
+  /// </summary>
+  /// <param name="key"></param>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  void TJValueObject::set(const TJCHAR* key, const TJValue* value)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    auto clone = value->clone();
+    member->move_value(clone);
+    TJHelper::move_member_to_members(member, _members);
+  }
+
+  /// <summary>
   /// Set the value of a number
   /// </summary>
   /// <param name="key"></param>

@@ -213,7 +213,6 @@ class TJDictionary;
     void free_last_dump() const;
   };
 
-
   // The parser class
   class TJ
   {
@@ -358,6 +357,25 @@ class TJDictionary;
     TJMember* at(int idx) const;
 
     bool is_object() const;
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    void set(const TJCHAR* key, const TJValue* value);
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    inline void set(const TJCHAR* key, const TJValue& value)
+    {
+      set(key, &value);
+    }
 
     /// <summary>
     /// Set the value of a number

@@ -339,3 +339,36 @@ TEST(TestObjects, SetBoolean)
 })");
   delete object;
 }
+
+TEST(TestObjects, SetAValueDirectlyAsReference)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", TinyJSON::TJValueBoolean(true));
+  object->set("b", TinyJSON::TJValueBoolean(false));
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": true,
+  "b": false
+})");
+  delete object;
+}
+
+TEST(TestObjects, SetAValueDirectlyAsPointers)
+{
+  auto object = new TinyJSON::TJValueObject();
+  auto t = new TinyJSON::TJValueBoolean(true);
+  auto f = new TinyJSON::TJValueBoolean(false);
+  object->set("a", t);
+  object->set("b", f);
+
+  // delete it before the dump.
+  delete f;
+  delete t;
+
+  auto dump = object->dump();
+  ASSERT_STREQ(dump, R"({
+  "a": true,
+  "b": false
+})");
+  delete object;
+}
