@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <random>
+#include <chrono>
 
 std::string generateRandomString(size_t length) {
   const std::string characters = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -154,5 +155,4 @@ TEST(JSONchecker, LargeShallowObjectCheck)
   GTEST_LOG_(INFO) << "Search: " << duration2.count() << " seconds";
 
   delete object;
-
 }
