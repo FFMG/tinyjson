@@ -10,6 +10,21 @@
 #define TJ_INCLUDE_STD_STRING 0
 #endif
 
+// use the std vector or not, (use the custom array).
+// using the vector can cause performance issue as the
+// array is optimised for deep searches.
+#ifndef TJ_INCLUDE_STDVECTOR
+#define TJ_INCLUDE_STDVECTOR 0
+#endif
+
+#include <exception>
+
+#if TJ_INCLUDE_STDVECTOR == 1
+#include <vector>
+#else
+#include <stdexcept>
+#endif
+
 #if TJ_INCLUDE_STD_STRING == 1
 #include <string>
 #endif
@@ -42,10 +57,18 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 #  define TJCHARPREFIX(x) U ## x
 #endif
 
-#include <vector>
-
 namespace TinyJSON
 {
+#if TJ_INCLUDE_STDVECTOR == 1
+#define TJDICTIONARY std::vector<TJMember*>
+#define TJLIST std::vector<TJValue*>
+#else
+class TJList;
+class TJDictionary;
+#define TJDICTIONARY TJDictionary
+#define TJLIST TJList
+#endif
+
   // the various types of formating.
   enum class formating
   {
@@ -255,6 +278,7 @@ namespace TinyJSON
   class TJMember
   {
     friend TJHelper;
+    friend TJValueObject;
   public:
     TJMember(const TJCHAR* string, const TJValue* value);
     virtual ~TJMember();
@@ -271,6 +295,11 @@ namespace TinyJSON
     /// <param name="value"></param>
     /// <returns></returns>
     static TJMember* move(TJCHAR*& string, TJValue*& value);
+
+    /// <summary>
+    /// Move a value to the member
+    /// </summary>
+    void move_value(TJValue*& value);
 
   private:
     TJCHAR* _string;
@@ -307,12 +336,34 @@ namespace TinyJSON
     /// <returns></returns>
     virtual const TJValue* try_get_value(const TJCHAR* name) const;
 
+#if TJ_INCLUDE_STD_STRING == 1
+    /// <summary>
+    /// Try and get the value of this member if it exists.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
+#if TJ_INCLUDE_STD_STRING == 1
+    inline const TJValue* try_get_value(const std::string& name) const
+    {
+      return try_get_value(name.c_str());
+    }
+#endif
+#endif
+
     TJValue* clone() const;
 
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
 
     bool is_object() const;
+
+    /// <summary>
+    /// Set the value of a number
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    void set(const TJCHAR* key, const long long& value);
 
   protected:
     /// <summary>
@@ -321,13 +372,13 @@ namespace TinyJSON
     /// </summary>
     /// <param name="members"></param>
     /// <returns></returns>
-    static TJValueObject* move(std::vector<TJMember*>*& members);
+    static TJValueObject* move(TJDICTIONARY*& members);
 
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
-    std::vector<TJMember*>* _members;
+    TJDICTIONARY* _members;
 
     void free_members();
   };
@@ -360,13 +411,13 @@ namespace TinyJSON
     /// </summary>
     /// <param name="values"></param>
     /// <returns></returns>
-    static TJValueArray* move(std::vector<TJValue*>*& values);
+    static TJValueArray* move(TJLIST*& values);
 
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
 
   private:
     // All the key value pairs in this object.
-    std::vector<TJValue*>* _values;
+    TJLIST* _values;
 
     void free_values();
   };

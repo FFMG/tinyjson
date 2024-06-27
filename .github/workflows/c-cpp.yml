@@ -67,3 +67,26 @@ jobs:
       run: |
         set +e
         ./options11
+
+  build_array:
+    name: Build array
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build custom array c++11
+      run: g++ -std=c++11 -D TJ_INCLUDE_STDVECTOR=0  -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/basic_parse.cpp -o basic_parse
+
+    - name: run custom array  
+      run: |
+        set +e
+        ./basic_parse        
+
+    - name: build std::vector c++11
+      run: g++ -std=c++11 -D TJ_INCLUDE_STDVECTOR=1  -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/basic_parse.cpp -o basic_parse
+
+    - name: run std::vector
+      run: |
+        set +e
+        ./basic_parse

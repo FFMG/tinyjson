@@ -3,7 +3,10 @@
 // See the LICENSE file in the project root for more information.
 #include "TinyJSON.h"
 
+#if TJ_INCLUDE_STDVECTOR == 1
 #include <algorithm>
+#endif
+
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -401,6 +404,437 @@ namespace TinyJSON
       _message = nullptr;
     }
   }
+
+#if TJ_INCLUDE_STDVECTOR != 1
+  ///////////////////////////////////////
+  /// Protected Array class.
+  class TJList
+  {
+  public:
+    TJList()
+      :
+      _values(nullptr),
+      _number_of_items(0),
+      _capacity(1)
+    {
+    }
+
+    virtual ~TJList()
+    {
+      clean();
+    }
+
+    /// <summary>
+    /// Add an item to our array, grow if needed.
+    /// </summary>
+    /// <param name="value"></param>
+    void add(TJValue* value)
+    {
+      if (nullptr == _values)
+      {
+        //  first time using the array.
+        _values = new TJValue*[_capacity];
+      }
+      if (_number_of_items == _capacity)
+      {
+        grow();
+      }
+      _values[_number_of_items++] = value;
+    }
+
+    /// <summary>
+    /// Get the size of the array, (not the capacity).
+    /// </summary>
+    /// <returns></returns>
+    unsigned int size() const
+    {
+      return _number_of_items;
+    }
+
+    /// <summary>
+    /// Get a value at an index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    TJValue* at(unsigned int index) const
+    {
+      return index < _number_of_items ? _values[index] : nullptr;
+    }
+  private:
+    /// <summary>
+    /// The pointers we will take ownership of.
+    /// </summary>
+    TJValue** _values;
+
+    /// <summary>
+    /// The number of items in the array
+    /// </summary>
+    unsigned int _number_of_items;
+
+    /// <summary>
+    /// The capacity
+    /// </summary>
+    unsigned int _capacity;
+
+    /// <summary>
+    /// Delete all the pointers in the array and the array itself.
+    /// </summary>
+    void clean()
+    {
+      if (nullptr == _values)
+      {
+        return;
+      }
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        delete _values[i];
+      }
+      delete[] _values;
+      _values = nullptr;
+    }
+
+    /// <summary>
+    /// Grow the array by nultiplying the capacity by 2.
+    /// </summary>
+    void grow()
+    {
+      _capacity = _capacity << 1;
+
+      // create the new container
+      TJValue** temp_values = new TJValue*[_capacity];
+
+      // just move the data from one to the other as we wil take ownership of it.
+      memmove(temp_values, _values, _number_of_items * sizeof(TJValue*));
+
+      // clean up the old value and point it to the temp value.
+      delete[] _values;
+      _values = temp_values;
+    }
+
+    // no copies.
+    TJList(const TJList&) = delete;
+    TJList& operator=(const TJList&) = delete;
+    TJList& operator=(TJList&&) = delete;
+  };
+
+  ///////////////////////////////////////
+  /// Protected Array class.
+  class TJDictionary
+  {
+  private:
+    /// <summary>
+    /// The dictionary data, the key and the index of the value
+    /// </summary>
+    struct dictionary_data
+    {
+      unsigned int _value_index;
+      TJCHAR* _key;
+    };
+
+    /// <summary>
+    /// Structure that return the dictionary index, (or the nearest one)
+    /// and the flag 'was_found' tells us if the actual value was located.
+    /// </summary>
+    struct search_result {
+      int _dictionary_index;
+      bool _was_found;
+    };
+
+  public:
+    TJDictionary()
+      :
+      _values(nullptr),
+      _values_dictionary(nullptr),
+      _number_of_items(0),
+      _number_of_items_dictionary(0),
+      _capacity(1)
+    {
+    }
+
+    virtual ~TJDictionary()
+    {
+      clean();
+    }
+
+    /// <summary>
+    /// set a value in our dictionary, if the value exists, (by name)
+    /// we will replace the old value with the new value.
+    /// </summary>
+    void set(TJMember* value)
+    {
+      auto key = value->name();
+      if (nullptr == _values)
+      {
+        _values = new TJMember*[_capacity];
+        _values_dictionary = new dictionary_data[_capacity];
+        _number_of_items = 0;
+        _number_of_items_dictionary = 0;
+      }
+
+      // check if the key already exists, if it does simply update the value.
+      auto binary_search_result = binary_search(key);
+      if (true == binary_search_result._was_found)
+      {
+        auto index = _values_dictionary[binary_search_result._dictionary_index]._value_index;
+        if (_values[index] == value)
+        {
+          // trying to add the same value twice.
+          return;
+        }
+        delete _values[index];
+        _values[index] = value;
+        return;
+      }
+
+      // check if the value can be added.
+      // if not grow both the dictionary and the value.
+      if (_number_of_items == _capacity)
+      {
+        grow();
+      }
+
+      // get the value index.
+      auto value_index = _number_of_items++;
+      _values[value_index] = value;
+
+      //  shift everything to the left.
+      auto dictionary_index = binary_search_result._dictionary_index;
+      shift_dictionary_left(dictionary_index);
+
+      // add the dictionary index value
+      add_dictionary_data(key, value_index, dictionary_index);
+
+      // at this point both values should be the same.
+      TJASSERT(_number_of_items == _number_of_items_dictionary);
+    }
+
+    /// <summary>
+    /// Get the size of the array, (not the capacity).
+    /// </summary>
+    /// <returns></returns>
+    unsigned int size() const
+    {
+      return _number_of_items;
+    }
+
+    /// <summary>
+    /// Get a value at an index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    TJMember* at(unsigned int index) const
+    {
+      return index < _number_of_items ? _values[index] : nullptr;
+    }
+
+    /// <summary>
+    /// Find a single value using the given lambda function to compare,
+    /// </summary>
+    /// <typeparam name="Compare"></typeparam>
+    /// <param name="compare"></param>
+    /// <returns></returns>
+    TJMember* at(const TJCHAR* key) const
+    {
+      auto binary_search_result = binary_search(key);
+      // if we found it, return the actual index value.
+      int index = binary_search_result._was_found ? _values_dictionary[binary_search_result._dictionary_index]._value_index : -1;
+      return index != -1 ? _values[index] : nullptr;
+    }
+
+  private:
+    /// <summary>
+    /// The pointers we will take ownership of.
+    /// </summary>
+    TJMember** _values;
+
+    /// <summary>
+    /// The key value pairs to help binary search.
+    /// </summary>
+    dictionary_data* _values_dictionary;
+
+    /// <summary>
+    /// The number of items in the array
+    /// </summary>
+    unsigned int _number_of_items;
+
+    /// <summary>
+    /// The current number of items in the dictionayr
+    /// This might not always be the same, (for a brief time)
+    /// As the number of items
+    /// </summary>
+    unsigned int _number_of_items_dictionary;
+
+    /// <summary>
+    /// The capacity of both the dictionary and the values.
+    /// </summary>
+    unsigned int _capacity;
+
+    /// <summary>
+    /// Delete all the pointers in the arrays and the array themselves.
+    /// </summary>
+    void clean()
+    {
+      if (nullptr == _values)
+      {
+        return;
+      }
+
+      TJASSERT(_number_of_items == _number_of_items_dictionary);
+      for (unsigned int i = 0; i < _number_of_items; ++i)
+      {
+        delete _values[i];
+        delete[] _values_dictionary[i]._key;
+      }
+
+      // clean up the old values and point it to the temp values.
+      delete[] _values;
+      _values = nullptr;
+
+      delete[] _values_dictionary;
+      _values_dictionary = nullptr;
+    }
+
+    /// <summary>
+    /// Grow the array and the dictionary array by nultiplying the capacity by 2.
+    /// </summary>
+    void grow()
+    {
+      // grow the capacity
+      _capacity = _capacity << 1;
+      TJASSERT(_capacity > _number_of_items);
+
+      // create the new containers as temp containers
+      auto temp_values = new TJMember*[_capacity];
+      auto temp_values_dictionary = new dictionary_data[_capacity];
+
+      // just move the data from one to the other as we will take ownership of it.
+      memmove(temp_values, _values, _number_of_items * sizeof(TJMember*));
+      memmove(temp_values_dictionary, _values_dictionary, _number_of_items_dictionary * sizeof(dictionary_data));
+
+      // replace the old values
+      delete[] _values;
+      _values = temp_values;
+
+      // replace the old dictionary values.
+      delete[] _values_dictionary;
+      _values_dictionary = temp_values_dictionary;
+    }
+
+    /// <summary>
+    /// Add the value to the dictionary
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value_index"></param>
+    /// <param name="dictionary_index"></param>
+    void add_dictionary_data(const TJCHAR* key, unsigned int value_index, unsigned int dictionary_index)
+    {
+      // build the new dictionary dta data
+      auto length = strlen(key);
+      auto key_copy = new TJCHAR[length + 1];
+      memcpy(key_copy, key, length);
+      key_copy[length] = TJ_NULL_TERMINATOR;
+      dictionary_data dictionary = { value_index, key_copy };
+
+      // finally set the dictionary at the correct value
+      _values_dictionary[dictionary_index] = dictionary;
+      ++_number_of_items_dictionary;
+    }
+
+    /// <summary>
+    /// Custom case compare that probably will not work with
+    /// locals and so on.
+    /// </summary>
+    /// <param name="s1"></param>
+    /// <param name="s2"></param>
+    /// <returns></returns>
+    int case_compare(const TJCHAR* s1, const TJCHAR* s2) const
+    {
+      while (tolower(*s1) == tolower(*s2))
+      {
+        if (*s1++ == TJ_NULL_TERMINATOR)
+        {
+          return 0;
+        }
+        ++s2;
+      }
+      return tolower(*s1) - tolower(*s2);
+    }
+
+    /// <summary>
+    /// Do a binary search and return either the exact location of the item
+    /// or the location of the item we should insert in the dictionary if we want to keep 
+    /// the key order valid.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    search_result binary_search(const TJCHAR* key) const
+    {
+      if (_number_of_items_dictionary == 0)
+      {
+        //  we have no data, so we have to put it in the first place.
+        search_result result = {};
+        result._was_found = false;
+        result._dictionary_index = 0;
+        return result;
+      }
+
+      int first = 0;
+      int last = _number_of_items_dictionary - 1;
+      int middle = 0;
+      while (first <= last)
+      {
+        // the middle is the floor.
+        middle = static_cast<unsigned int>(first + (last - first) / 2);
+        auto compare = case_compare(_values_dictionary[middle]._key, key);
+        if (compare == 0)
+        {
+          search_result result = {};
+          result._was_found = true;
+          result._dictionary_index = middle;
+          return result;
+        }
+        if (compare < 0)
+        {
+          first = middle + 1;
+        }
+        else
+        {
+          last = middle - 1;
+        }
+      }
+
+      search_result result = {};
+      result._was_found = false;
+      result._dictionary_index = first;
+      return result;
+    }
+
+    /// <summary>
+    /// Shift everything one position to the left from the index value given.
+    /// </summary>
+    /// <param name="dictionary_index"></param>
+    void shift_dictionary_left(int dictionary_index)
+    {
+      if (_number_of_items_dictionary == 0)
+      {
+        return;
+      }
+
+      // check that we will have space.
+      TJASSERT((_number_of_items_dictionary + 1) >= _capacity);
+      // shift everything in memory a little to the left.
+      memmove(
+        &_values_dictionary[dictionary_index + 1],                                  // we are moving +1 to the left
+        &_values_dictionary[dictionary_index],                                      // we are moving from here.
+        (_number_of_items_dictionary- dictionary_index) * sizeof(dictionary_data)); // we are moving the total number of elements less were we are shifting from.
+    }
+
+    // no copies.
+    TJDictionary(const TJDictionary&) = delete;
+    TJDictionary& operator=(const TJDictionary&) = delete;
+    TJDictionary& operator=(TJDictionary&&) = delete;
+  };
+#endif
 
   ///////////////////////////////////////
   /// Protected Helper class
@@ -867,50 +1301,57 @@ namespace TinyJSON
       return true;
     }
 
-    static void free_members(std::vector<TJMember*>* members)
+    static void free_members(TJDICTIONARY* members)
     {
       if (members == nullptr)
       {
         return;
       }
-
+#if TJ_INCLUDE_STDVECTOR == 1
       for (auto var : *members)
       {
         delete var;
       }
+#endif
       delete members;
       members = nullptr;
     }
 
-    static void free_values(std::vector<TJValue*>* values)
+    static void free_values(TJLIST* values)
     {
       if (values == nullptr)
       {
         return;
       }
 
+#if TJ_INCLUDE_STDVECTOR == 1
       for (auto var : *values)
       {
         delete var;
       }
+#endif
       delete values;
       values = nullptr;
     }
 
+    /// <summary>
+    /// Fast(ish) Calculate the number of digits in a whole unsigned number.
+    /// </summary>
+    /// <param name="number"></param>
+    /// <returns></returns>
     static unsigned long long get_number_of_digits(const unsigned long long& number)
     {
       if (number == 0)
       {
         return 0ull;
       }
-      unsigned long long truncated_number = number;
-      unsigned long long count = 0;
-      do
+      unsigned long long digit = 0;
+      for (unsigned long long i = 0; i <= number; ++digit)
       {
-        truncated_number /= 10;
-        ++count;
-      } while (truncated_number != 0);
-      return count;
+        //  multiply by 10
+        i = i == 0 ? 10 : (i << 3) + (i << 1);
+      }
+      return digit;
     }
 
     static TJCHAR* resize_string(TJCHAR*& source, int length, int resize_length)
@@ -1834,18 +2275,19 @@ namespace TinyJSON
     }
 
     /// <summary>
-    /// We are moving the owership of the TJMember to the vector.
-    /// If the vector is not created we will create it.
-    /// Duplicate values will be overwiten here.
+    /// We are moving the owership of the TJMember to the array.
+    /// If the array is not created we will create it and add the value.
+    /// Duplicate values will be overwiten here, the old value will be removed and the new one added.
     /// </summary>
     /// <param name="member"></param>
     /// <param name="members"></param>
-    static void move_member_to_members(TJMember* member, std::vector<TJMember*>*& members)
+    static void move_member_to_members(TJMember* member, TJDICTIONARY*& members)
     {
       if (nullptr == members)
       {
-        members = new std::vector<TJMember*>();
+        members = new TJDICTIONARY();
       }
+#if TJ_INCLUDE_STDVECTOR == 1
       else
       {
         auto current = std::find_if(members->begin(), members->end(), [&](TJMember*& elem) 
@@ -1860,6 +2302,9 @@ namespace TinyJSON
         }
       }
       members->push_back(member);
+#else
+      members->set(member);
+#endif
     }
 
     /// <summary>
@@ -1878,7 +2323,7 @@ namespace TinyJSON
       }
       //  assume no members in that object.
       bool found_comma = false;
-      std::vector<TJMember*>* members = nullptr;
+      TJDICTIONARY* members = nullptr;
       bool after_string = false;
       bool waiting_for_a_string = false;
       while (*p != TJ_NULL_TERMINATOR)
@@ -1987,7 +2432,7 @@ namespace TinyJSON
       }
 
       //  assume no values in that array
-      std::vector<TJValue*>* values = nullptr;
+      TJLIST* values = nullptr;
       bool waiting_for_a_value = true;
       bool found_comma = false;
       while (*p != TJ_NULL_TERMINATOR)
@@ -2038,7 +2483,7 @@ namespace TinyJSON
           }
           if (nullptr == values)
           {
-            values = new std::vector<TJValue*>();
+            values = new TJLIST();
           }
           else if (found_comma == false && values->size() > 0)
           {
@@ -2048,7 +2493,11 @@ namespace TinyJSON
             parse_result.assign_exception_message("We found a value but we expected a comma.");
             return nullptr;
           }
+#if TJ_INCLUDE_STDVECTOR == 1
           values->push_back(value);
+#else
+          values->add(value);
+#endif
           waiting_for_a_value = false;
           found_comma = false;
           break;
@@ -2489,6 +2938,19 @@ namespace TinyJSON
     }
   }
 
+  /// <summary>
+  /// Move a value to the member
+  /// </summary>
+  void TJMember::move_value(TJValue*& value)
+  {
+    if (_value != nullptr)
+    {
+      delete _value;
+    }
+    _value = value;
+    value = nullptr;
+  }
+
   TJMember* TJMember::move(TJCHAR*& string, TJValue*& value)
   {
     auto member = new TJMember(nullptr, nullptr);
@@ -2807,7 +3269,26 @@ namespace TinyJSON
     free_members();
   }
 
-  TJValueObject* TJValueObject::move(std::vector<TJMember*>*& members)
+  /// <summary>
+  /// Set the value of a number
+  /// </summary>
+  /// <param name="key"></param>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  void TJValueObject::set(const TJCHAR* key, const long long& value)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_int = new TJValueNumberInt(value);
+    member->move_value(value_int);
+    TJHelper::move_member_to_members(member, _members);
+  }
+
+  TJValueObject* TJValueObject::move(TJDICTIONARY*& members)
   {
     auto object = new TJValueObject();
     object->_members = members;
@@ -2820,11 +3301,21 @@ namespace TinyJSON
     auto object = new TJValueObject();
     if (_members != nullptr)
     {
-      auto members = new std::vector<TJMember*>();
+      auto members = new TJDICTIONARY();
+#if TJ_INCLUDE_STDVECTOR == 1
       for (auto& member : *_members)
       {
         members->push_back(new TJMember(member->name(), member->value()->clone()));
       }
+#else
+      auto size = _members->size();
+      for(unsigned int i = 0; i < size; ++i)
+      {
+        const auto& member = _members->at(i);
+        const auto& name = member->name();
+        members->set(new TJMember(name, member->value()->clone()));
+      }
+#endif
       object->_members = members;
     }
     return object;
@@ -2851,8 +3342,15 @@ namespace TinyJSON
       TJHelper::add_string_to_string(current_indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
       TJHelper::add_string_to_string(configuration._indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
 
+#if TJ_INCLUDE_STDVECTOR == 1
       for (const auto& member : *_members)
       {
+#else
+      auto size = _members->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& member = _members->at(i);
+#endif
         TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
 
         TJHelper::add_string_to_string(configuration._key_quote, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
@@ -2901,7 +3399,11 @@ namespace TinyJSON
     {
       return nullptr;
     }
+#if TJ_INCLUDE_STDVECTOR == 1
     return (*_members)[idx];
+#else
+    return _members->at(idx);
+#endif
   }
 
   void TJValueObject::free_members()
@@ -2911,10 +3413,12 @@ namespace TinyJSON
       return;
     }
 
+#if TJ_INCLUDE_STDVECTOR == 1
     for (auto var : *_members)
     {
       delete var;
     }
+#endif
     delete _members;
     _members = nullptr;
   }
@@ -2930,11 +3434,20 @@ namespace TinyJSON
       return nullptr;
     }
 
+#if TJ_INCLUDE_STDVECTOR == 1
     auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
       return TJHelper::are_same(name, value->name());
     });
 
     return (it == _members->end()) ? nullptr : (*it)->value();
+#else
+    auto member = _members->at(name);
+    if (nullptr == member)
+    {
+      return nullptr;
+    }
+    return member->value();
+#endif
   }
 
   const TJCHAR* TJValueObject::try_get_string(const TJCHAR* name) const
@@ -2965,7 +3478,7 @@ namespace TinyJSON
     free_values();
   }
 
-  TJValueArray* TJValueArray::move(std::vector<TJValue*>*& values)
+  TJValueArray* TJValueArray::move(TJLIST*& values)
   {
     auto value = new TJValueArray();
     value->_values = values;
@@ -2991,8 +3504,15 @@ namespace TinyJSON
       TJHelper::add_string_to_string(current_indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
       TJHelper::add_string_to_string(configuration._indent, inner_current_indent, inner_buffer_pos, inner_buffer_max_length);
 
+#if TJ_INCLUDE_STDVECTOR == 1
       for (const auto& value : *_values)
       {
+#else
+      auto size = _values->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& value = _values->at(i);
+#endif
         TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length);
         value->internal_dump(configuration, inner_current_indent);
 
@@ -3015,10 +3535,18 @@ namespace TinyJSON
     auto array = new TJValueArray();
     if (_values != nullptr)
     {
-      auto values = new std::vector<TJValue*>();
-      for (auto& value : *_values)
+      auto values = new TJLIST();
+#if TJ_INCLUDE_STDVECTOR == 1
+      for (const auto& value : *_values)
       {
         values->push_back(value->clone());
+#else
+      auto size = _values->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& value = _values->at(i);
+        values->add(value->clone());
+#endif
       }
       array->_values = values;
     }
@@ -3046,7 +3574,11 @@ namespace TinyJSON
     {
       return nullptr;
     }
+#if TJ_INCLUDE_STDVECTOR == 1
     return (*_values)[idx];
+#else
+    return _values->at(idx);
+#endif
   }
 
   void TJValueArray::free_values()
@@ -3056,10 +3588,12 @@ namespace TinyJSON
       return;
     }
 
+#if TJ_INCLUDE_STDVECTOR == 1
     for (auto var : *_values)
     {
       delete var;
     }
+#endif
     delete _values;
     _values = nullptr;
   }

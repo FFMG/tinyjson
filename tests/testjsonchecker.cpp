@@ -2,12 +2,39 @@
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 #include <gtest/gtest.h>
-#define TJ_USE_CHAR 1
+#ifndef TJ_INCLUDE_STD_STRING
+#define TJ_INCLUDE_STD_STRING 1
+#endif // !TJ_INCLUDE_STD_STRING
 #include "../src/TinyJSON.h"
 
 #include <filesystem>
 #include <fstream>
 #include <regex>
+#include <map>
+#include <iostream>
+#include <string>
+#include <random>
+
+std::string generateRandomString(size_t length) {
+  const std::string characters = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  std::random_device rd;
+  std::mt19937 generator(rd());
+  std::uniform_int_distribution<> distribution(0, characters.size() - 1);
+
+  std::string randomString;
+  for (size_t i = 0; i < length; ++i) {
+    randomString += characters[distribution(generator)];
+  }
+  return randomString;
+}
+
+int generateRandomNumber(int min, int max) {
+  std::random_device rd; // Seed for the random number generator
+  std::mt19937 generator(rd()); // Mersenne Twister random number generator
+  std::uniform_int_distribution<> distribution(min, max); // Uniform distribution within [min, max]
+
+  return distribution(generator);
+}
 
 bool matches_file(const std::filesystem::directory_entry& file, const std::string& pattern) 
 {
@@ -82,4 +109,50 @@ TEST(JSONchecker, AllFiles)
       }
     }
   }
+}
+
+TEST(JSONchecker, LargeShallowObjectCheck)
+{
+  // Get the start time
+  auto start1 = std::chrono::high_resolution_clock::now();
+
+  // create an empty object and add some items to it.
+  auto object = new TinyJSON::TJValueObject();
+
+  // then add a lot of items
+  std::map<std::string, int> data;
+  const int numbers_to_add = 10000;
+  for (auto i = 0; i < numbers_to_add; ++i)
+  {
+    auto key = generateRandomString(10);  //  long string to prevent colisions.
+    auto value = generateRandomNumber(0, 5000);
+    object->set(key.c_str(), value);
+    data.insert({ key, value });
+  }
+  ASSERT_EQ(numbers_to_add, object->get_number_of_items());
+
+  auto end1 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration1 = end1 - start1;
+  GTEST_LOG_(INFO) << "Insert: " << duration1.count() << " seconds";
+
+  auto start2 = std::chrono::high_resolution_clock::now();
+
+  // then search each and every item
+  for (auto d : data)
+  {
+    auto key = d.first;
+    auto value = d.second;
+    auto tj = object->try_get_value(key.c_str());
+    ASSERT_NE(nullptr, tj);
+    auto number = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tj);
+    ASSERT_NE(nullptr, number);
+    ASSERT_EQ(value, number->get_number());
+  }
+
+  auto end2 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration2 = end2 - start2;
+  GTEST_LOG_(INFO) << "Search: " << duration2.count() << " seconds";
+
+  delete object;
+
 }

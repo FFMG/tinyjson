@@ -216,3 +216,91 @@ TEST(TestObjects, TheLastItemInOurBrokenJsonIsAnEscape) {
   ASSERT_EQ(nullptr, json);
   delete json;
 }
+
+
+TEST(TestObjects, ShallowQueries)
+{
+  auto json = R"({
+    "string" : "Hello world 0",
+    "number" : 12
+  })";
+  auto tjjson = TinyJSON::TJ::parse(json);
+  ASSERT_NE(nullptr, tjjson);
+  auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
+  auto o1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tjobject->try_get_value("number"));
+  ASSERT_NE(nullptr, o1);
+  auto o2 = dynamic_cast<const TinyJSON::TJValueString*>(tjobject->try_get_value("string"));
+  ASSERT_NE(nullptr, o2);
+  ASSERT_STREQ("Hello world 0", o2->dump_string());
+
+  delete tjjson;
+}
+
+TEST(TestObjects, ShallowQueriesWithManyItems)
+{
+  auto json = R"({
+"t" : 20,
+"a" : 1,
+"b" : 2,
+"w" : 23,
+"c" : 3,
+"d" : 4,
+"e" : 5,
+"f" : 6,
+"g" : 7,
+"h" : 8,
+"j" : 10,
+"v" : 22,
+"k" : 11,
+"l" : 12,
+"m" : 13,
+"n" : 14,
+"o" : 15,
+"p" : 16,
+"q" : 17,
+"r" : 18,
+"i" : 9,
+"s" : 19,
+"y" : 25,
+"u" : 21,
+"x" : 24,
+"z" : 26
+  })";
+  auto tjjson = TinyJSON::TJ::parse(json);
+  ASSERT_NE(nullptr, tjjson);
+  auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
+  auto o1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tjobject->try_get_value("a"));
+  ASSERT_EQ(1, o1->get_number());
+  o1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tjobject->try_get_value("z"));
+  ASSERT_EQ(26, o1->get_number());
+
+  delete tjjson;
+}
+
+TEST(TestObjects, DeepQueries)
+{
+  auto json = R"({
+    "number" : 12,
+    "string" : "Hello world 0",
+    "object" : {
+      "number" : 12,
+      "string" : "Hello world 1",
+      "object" : {
+        "number" : 12,
+        "string" : "Hello world 2"
+      }
+    }
+  })";
+  auto tjjson = TinyJSON::TJ::parse(json);
+  ASSERT_NE(nullptr, tjjson);
+  auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
+  auto o1 = dynamic_cast<const TinyJSON::TJValueObject*>(tjobject->try_get_value("object"));
+  ASSERT_NE(nullptr, o1);
+  auto o2 = dynamic_cast<const TinyJSON::TJValueObject*>(o1->try_get_value("object"));
+  ASSERT_NE(nullptr, o2);
+  auto o3 = o2->try_get_value("string");
+  ASSERT_NE(nullptr, o3);
+  ASSERT_STREQ("Hello world 2", o3->dump_string());
+
+  delete tjjson;
+}

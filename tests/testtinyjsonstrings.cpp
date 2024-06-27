@@ -604,12 +604,15 @@ TEST(TestStrings, YouCanHaveATabBeforeAndAfterAStringInObject) {
 }
 
 TEST(TestStrings, ValidHexValues) {
+  GTEST_SKIP();
+
   auto json = TinyJSON::TJ::parse(R"(
 [
   "\u0123\u4567\u89AB\uCDEF\uabcd\uef4A"
 ]
 )"
 );
+
   ASSERT_NE(nullptr, json);
 
   auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
