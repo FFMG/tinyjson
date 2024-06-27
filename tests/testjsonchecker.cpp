@@ -124,7 +124,7 @@ TEST(JSONchecker, LargeShallowObjectCheck)
   const int numbers_to_add = 10000;
   for (auto i = 0; i < numbers_to_add; ++i)
   {
-    auto key = generateRandomString(7);
+    auto key = generateRandomString(10);  //  long string to prevent colisions.
     auto value = generateRandomNumber(0, 5000);
     object->set(key.c_str(), value);
     data.insert({ key, value });
