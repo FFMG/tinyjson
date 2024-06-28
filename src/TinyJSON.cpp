@@ -528,7 +528,7 @@ namespace TinyJSON
     struct dictionary_data
     {
       unsigned int _value_index;
-      TJCHAR* _key;
+      const TJCHAR* _key;
     };
 
     /// <summary>
@@ -589,7 +589,7 @@ namespace TinyJSON
     /// </summary>
     void set(TJMember* value)
     {
-      auto key = value->name();
+      const TJCHAR* key = value->name();
       if (nullptr == _values)
       {
         _values = new TJMember*[_capacity];
@@ -710,7 +710,6 @@ namespace TinyJSON
       for (unsigned int i = 0; i < _number_of_items; ++i)
       {
         delete _values[i];
-        delete[] _values_dictionary[i]._key;
       }
 
       // clean up the old values and point it to the temp values.
@@ -756,11 +755,7 @@ namespace TinyJSON
     void add_dictionary_data(const TJCHAR* key, unsigned int value_index, unsigned int dictionary_index)
     {
       // build the new dictionary dta data
-      auto length = strlen(key);
-      auto key_copy = new TJCHAR[length + 1];
-      memcpy(key_copy, key, length);
-      key_copy[length] = TJ_NULL_TERMINATOR;
-      dictionary_data dictionary = { value_index, key_copy };
+      dictionary_data dictionary = { value_index, key };
 
       // finally set the dictionary at the correct value
       _values_dictionary[dictionary_index] = dictionary;
@@ -846,8 +841,6 @@ namespace TinyJSON
       {
         return;
       }
-
-      delete[] _values_dictionary[dictionary_index]._key;
 
       // shift everything in memory a little to the left.
       memmove(
