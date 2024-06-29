@@ -563,7 +563,15 @@ namespace TinyJSON
     /// <returns></returns>
     bool pop(const TJCHAR* key)
     {
-      auto binary_search_result = binary_search(key);
+      bool case_sensitive =
+#if TJ_KEY_CASE_SENSITIVE == 0
+        true;
+#else
+        false;
+#endif
+
+      auto binary_search_result = binary_search(key, case_sensitive);
+
       if (false == binary_search_result._was_found)
       {
         return false;
@@ -598,8 +606,15 @@ namespace TinyJSON
         _number_of_items_dictionary = 0;
       }
 
+      bool case_sensitive =
+#if TJ_KEY_CASE_SENSITIVE == 0
+        true;
+#else
+        false;
+#endif
+
       // check if the key already exists, if it does simply update the value.
-      auto binary_search_result = binary_search(key);
+      auto binary_search_result = binary_search(key, case_sensitive);
       if (true == binary_search_result._was_found)
       {
         auto index = _values_dictionary[binary_search_result._dictionary_index]._value_index;
@@ -663,9 +678,9 @@ namespace TinyJSON
     /// <typeparam name="Compare"></typeparam>
     /// <param name="compare"></param>
     /// <returns></returns>
-    TJMember* at(const TJCHAR* key) const
+    TJMember* at(const TJCHAR* key, bool case_sensitive) const
     {
-      auto binary_search_result = binary_search(key);
+      auto binary_search_result = binary_search(key, case_sensitive);
       // if we found it, return the actual index value.
       int index = binary_search_result._was_found ? _values_dictionary[binary_search_result._dictionary_index]._value_index : -1;
       return index != -1 ? _values[index] : nullptr;
@@ -765,7 +780,6 @@ namespace TinyJSON
       ++_number_of_items_dictionary;
     }
 
-#if TJ_KEY_CASE_SENSITIVE == 1
     /// <summary>
     /// Custom case compare that probably will not work with
     /// locals and so on.
@@ -773,8 +787,13 @@ namespace TinyJSON
     /// <param name="s1"></param>
     /// <param name="s2"></param>
     /// <returns></returns>
-    int case_compare(const TJCHAR* s1, const TJCHAR* s2) const
+    static int case_compare(const TJCHAR* s1, const TJCHAR* s2, bool case_sensitive)
     {
+      if (true == case_sensitive)
+      {
+        return strcmp(s1, s2);
+      }
+
       while (tolower(*s1) == tolower(*s2))
       {
         if (*s1++ == TJ_NULL_TERMINATOR)
@@ -785,7 +804,6 @@ namespace TinyJSON
       }
       return tolower(*s1) - tolower(*s2);
     }
-#endif
 
     /// <summary>
     /// Do a binary search and return either the exact location of the item
@@ -794,7 +812,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
-    search_result binary_search(const TJCHAR* key) const
+    search_result binary_search(const TJCHAR* key, bool case_sensitive) const
     {
       if (_number_of_items_dictionary == 0)
       {
@@ -812,13 +830,8 @@ namespace TinyJSON
       {
         // the middle is the floor.
         middle = static_cast<unsigned int>(first + (last - first) / 2);
-#if TJ_KEY_CASE_SENSITIVE == 1
         // we do not want duplicate keys
-        auto compare = case_compare(_values_dictionary[middle]._key, key);
-#else
-        // we are not case sensitive
-        auto compare = strcmp(_values_dictionary[middle]._key, key);
-#endif
+        auto compare = case_compare(_values_dictionary[middle]._key, key, case_sensitive);
         if (compare == 0)
         {
           search_result result = {};
@@ -1339,13 +1352,39 @@ namespace TinyJSON
       }
     }
 
+
+    /// <summary>
+    /// Custom case compare that probably will not work with
+    /// locals and so on.
+    /// </summary>
+    /// <param name="s1"></param>
+    /// <param name="s2"></param>
+    /// <returns></returns>
+    static int case_compare(const TJCHAR* s1, const TJCHAR* s2, bool case_sensitive)
+    {
+      if (true == case_sensitive)
+      {
+        return strcmp(s1, s2);
+      }
+
+      while (tolower(*s1) == tolower(*s2))
+      {
+        if (*s1++ == TJ_NULL_TERMINATOR)
+        {
+          return 0;
+        }
+        ++s2;
+      }
+      return tolower(*s1) - tolower(*s2);
+    }
+
     /// <summary>
     /// Compare if 2 strings are the same
     /// </summary>
     /// <param name="lhs"></param>
     /// <param name="rhs"></param>
     /// <returns></returns>
-    static bool are_same(const TJCHAR* lhs, const TJCHAR* rhs)
+    static bool are_same(const TJCHAR* lhs, const TJCHAR* rhs, bool case_sensitive)
     {
       if (nullptr == lhs && nullptr == rhs)
       {
@@ -1355,23 +1394,7 @@ namespace TinyJSON
       {
         return false;
       }
-
-      for (auto i = 0;; ++i)
-      {
-        if (lhs[i] == TJ_NULL_TERMINATOR && rhs[i] == TJ_NULL_TERMINATOR)
-        {
-          return true;
-        }
-        else if (lhs[i] == TJ_NULL_TERMINATOR || rhs[i] == TJ_NULL_TERMINATOR)
-        {
-          return false;
-        }
-        if (lhs[i] != rhs[i])
-        {
-          return false;
-        }
-      }
-      return true;
+      return case_compare(lhs, rhs, case_sensitive) == 0;
     }
 
     static void free_members(TJDICTIONARY* members)
@@ -2365,7 +2388,11 @@ namespace TinyJSON
       {
         auto current = std::find_if(members->begin(), members->end(), [&](TJMember*& elem) 
           { 
-            return TJHelper::are_same( elem->name(), member->name());
+#if TJ_KEY_CASE_SENSITIVE == 0
+            return TJHelper::are_same(elem->name(), member->name(), true);
+#else
+            return TJHelper::are_same(elem->name(), member->name(), false);
+#endif
           });
         if (current != members->end())
         {
@@ -3375,7 +3402,11 @@ namespace TinyJSON
     }
 #if TJ_INCLUDE_STDVECTOR == 1
     auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
-      return TJHelper::are_same(key, value->name());
+#if TJ_KEY_CASE_SENSITIVE == 0
+      return TJHelper::are_same(key, value->name(), true);
+#else
+      return TJHelper::are_same(key, value->name(), false);
+#endif
       });
     if (it != _members->end())
     {
@@ -3602,9 +3633,14 @@ namespace TinyJSON
     _members = nullptr;
   }
 
-  const TJValue* TJValueObject::try_get_value(const TJCHAR* name) const
+  /// <summary>
+  /// Try and get the value of this member if it exists.
+  /// </summary>
+  /// <param name="key"></param>
+  /// <returns></returns>
+  const TJValue* TJValueObject::try_get_value(const TJCHAR* key, bool case_sensitive) const
   {
-    if (nullptr == name)
+    if (nullptr == key)
     {
       return nullptr;
     }
@@ -3615,12 +3651,12 @@ namespace TinyJSON
 
 #if TJ_INCLUDE_STDVECTOR == 1
     auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
-      return TJHelper::are_same(name, value->name());
+      return TJHelper::are_same(key, value->name(), case_sensitive);
     });
 
     return (it == _members->end()) ? nullptr : (*it)->value();
 #else
-    auto member = _members->at(name);
+    auto member = _members->at(key, case_sensitive);
     if (nullptr == member)
     {
       return nullptr;
@@ -3629,9 +3665,14 @@ namespace TinyJSON
 #endif
   }
 
-  const TJCHAR* TJValueObject::try_get_string(const TJCHAR* name) const
+  /// <summary>
+  /// Try and get a string value, if it does not exist, then we return null.
+  /// </summary>
+  /// <param name="key"></param>
+  /// <returns></returns>
+  const TJCHAR* TJValueObject::try_get_string(const TJCHAR* key, bool case_sensitive) const
   {
-    auto value = try_get_value(name);
+    auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
       return nullptr;
