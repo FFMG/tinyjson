@@ -610,6 +610,9 @@ namespace TinyJSON
         }
         delete _values[index];
         _values[index] = value;
+
+        // we also need to update the name as we are now pointing somewhere else
+        _values_dictionary[binary_search_result._dictionary_index]._key = value->name();
         return;
       }
 
