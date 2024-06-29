@@ -765,6 +765,7 @@ namespace TinyJSON
       ++_number_of_items_dictionary;
     }
 
+#if TJ_KEY_CASE_SENSITIVE == 1
     /// <summary>
     /// Custom case compare that probably will not work with
     /// locals and so on.
@@ -784,6 +785,7 @@ namespace TinyJSON
       }
       return tolower(*s1) - tolower(*s2);
     }
+#endif
 
     /// <summary>
     /// Do a binary search and return either the exact location of the item
@@ -810,7 +812,13 @@ namespace TinyJSON
       {
         // the middle is the floor.
         middle = static_cast<unsigned int>(first + (last - first) / 2);
+#if TJ_KEY_CASE_SENSITIVE == 1
+        // we do not want duplicate keys
         auto compare = case_compare(_values_dictionary[middle]._key, key);
+#else
+        // we are not case sensitive
+        auto compare = strcmp(_values_dictionary[middle]._key, key);
+#endif
         if (compare == 0)
         {
           search_result result = {};

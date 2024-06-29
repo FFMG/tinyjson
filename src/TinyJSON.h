@@ -10,6 +10,13 @@
 #define TJ_INCLUDE_STD_STRING 0
 #endif
 
+// According to the spec the keys are case sensitive
+// set this value to 1 if you _do not_ want this behaviour
+// so { "a" : 12} is the same as { "A" : 12} 
+#ifndef TJ_KEY_CASE_SENSITIVE
+#define TJ_KEY_CASE_SENSITIVE 0
+#endif
+
 // use the std vector or not, (use the custom array).
 // using the vector can cause performance issue as the
 // array is optimised for deep searches.

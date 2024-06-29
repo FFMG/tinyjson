@@ -623,3 +623,40 @@ TEST(TestStrings, ValidHexValues) {
 
   delete json;
 }
+
+#if TJ_KEY_CASE_SENSITIVE == 0
+TEST(TestStrings, KeysAreNotCaseSensitive) {
+#else
+TEST(TestStrings, KeysAreCaseSensitive) {
+#endif
+  auto tjjson = TinyJSON::TJ::parse(R"(
+{
+  "e" : 12,
+  "e" : 14,
+  "E" : 15,
+  "Hello" : "a",
+  "HELLO" : "b"
+}
+)"
+);
+
+  ASSERT_NE(nullptr, tjjson);
+
+  auto json = tjjson->dump();
+
+#if TJ_KEY_CASE_SENSITIVE == 0
+  ASSERT_STREQ(json, R"({
+  "e": 14,
+  "E": 15,
+  "Hello": "a",
+  "HELLO": "b"
+})");
+#else
+  ASSERT_STREQ(json, R"({
+  "E": 15,
+  "HELLO": "b"
+})");
+#endif
+  
+  delete tjjson;
+}

@@ -574,9 +574,9 @@ TEST(TestBasic, UserLiteralsArray)
   ASSERT_NE(nullptr, tjarray);
 
   ASSERT_EQ(3, tjarray->get_number_of_items());
-  ASSERT_TRUE(12, tjarray->at(0)->is_number());
-  ASSERT_TRUE(13, tjarray->at(1)->is_number());
-  ASSERT_TRUE(4, tjarray->at(2)->is_number());
+  ASSERT_TRUE(tjarray->at(0)->is_number());
+  ASSERT_TRUE(tjarray->at(1)->is_number());
+  ASSERT_TRUE(tjarray->at(2)->is_number());
 
   delete json;
 }
