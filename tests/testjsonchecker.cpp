@@ -207,28 +207,39 @@ TEST(JSONchecker, CaseSensitiveCaseEdgeCases)
   object->set("a1", 1);
   object->set("b2", 2);
   object->set("c3", 3);
-  object->set("A4", 3);
+  object->set("A4", 4);
 
-  auto a = object->try_get_value("a1", false); //  case is correct
+  const TinyJSON::TJValueNumberInt* a = nullptr;
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("a1", false)); //  case is correct
   ASSERT_NE(nullptr, a);
+  ASSERT_EQ(1, a->get_number());
 
   // case sensitive search, (default)
-  auto acs = object->try_get_value("a1", true); //  case is correct
-  ASSERT_NE(nullptr, acs);
-  auto acs2 = object->try_get_value("A1", true); // case is wrong 
-  ASSERT_EQ(nullptr, acs2);
-  auto acs3 = object->try_get_value("A1", false); // case is wrong .... but we don't care
-  ASSERT_NE(nullptr, acs3);
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("a1", true)); //  case is correct
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(1, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A1", true)); // case is wrong 
+  ASSERT_EQ(nullptr, a);
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A1", false)); // case is wrong .... but we don't care
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(1, a->get_number());
 
-  auto b = object->try_get_value("b2", true);
-  ASSERT_NE(nullptr, b);
-  auto c = object->try_get_value("c3", true);
-  ASSERT_NE(nullptr, c);
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("b2", true));
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(2, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("c3", true));
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(3, a->get_number());
 
-  auto a2 = object->try_get_value("A4", true);  // case is good
-  ASSERT_NE(nullptr, a2);
-  auto a3 = object->try_get_value("A4", false); // case is good ... but we don;t care
-  ASSERT_NE(nullptr, a3);
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A4", true));  // case is good
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(4, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A4", false)); // case is good ... but we don't care
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(4, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("a4", false)); // case is wrong ... but we don't care
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(4, a->get_number());
 
   delete object;
 }
