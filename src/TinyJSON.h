@@ -10,13 +10,6 @@
 #define TJ_INCLUDE_STD_STRING 0
 #endif
 
-// According to the spec the keys are case sensitive
-// set this value to 1 if you _do not_ want this behaviour
-// so { "a" : 12} is the same as { "A" : 12} 
-#ifndef TJ_KEY_CASE_SENSITIVE
-#define TJ_KEY_CASE_SENSITIVE 0
-#endif
-
 // use the std vector or not, (use the custom array).
 // using the vector can cause performance issue as the
 // array is optimised for deep searches.
@@ -339,7 +332,7 @@ class TJDictionary;
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
-    const TJCHAR* try_get_string(const TJCHAR* key, bool case_sensitive = true) const;
+    const TJCHAR* try_get_string(const TJCHAR* key, bool case_sensitive = true) const;    
 
 #if TJ_INCLUDE_STD_STRING == 1
     /// <summary>
@@ -347,7 +340,7 @@ class TJDictionary;
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
-    inline const TJCHAR* try_get_string(const std::string& key, bool case_sensitive = true) const
+    inline const TJCHAR* try_get_string(const std::string& key, bool case_sensitive = true) const    
     {
       return try_get_string(key.c_str(), case_sensitive);
     }

@@ -164,20 +164,11 @@ bool object_keys_valid()
   auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
   auto o1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tjobject->try_get_value("a"));
   auto o2 = dynamic_cast<const TinyJSON::TJValueString*>(tjobject->try_get_value("A"));
-#if TJ_KEY_CASE_SENSITIVE == 1  
-  if(o1 != nullptr)
-  {
-    // the value should have been overwriten!
-    std::cout << "Bad!!!\n\n";
-    return false;
-  }
-#else
   if(o1 == nullptr)
   {
     std::cout << "Bad!!!\n\n";
     return false;
   }
-#endif  
 
   if(o2 == nullptr)
   {
