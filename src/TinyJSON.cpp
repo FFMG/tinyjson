@@ -569,16 +569,20 @@ namespace TinyJSON
       // insensitive one where the index is the same.
       // unless both are the same ... but they might not be.
       auto binary_search_result_cs = binary_search(key, true);
-      int index_cs = binary_search_result_cs._was_found ? binary_search_result_cs._dictionary_index : -1;
+      auto dictionary_index_cs = binary_search_result_cs._dictionary_index;
+      int value_index_cs = binary_search_result_cs._was_found ? _values_dictionary_cs[binary_search_result_cs._dictionary_index]._value_index : -1;
+
       auto binary_search_result_ci = binary_search(key, false);
-      auto index_ci = binary_search_result_cs._was_found ? binary_search_result_ci._dictionary_index : -1;
-      if (index_cs == -1)
+      auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
+      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_cs[binary_search_result_ci._dictionary_index]._value_index : -1;
+      if (value_index_cs == -1)
       {
-        TJASSERT(index_cs == -1);
+        TJASSERT(value_index_ci == -1); //  how can it be???
+                                        // surely if we do not have one we do not have the other 
         return false;
       }
 
-      if (index_ci == index_cs)
+      if (value_index_cs == value_index_ci)
       {
         /// life is good, we are all pointing at the same code.
         // so we can remove both values
@@ -588,12 +592,12 @@ namespace TinyJSON
         remove_dictionary_data(key, false);
       }
       else
-      if (index_ci != index_cs)
+      if (value_index_cs != value_index_ci)
       {
         //  hum ... we now need to delete the _actual_ value
       }
 
-      shift_value_right(index_cs);
+      shift_value_right(value_index_cs);
       return true;
     }
 
