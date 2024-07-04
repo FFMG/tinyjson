@@ -87,7 +87,12 @@ bool object_shallow()
   std::chrono::duration<double> duration2 = end2 - start2;
   std::cout << "Search: " << duration2.count() << " seconds\n";
 
+  auto start3 = std::chrono::high_resolution_clock::now();
   std::cout << "JSON Size: " << calculateSizeInMegabytes(object->dump()) << " mb\n";
+
+  auto end3 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration3 = end3 - start3;
+  std::cout << "Dump: " << duration3.count() << " seconds\n";
 
   delete object;
   return true;
