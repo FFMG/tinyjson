@@ -610,3 +610,22 @@ TEST(TestBasic, DeleteItemWhenWeHaeCaseInsensitiveItems)
 
   delete object;
 }
+
+TEST(TestBasic, DeleteItemWhenWeHaeCaseInsensitiveItemsOppositeOrder)
+{
+  // inser 2 items that are the same
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a1", 1);
+  object->set("A1", 2);
+
+  // remove the lower case one
+  // this is the exact opposite of the previous test
+  object->pop("a1");
+
+  auto text = object->dump();
+  ASSERT_STREQ(R"({
+  "A1": 2
+})", text);
+
+  delete object;
+}

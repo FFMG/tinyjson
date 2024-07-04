@@ -565,23 +565,28 @@ namespace TinyJSON
     /// <returns></returns>
     bool pop(const TJCHAR* key)
     {
-      // this is wrong, we need to remove the case
-      // insensitive one where the index is the same.
-      // unless both are the same ... but they might not be.
+      // get the index of both values, the case sentitive one
+      // is the one we want to remove
       auto binary_search_result_cs = binary_search(key, true);
       auto dictionary_index_cs = binary_search_result_cs._dictionary_index;
       int value_index_cs = binary_search_result_cs._was_found ? _values_dictionary_cs[binary_search_result_cs._dictionary_index]._value_index : -1;
 
+      // the case insensitive one is a little more complex.
+      // if we have "a" and "A" in our database and we want to pop("a")
+      // then we have to make sure that we get the correct one.
       auto binary_search_result_ci = binary_search(key, false);
       auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
       int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_cs[binary_search_result_ci._dictionary_index]._value_index : -1;
+
+      // if we have no indexes then we have noting to pop.
       if (value_index_cs == -1)
       {
-        TJASSERT(value_index_ci == -1); //  how can it be???
+        TJASSERT(value_index_ci == -1); // how can it be???
                                         // surely if we do not have one we do not have the other 
         return false;
       }
 
+      // if both indexes are the same, then we can just remove them.
       if (value_index_cs == value_index_ci)
       {
         /// life is good, we are all pointing at the same code.
@@ -594,10 +599,24 @@ namespace TinyJSON
       else
       if (value_index_cs != value_index_ci)
       {
-        //  hum ... we now need to delete the _actual_ value
+        // this is a bit more difficult, while we found the exact match
+        // there seem to be a case insensitive match as well.
+        // so we now have to remove it by index.
+
+        // we know that the case sensitive one was found ... so it can be removed.
+        remove_dictionary_data(key, true);
+
+        // the issue is the one that is not case sensitive, we nee to remove the correct one.
+        remove_dictionary_data_by_value_index(
+          value_index_cs,
+          _number_of_items_dictionary_ci,
+          _values_dictionary_ci
+        );
       }
 
+      // shift the value to the right and update the counter.
       shift_value_right(value_index_cs);
+      --_number_of_items;
       return true;
     }
 
@@ -867,13 +886,11 @@ namespace TinyJSON
         );
 
         // finally we need to move all the index _after_ the dictionary index down by one.
-        for (unsigned int i = 0; i < _number_of_items_dictionary_cs; ++i)
-        {
-          if (_values_dictionary_cs[i]._value_index >= index)
-          {
-            --_values_dictionary_cs[i]._value_index;
-          }
-        }
+        uppdate_dictionary_data_by_value_index(
+          index,
+          _number_of_items_dictionary_cs,
+          _values_dictionary_cs
+        );
         return true;
       }
 
@@ -884,15 +901,53 @@ namespace TinyJSON
         _number_of_items_dictionary_ci
       );
 
+      uppdate_dictionary_data_by_value_index(
+        index,
+        _number_of_items_dictionary_ci,
+        _values_dictionary_ci
+      );
+
+      return true;
+    }
+
+    static void remove_dictionary_data_by_value_index(
+      const unsigned int& index,
+      unsigned int& dictionary_size,
+      dictionary_data*& dictionary
+    )
+    {
       // finally we need to move all the index _after_ the dictionary index down by one.
-      for (unsigned int i = 0; i < _number_of_items_dictionary_ci; ++i)
+      for (unsigned int i = 0; i < dictionary_size; ++i)
       {
-        if (_values_dictionary_ci[i]._value_index >= index)
+        auto value_index = dictionary[i]._value_index;
+        if (value_index != index)
         {
-          --_values_dictionary_ci[i]._value_index;
+          continue;
+        }
+        shift_dictionary_right(value_index, dictionary, dictionary_size);
+
+        // update the counter
+        --dictionary_size;
+
+        // we have to get out as we removed them one and only.
+        return;
+      }
+    }
+
+    static void uppdate_dictionary_data_by_value_index(
+      const unsigned int& index,
+      const unsigned int& dictionary_size,
+      dictionary_data*& dictionary
+    )
+    {
+      // finally we need to move all the index _after_ the dictionary index down by one.
+      for (unsigned int i = 0; i < dictionary_size; ++i)
+      {
+        if (dictionary[i]._value_index >= index)
+        {
+          --dictionary[i]._value_index;
         }
       }
-      return true;
     }
     
     /// <summary>
@@ -1094,7 +1149,6 @@ namespace TinyJSON
         &_values[value_index],                                  // we are moving +1 to the left
         &_values[value_index + 1],                                      // we are moving from here.
         (_number_of_items - value_index - 1) * sizeof(TJMember*)); // we are moving the total number of elements less were we are shifting from.
-      --_number_of_items;
     }
 
     /// <summary>
