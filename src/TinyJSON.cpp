@@ -569,14 +569,14 @@ namespace TinyJSON
       // is the one we want to remove
       auto binary_search_result_cs = binary_search(key, true);
       auto dictionary_index_cs = binary_search_result_cs._dictionary_index;
-      int value_index_cs = binary_search_result_cs._was_found ? _values_dictionary_cs[binary_search_result_cs._dictionary_index]._value_index : -1;
+      int value_index_cs = binary_search_result_cs._was_found ? _values_dictionary_cs[dictionary_index_cs]._value_index : -1;
 
       // the case insensitive one is a little more complex.
       // if we have "a" and "A" in our database and we want to pop("a")
       // then we have to make sure that we get the correct one.
       auto binary_search_result_ci = binary_search(key, false);
       auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
-      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_cs[binary_search_result_ci._dictionary_index]._value_index : -1;
+      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_cs[dictionary_index_ci]._value_index : -1;
 
       // if we have no indexes then we have noting to pop.
       if (value_index_cs == -1)
