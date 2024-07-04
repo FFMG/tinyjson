@@ -251,6 +251,26 @@ std::cout << "[12 , 13 , 14]"_tj_minify;
 ...
 ```
 
+### Search an object by key
+
+There are 2 ways to find a key, case sensitive or insensitive, (the default is case sensitive).
+
+You can load the json either by parsing or creating it manually.
+
+```cpp
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", "Hello");
+  object->set("b", "World");
+  object->set("c", "Bye");
+  ...
+  // search for something
+  auto case_sensitive = object->try_get_value("Hello");
+  auto case_insensitive = object->try_get_value("HelLO", false);  // all good as we don't care about case.
+  auto case_insensitive_not_found = object->try_get_value("HelLO");  // = null as the search was case sensitive
+  ...
+  delete object;
+```
+
 ### How to create a JSON value?
 
 ```cpp
