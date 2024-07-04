@@ -590,11 +590,19 @@ namespace TinyJSON
       if (value_index_cs == value_index_ci)
       {
         /// life is good, we are all pointing at the same code.
-        // so we can remove both values
-        // TBD: we will do another search here ... 
-        //      we need to remove that extra search as we know who is being removed.
-        remove_dictionary_data(key, true);
-        remove_dictionary_data(key, false);
+        // so we can remove both values at the indexes we found aleady.
+        remove_dictionary_data_by_dictionary_index
+        (
+          binary_search_result_cs._dictionary_index,
+          _number_of_items_dictionary_cs,
+          _values_dictionary_cs
+        );
+        remove_dictionary_data_by_dictionary_index
+        (
+          binary_search_result_ci._dictionary_index,
+          _number_of_items_dictionary_ci,
+          _values_dictionary_ci
+        );
       }
       else
       if (value_index_cs != value_index_ci)
@@ -604,7 +612,12 @@ namespace TinyJSON
         // so we now have to remove it by index.
 
         // we know that the case sensitive one was found ... so it can be removed.
-        remove_dictionary_data(key, true);
+        remove_dictionary_data_by_dictionary_index
+        (
+          binary_search_result_cs._dictionary_index,
+          _number_of_items_dictionary_cs,
+          _values_dictionary_cs
+        );
 
         // the issue is the one that is not case sensitive, we nee to remove the correct one.
         remove_dictionary_data_by_value_index(
@@ -878,36 +891,44 @@ namespace TinyJSON
 
       if (case_sensitive == true)
       {
-        auto index = _values_dictionary_cs[binary_search_result._dictionary_index]._value_index;
-        remove_dictionary_data(
+        remove_dictionary_data_by_dictionary_index
+        (
           binary_search_result._dictionary_index,
-          _values_dictionary_cs,
-          _number_of_items_dictionary_cs
-        );
-
-        // finally we need to move all the index _after_ the dictionary index down by one.
-        uppdate_dictionary_data_by_value_index(
-          index,
           _number_of_items_dictionary_cs,
           _values_dictionary_cs
         );
         return true;
       }
 
-      auto index = _values_dictionary_ci[binary_search_result._dictionary_index]._value_index;
-      remove_dictionary_data(
+      remove_dictionary_data_by_dictionary_index
+      (
         binary_search_result._dictionary_index,
-        _values_dictionary_ci,
-        _number_of_items_dictionary_ci
-      );
-
-      uppdate_dictionary_data_by_value_index(
-        index,
         _number_of_items_dictionary_ci,
         _values_dictionary_ci
       );
-
       return true;
+    }
+
+    static void remove_dictionary_data_by_dictionary_index
+    (
+      const unsigned int& dictionary_index,
+      unsigned int& dictionary_size,
+      dictionary_data*& dictionary
+    )
+    {
+      auto index = dictionary[dictionary_index]._value_index;
+      remove_dictionary_data(
+        dictionary_index,
+        dictionary,
+        dictionary_size
+      );
+
+      // finally we need to move all the index _after_ the dictionary index down by one.
+      uppdate_dictionary_data_by_value_index(
+        index,
+        dictionary_size,
+        dictionary
+      );
     }
 
     static void remove_dictionary_data_by_value_index(
