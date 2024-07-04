@@ -805,6 +805,12 @@ namespace TinyJSON
     /// </summary>
     unsigned int _capacity;
 
+    /// <summary>
+    /// Update the value of the key for a given dictionary.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="dictionary_index"></param>
+    /// <param name="dictionary"></param>
     static void replace_dictionary_data
     (
       const TJCHAR* key,
@@ -909,6 +915,12 @@ namespace TinyJSON
       return true;
     }
 
+    /// <summary>
+    /// Remove a dictionary entry at a given index.
+    /// </summary>
+    /// <param name="dictionary_index">The dictionary index.</param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="dictionary">The dictionary we will be looking in</param>
     static void remove_dictionary_data_by_dictionary_index
     (
       const unsigned int& dictionary_index,
@@ -931,6 +943,12 @@ namespace TinyJSON
       );
     }
 
+    /// <summary>
+    /// Remove a dictionary entry given the value index we are looking for.
+    /// </summary>
+    /// <param name="index">The value index we are looking for.</param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="dictionary">The dictionary we will be looking in</param>
     static void remove_dictionary_data_by_value_index(
       const unsigned int& index,
       unsigned int& dictionary_size,
@@ -950,11 +968,25 @@ namespace TinyJSON
         // update the counter
         --dictionary_size;
 
+        // finally we need to move all the index _after_ the dictionary index down by one.
+        uppdate_dictionary_data_by_value_index(
+          value_index,
+          dictionary_size,
+          dictionary
+        );
+
         // we have to get out as we removed them one and only.
         return;
       }
     }
 
+    /// <summary>
+    /// As we removed a value index we need to shift all the value indexes
+    /// That are past the value index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="dictionary"></param>
     static void uppdate_dictionary_data_by_value_index(
       const unsigned int& index,
       const unsigned int& dictionary_size,
@@ -1001,6 +1033,12 @@ namespace TinyJSON
       }
     }
 
+    /// <summary>
+    /// Remove a single dictionary entry shift the data.
+    /// </summary>
+    /// <param name="dictionary_index"></param>
+    /// <param name="dictionary"></param>
+    /// <param name="dictionary_size"></param>
     static void remove_dictionary_data(
       unsigned int dictionary_index,
       dictionary_data*& dictionary,
@@ -1072,6 +1110,7 @@ namespace TinyJSON
     /// the key order valid.
     /// </summary>
     /// <param name="key"></param>
+    /// <param name="case_sensitive">If the search is case sensitive or not.</param>
     /// <returns></returns>
     search_result binary_search(const TJCHAR* key, bool case_sensitive) const
     {
@@ -1082,6 +1121,16 @@ namespace TinyJSON
       return binary_search(key, _values_dictionary_ci, _number_of_items_dictionary_ci, false);
     }
 
+    /// <summary>
+    /// Do a binary search and return either the exact location of the item
+    /// or the location of the item we should insert in the dictionary if we want to keep 
+    /// the key order valid.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="dictionary"></param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="case_sensitive"></param>
+    /// <returns></returns>
     static search_result binary_search(
       const TJCHAR* key, 
       const dictionary_data* dictionary,
