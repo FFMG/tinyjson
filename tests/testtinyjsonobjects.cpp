@@ -468,3 +468,35 @@ TEST(TestObjects, PopTheLastItem)
 })");
   delete object;
 }
+
+TEST(TestObjects, CaseInSensitiveSearch) {
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "Hello" : 12,
+      "WORld" : 14
+    }
+    )"
+  );
+
+  ASSERT_NE(nullptr, json);
+  ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
+
+  const auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+  ASSERT_EQ(2, jobject->get_number_of_items());
+
+  const auto a = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("hello", false));
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(12, a->get_number());
+
+  const auto a1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("hello", true));
+  ASSERT_EQ(nullptr, a1);
+
+  const auto b = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("world", false));
+  ASSERT_NE(nullptr, b);
+  ASSERT_EQ(14, b->get_number());
+
+  const auto b1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("world", true));
+  ASSERT_EQ(nullptr, b1);
+  delete json;
+}

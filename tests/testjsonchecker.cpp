@@ -17,7 +17,7 @@
 #include <chrono>
 
 std::string generateRandomString(size_t length) {
-  const std::string characters = "!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   std::random_device rd;
   std::mt19937 generator(rd());
   std::uniform_int_distribution<> distribution(0, characters.size() - 1);
@@ -154,6 +154,92 @@ TEST(JSONchecker, LargeShallowObjectCheck)
   auto end2 = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration2 = end2 - start2;
   GTEST_LOG_(INFO) << "Search: " << duration2.count() << " seconds";
+
+  delete object;
+}
+
+bool object_shallow()
+{
+  // create an empty object and add some items to it.
+  auto object = new TinyJSON::TJValueObject();
+
+  // then add a lot of items
+  std::map<std::string, int> data;
+  const int numbers_to_add = 10;
+  for (auto i = 0; i < numbers_to_add; ++i)
+  {
+    auto key = generateRandomString(20);  //  long string to prevent colisions.
+    auto value = generateRandomNumber(0, 5000);
+    object->set(key.c_str(), value);
+    data[key] = value;
+  }
+
+  // then search each and every item
+  for (auto d : data)
+  {
+    auto key = d.first;
+    auto value = d.second;
+    auto tj = object->try_get_value(key.c_str());
+    auto number = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tj);
+    if (number == nullptr)
+    {
+      std::cout << "  Error! Values was not found!\n";
+      return false;
+    }
+    if (number->get_number() != value)
+    {
+      std::cout << "  Error! Values mismatch\n";
+      return false;
+    }
+  }
+  delete object;
+  return true;
+}
+
+TEST(JSONchecker, object_shallow)
+{
+  ASSERT_TRUE(object_shallow());
+}
+
+TEST(JSONchecker, CaseSensitiveCaseEdgeCases)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a1", 1);
+  object->set("b2", 2);
+  object->set("c3", 3);
+  object->set("A4", 4);
+
+  const TinyJSON::TJValueNumberInt* a = nullptr;
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("a1", false)); //  case is correct
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(1, a->get_number());
+
+  // case sensitive search, (default)
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("a1", true)); //  case is correct
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(1, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A1", true)); // case is wrong 
+  ASSERT_EQ(nullptr, a);
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A1", false)); // case is wrong .... but we don't care
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(1, a->get_number());
+
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("b2", true));
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(2, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("c3", true));
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(3, a->get_number());
+
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A4", true));  // case is good
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(4, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("A4", false)); // case is good ... but we don't care
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(4, a->get_number());
+  a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("a4", false)); // case is wrong ... but we don't care
+  ASSERT_NE(nullptr, a);
+  ASSERT_EQ(4, a->get_number());
 
   delete object;
 }
