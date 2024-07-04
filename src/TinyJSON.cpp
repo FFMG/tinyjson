@@ -13,6 +13,8 @@
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
+static constexpr unsigned int TJ_DEFAULT_STRING_MAX_READ_SIZE = 4294967295;
+static constexpr unsigned int TJ_DEFAULT_STRING_MAX_READ_GROW = TJ_DEFAULT_STRING_MAX_READ_SIZE / 2;
 
 static constexpr TJCHAR TJ_NULL_TERMINATOR = '\0';
 
@@ -1796,10 +1798,26 @@ namespace TinyJSON
         return TJ_DEFAULT_STRING_READ_SIZE;
       }
 
-      //  multiply our capacity by 2
-      unsigned int resize_length = current_length << 1;
-      TJCHAR* new_string = new TJCHAR[resize_length];
+      if (current_length >= TJ_DEFAULT_STRING_MAX_READ_SIZE)
+      {
+        // we have reached the limit
+        // we simply cannot go further and we do not want to risk further corruption.
+        _Exit(-1);
+      }
+      unsigned int resize_length = 0;
+      if (current_length >= TJ_DEFAULT_STRING_MAX_READ_GROW)
+      {
+        // we are about to reach the limit, if we cannot make it here, we will break.
+        resize_length = TJ_DEFAULT_STRING_MAX_READ_SIZE;
+      }
+      else
+      {
+        //  multiply our capacity by 2
+        resize_length = current_length << 1;
+      }
 
+      // create the new array.
+      TJCHAR* new_string = new TJCHAR[resize_length];
       memmove(new_string, source, current_length* sizeof(TJCHAR));
       memset(new_string+ current_length, TJ_NULL_TERMINATOR, sizeof(TJCHAR) * (resize_length- current_length));
       delete[] source;
