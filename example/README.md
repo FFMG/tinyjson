@@ -44,3 +44,7 @@ User Literals are like shortcuts to the code, the user_literals code shows how t
 
   std::cout << "[12,13,14]"_tj_indent;
 ```
+
+## Fast dump
+
+This example shows us how to create and dump large data, this is mainly to test that there is not data loss.

@@ -90,3 +90,27 @@ jobs:
       run: |
         set +e
         ./basic_parse
+
+  fast_dump:
+    name: Fast dump test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build fast dump c++11
+      run: g++ -std=c++11 -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/fast_dump.cpp -o fast_dump
+
+    - name: run fast dump c++11
+      run: |
+        set +e
+        ./fast_dump        
+
+    - name: build fast dump c++20
+      run: g++ -std=c++20 -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/fast_dump.cpp -o fast_dump
+
+    - name: run fast dump c++20
+      run: |
+        set +e
+        ./fast_dump        
+  

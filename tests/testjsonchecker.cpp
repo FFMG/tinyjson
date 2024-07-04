@@ -243,3 +243,53 @@ TEST(JSONchecker, CaseSensitiveCaseEdgeCases)
 
   delete object;
 }
+
+double calculateSizeInMegabytes(const char* str) {
+  // Get the length of the string in bytes
+  size_t lengthInBytes = std::strlen(str);
+
+  // Convert bytes to megabytes
+  double lengthInMegabytes = static_cast<double>(lengthInBytes) / (1024 * 1024);
+
+  return lengthInMegabytes;
+}
+
+bool object_dump(const int numbers_to_add)
+{
+  // Get the start time
+  auto start1 = std::chrono::high_resolution_clock::now();
+
+  // create an empty object and add some items to it.
+  auto object = new TinyJSON::TJValueObject();
+
+  // then add a lot of items
+  std::map<std::string, int> data;
+  for (auto i = 0; i < numbers_to_add; ++i)
+  {
+    auto key = generateRandomString(20);  //  long string to prevent colisions.
+    auto value = generateRandomNumber(0, 5000);
+    object->set(key.c_str(), value);
+    data[key] = value;
+  }
+
+  std::cout << "Added: " << data.size() << " items." << "\n";
+
+  auto end1 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration1 = end1 - start1;
+  std::cout << "Insert: " << duration1.count() << " seconds" << "\n";
+
+  auto start2 = std::chrono::high_resolution_clock::now();
+  std::cout << "JSON Size: " << calculateSizeInMegabytes(object->dump()) << " mb\n";
+
+  auto end2 = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> duration2 = end2 - start2;
+  std::cout << "Dump: " << duration2.count() << " seconds\n";
+
+  delete object;
+  return true;
+}
+
+TEST(JSONchecker, object_dump)
+{
+  ASSERT_TRUE(object_dump(1000));
+}
