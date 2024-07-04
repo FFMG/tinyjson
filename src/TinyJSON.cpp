@@ -1786,16 +1786,18 @@ namespace TinyJSON
     /// <param name="source"></param>
     /// <param name="length"></param>
     /// <param name="resize_length"></param>
+    /// <param name="needed_length">How much we should grow at least by</param>
     /// <returns></returns>
-    static unsigned int resize_string(TJCHAR*& source, unsigned int current_length)
+    static unsigned int resize_string(TJCHAR*& source, unsigned int current_length, const unsigned int needed_length)
     {
       //  create the new string
       if (source == nullptr)
       {
-        TJCHAR* new_string = new TJCHAR[TJ_DEFAULT_STRING_READ_SIZE];
-        memset(new_string, TJ_NULL_TERMINATOR, sizeof(TJCHAR) * TJ_DEFAULT_STRING_READ_SIZE);
+        auto grow_by = needed_length > TJ_DEFAULT_STRING_READ_SIZE ? needed_length : TJ_DEFAULT_STRING_READ_SIZE;
+        TJCHAR* new_string = new TJCHAR[grow_by];
+        memset(new_string, TJ_NULL_TERMINATOR, sizeof(TJCHAR) * grow_by);
         source = new_string;
-        return TJ_DEFAULT_STRING_READ_SIZE;
+        return grow_by;
       }
 
       if (current_length >= TJ_DEFAULT_STRING_MAX_READ_SIZE)
@@ -1812,8 +1814,24 @@ namespace TinyJSON
       }
       else
       {
-        //  multiply our capacity by 2
-        resize_length = current_length << 1;
+        // we are about to multiply by 2
+        // so if the length is less what we need this will be an issue.
+        if (current_length < needed_length)
+        {
+          if (needed_length > TJ_DEFAULT_STRING_MAX_READ_GROW)
+          {
+            resize_length += TJ_DEFAULT_STRING_MAX_READ_GROW;
+          }
+          else
+          {
+            resize_length += needed_length;
+          }
+        }
+        else
+        {
+          //  multiply our capacity by 2
+          resize_length = current_length << 1;
+        }
       }
 
       // create the new array.
@@ -1825,32 +1843,48 @@ namespace TinyJSON
       return resize_length;
     }
 
+    /// <summary>
+    /// As the name implies, we will add a single character to an existing string.
+    /// </summary>
+    /// <param name="char_to_add"></param>
+    /// <param name="buffer"></param>
+    /// <param name="buffer_pos"></param>
+    /// <param name="buffer_max_length"></param>
     static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
     {
       if (buffer_pos + 1 >= buffer_max_length)
       {
-        buffer_max_length = resize_string(buffer, buffer_max_length);
+        buffer_max_length = resize_string(buffer, buffer_max_length, 1);
       }
       buffer[buffer_pos] = char_to_add;
       buffer[buffer_pos+1] = TJ_NULL_TERMINATOR;
       ++buffer_pos;
     }
 
+    /// <summary>
+    /// Add a string to the buffer string.
+    /// </summary>
+    /// <param name="string_to_add"></param>
+    /// <param name="buffer"></param>
+    /// <param name="buffer_pos"></param>
+    /// <param name="buffer_max_length"></param>
     static void add_string_to_string(const TJCHAR* string_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
     {
       if (nullptr == string_to_add)
       {
         return;
       }
-      if (nullptr == buffer)
+
+      // what we want to add
+      auto length = strlen(string_to_add);
+      int total_length = length + sizeof(TJCHAR);//  we need one extra for the null char
+      if (buffer_pos + total_length >= buffer_max_length)
       {
-        buffer_max_length = resize_string(buffer, buffer_max_length);
+        buffer_max_length = resize_string(buffer, buffer_max_length, buffer_pos+total_length);
       }
-      while (*string_to_add != TJ_NULL_TERMINATOR)
-      {
-        add_char_to_string(*string_to_add, buffer, buffer_pos, buffer_max_length);
-        string_to_add++;
-      }
+      memcpy(buffer + buffer_pos, string_to_add, length);
+      buffer[buffer_pos+length] = TJ_NULL_TERMINATOR;
+      buffer_pos += length;
     }
 
     static bool try_add_char_to_string_after_escape(const TJCHAR*& source, TJCHAR*& result, int& result_pos, int& result_max_length)
