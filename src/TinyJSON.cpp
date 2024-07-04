@@ -1778,31 +1778,40 @@ namespace TinyJSON
       return digit;
     }
 
-    static TJCHAR* resize_string(TJCHAR*& source, int length, int resize_length)
+    /// <summary>
+    /// Increase the size of a string to make space.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="length"></param>
+    /// <param name="resize_length"></param>
+    /// <returns></returns>
+    static unsigned int resize_string(TJCHAR*& source, unsigned int current_length)
     {
-      TJCHAR* new_string = new TJCHAR[resize_length];
-      memset(new_string, TJ_NULL_TERMINATOR, sizeof(TJCHAR) * resize_length);
+      //  create the new string
       if (source == nullptr)
       {
-        return new_string;
+        TJCHAR* new_string = new TJCHAR[TJ_DEFAULT_STRING_READ_SIZE];
+        memset(new_string, TJ_NULL_TERMINATOR, sizeof(TJCHAR) * TJ_DEFAULT_STRING_READ_SIZE);
+        source = new_string;
+        return TJ_DEFAULT_STRING_READ_SIZE;
       }
 
-      auto actual_length = length < resize_length ? length : resize_length;
-      for (auto i = 0; i < actual_length; ++i)
-      {
-        new_string[i] = source[i];
-      }
+      //  multiply our capacity by 2
+      unsigned int resize_length = current_length << 1;
+      TJCHAR* new_string = new TJCHAR[resize_length];
+
+      memmove(new_string, source, current_length* sizeof(TJCHAR));
+      memset(new_string+ current_length, TJ_NULL_TERMINATOR, sizeof(TJCHAR) * (resize_length- current_length));
       delete[] source;
-      source = nullptr;
-      return new_string;
+      source = new_string;
+      return resize_length;
     }
 
     static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
     {
       if (buffer_pos + 1 >= buffer_max_length)
       {
-        buffer = resize_string(buffer, buffer_max_length, buffer_max_length + TJ_DEFAULT_STRING_READ_SIZE);
-        buffer_max_length += TJ_DEFAULT_STRING_READ_SIZE;
+        buffer_max_length = resize_string(buffer, buffer_max_length);
       }
       buffer[buffer_pos] = char_to_add;
       buffer[buffer_pos+1] = TJ_NULL_TERMINATOR;
@@ -1817,7 +1826,7 @@ namespace TinyJSON
       }
       if (nullptr == buffer)
       {
-        buffer = resize_string(buffer, buffer_max_length, buffer_max_length + TJ_DEFAULT_STRING_READ_SIZE);
+        buffer_max_length = resize_string(buffer, buffer_max_length);
       }
       while (*string_to_add != TJ_NULL_TERMINATOR)
       {
