@@ -574,9 +574,9 @@ TEST(TestBasic, UserLiteralsArray)
   ASSERT_NE(nullptr, tjarray);
 
   ASSERT_EQ(3, tjarray->get_number_of_items());
-  ASSERT_TRUE(12, tjarray->at(0)->is_number());
-  ASSERT_TRUE(13, tjarray->at(1)->is_number());
-  ASSERT_TRUE(4, tjarray->at(2)->is_number());
+  ASSERT_TRUE(tjarray->at(0)->is_number());
+  ASSERT_TRUE(tjarray->at(1)->is_number());
+  ASSERT_TRUE(tjarray->at(2)->is_number());
 
   delete json;
 }
@@ -592,3 +592,64 @@ TEST(TestBasic, UserLiteralsArrayOutputToIndented)
   14
 ])", json.c_str());
 }
+
+TEST(TestBasic, DeleteItemWhenWeHaeCaseInsensitiveItems)
+{
+  // inser 2 items that are the same
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a1", 1);
+  object->set("A1", 2);
+
+  // remove the upper case one
+  object->pop("A1");
+
+  auto text = object->dump();
+  ASSERT_STREQ(R"({
+  "a1": 1
+})", text);
+
+  delete object;
+}
+
+TEST(TestBasic, DeleteItemWhenWeHaeCaseInsensitiveItemsOppositeOrder)
+{
+  // inser 2 items that are the same
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a1", 1);
+  object->set("A1", 2);
+
+  // remove the lower case one
+  // this is the exact opposite of the previous test
+  object->pop("a1");
+
+  auto text = object->dump();
+  ASSERT_STREQ(R"({
+  "A1": 2
+})", text);
+
+  delete object;
+}
+
+TEST(TestBasic, DeleteAnIemAndMakeSureAllTheValuesAreShiftedProperly)
+{
+  // inser 2 items that are the same
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a1", 1);
+  object->set("A1", 2);
+  object->set("a2", 3);
+  object->set("A2", 4);
+
+  // remove the lower case one
+  // this is the exact opposite of the previous test
+  object->pop("a1");
+
+  auto text = object->dump();
+  ASSERT_STREQ(R"({
+  "A1": 2,
+  "a2": 3,
+  "A2": 4
+})", text);
+
+  delete object;
+}
+

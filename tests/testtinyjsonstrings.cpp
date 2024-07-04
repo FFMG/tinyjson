@@ -623,3 +623,30 @@ TEST(TestStrings, ValidHexValues) {
 
   delete json;
 }
+
+TEST(TestStrings, KeysAreNotCaseSensitive) 
+{
+  auto tjjson = TinyJSON::TJ::parse(R"(
+{
+  "e" : 12,
+  "e" : 14,
+  "E" : 15,
+  "Hello" : "a",
+  "HELLO" : "b"
+}
+)"
+);
+
+  ASSERT_NE(nullptr, tjjson);
+
+  auto json = tjjson->dump();
+
+  ASSERT_STREQ(json, R"({
+  "e": 14,
+  "E": 15,
+  "Hello": "a",
+  "HELLO": "b"
+})");
+  
+  delete tjjson;
+}

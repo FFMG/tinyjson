@@ -544,9 +544,11 @@ namespace TinyJSON
     TJDictionary()
       :
       _values(nullptr),
-      _values_dictionary(nullptr),
+      _values_dictionary_cs(nullptr),
+      _values_dictionary_ci(nullptr),
       _number_of_items(0),
-      _number_of_items_dictionary(0),
+      _number_of_items_dictionary_cs(0),
+      _number_of_items_dictionary_ci(0),
       _capacity(1)
     {
     }
@@ -563,24 +565,86 @@ namespace TinyJSON
     /// <returns></returns>
     bool pop(const TJCHAR* key)
     {
-      auto binary_search_result = binary_search(key);
-      if (false == binary_search_result._was_found)
+      // get the index of both values, the case sentitive one
+      // is the one we want to remove
+      auto binary_search_result_cs = binary_search(key, true);
+      auto dictionary_index_cs = binary_search_result_cs._dictionary_index;
+      int value_index_cs = binary_search_result_cs._was_found ? _values_dictionary_cs[dictionary_index_cs]._value_index : -1;
+
+      // the case insensitive one is a little more complex.
+      // if we have "a" and "A" in our database and we want to pop("a")
+      // then we have to make sure that we get the correct one.
+      auto binary_search_result_ci = binary_search(key, false);
+      auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
+      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_cs[dictionary_index_ci]._value_index : -1;
+
+      // if we have no indexes then we have noting to pop.
+      if (value_index_cs == -1)
       {
+        TJASSERT(value_index_ci == -1); // how can it be???
+                                        // surely if we do not have one we do not have the other 
         return false;
       }
-      auto index = _values_dictionary[binary_search_result._dictionary_index]._value_index;
-      shift_dictionary_right(binary_search_result._dictionary_index);
-      shift_value_right(index);
 
-      // finally we need to move all the index _after_ the dictionary index down by one.
-      for (unsigned int i = 0; i < _number_of_items_dictionary; ++i)
+      // if both indexes are the same, then we can just remove them.
+      if (value_index_cs == value_index_ci)
       {
-        if (_values_dictionary[i]._value_index >= index)
-        {
-          --_values_dictionary[i]._value_index;
-        }
+        /// life is good, we are all pointing at the same code.
+        // so we can remove both values at the indexes we found aleady.
+        remove_dictionary_data_by_dictionary_index
+        (
+          binary_search_result_cs._dictionary_index,
+          _number_of_items_dictionary_cs,
+          _values_dictionary_cs
+        );
+        remove_dictionary_data_by_dictionary_index
+        (
+          binary_search_result_ci._dictionary_index,
+          _number_of_items_dictionary_ci,
+          _values_dictionary_ci
+        );
       }
+      else
+      if (value_index_cs != value_index_ci)
+      {
+        // this is a bit more difficult, while we found the exact match
+        // there seem to be a case insensitive match as well.
+        // so we now have to remove it by index.
+
+        // we know that the case sensitive one was found ... so it can be removed.
+        remove_dictionary_data_by_dictionary_index
+        (
+          binary_search_result_cs._dictionary_index,
+          _number_of_items_dictionary_cs,
+          _values_dictionary_cs
+        );
+
+        // the issue is the one that is not case sensitive, we nee to remove the correct one.
+        remove_dictionary_data_by_value_index(
+          value_index_cs,
+          _number_of_items_dictionary_ci,
+          _values_dictionary_ci
+        );
+      }
+
+      // shift the value to the right and update the counter.
+      shift_value_right(value_index_cs);
+      --_number_of_items;
       return true;
+    }
+
+    /// <summary>
+    /// Initialise all the values.
+    /// We only do it when needed.
+    /// </summary>
+    void initilize()
+    {
+      _values = new TJMember * [_capacity];
+      _values_dictionary_cs = new dictionary_data[_capacity];
+      _values_dictionary_ci = new dictionary_data[_capacity];
+      _number_of_items = 0;
+      _number_of_items_dictionary_cs = 0;
+      _number_of_items_dictionary_ci = 0;
     }
 
     /// <summary>
@@ -592,27 +656,15 @@ namespace TinyJSON
       const TJCHAR* key = value->name();
       if (nullptr == _values)
       {
-        _values = new TJMember*[_capacity];
-        _values_dictionary = new dictionary_data[_capacity];
-        _number_of_items = 0;
-        _number_of_items_dictionary = 0;
+        initilize();
       }
 
       // check if the key already exists, if it does simply update the value.
-      auto binary_search_result = binary_search(key);
-      if (true == binary_search_result._was_found)
+      // we need to update the values in both case sensitive and insensitive
+      auto binary_search_result_cs = binary_search(key, true);
+      if (true == binary_search_result_cs._was_found)
       {
-        auto index = _values_dictionary[binary_search_result._dictionary_index]._value_index;
-        if (_values[index] == value)
-        {
-          // trying to add the same value twice.
-          return;
-        }
-        delete _values[index];
-        _values[index] = value;
-
-        // we also need to update the name as we are now pointing somewhere else
-        _values_dictionary[binary_search_result._dictionary_index]._key = value->name();
+        replace_dictionaries_data(value, binary_search_result_cs._dictionary_index);
         return;
       }
 
@@ -627,15 +679,47 @@ namespace TinyJSON
       auto value_index = _number_of_items++;
       _values[value_index] = value;
 
+      ///
+      // Add the item to the case sensitive dictionary
+      // 
       //  shift everything to the left.
-      auto dictionary_index = binary_search_result._dictionary_index;
-      shift_dictionary_left(dictionary_index);
+      auto dictionary_index_cs = binary_search_result_cs._dictionary_index;
+      // check that we will have space.
+      TJASSERT((_number_of_items_dictionary_cs + 1) >= _capacity);
 
       // add the dictionary index value
-      add_dictionary_data(key, value_index, dictionary_index);
+      add_dictionary_data(
+        key, 
+        value_index, 
+        dictionary_index_cs,
+        _values_dictionary_cs,
+        _number_of_items_dictionary_cs
+      );
 
-      // at this point both values should be the same.
-      TJASSERT(_number_of_items == _number_of_items_dictionary);
+      // at this point both values should be the same for the case sensitive.
+      // this is because exact matches always match
+      TJASSERT(_number_of_items == _number_of_items_dictionary_cs);
+
+      // we will also need the ci data
+      auto binary_search_result_ci = binary_search(key, false);
+
+      //  shift everything to the left.
+      auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
+
+      // if this item exists already, we are insertng at the same spot
+      // but it does not matter as we will be shifting things around.
+
+      // check that we will have space.
+      TJASSERT((_number_of_items_dictionary_ci + 1) >= _capacity);
+
+      // add the dictionary index value
+      add_dictionary_data(
+        key,
+        value_index,
+        dictionary_index_ci,
+        _values_dictionary_ci,
+        _number_of_items_dictionary_ci
+      );
     }
 
     /// <summary>
@@ -663,11 +747,20 @@ namespace TinyJSON
     /// <typeparam name="Compare"></typeparam>
     /// <param name="compare"></param>
     /// <returns></returns>
-    TJMember* at(const TJCHAR* key) const
+    TJMember* at(const TJCHAR* key, bool case_sensitive) const
     {
-      auto binary_search_result = binary_search(key);
+      // look in the dictionary depending on the case sensitivity.
+      auto binary_search_result = binary_search(key, case_sensitive);
+
       // if we found it, return the actual index value.
-      int index = binary_search_result._was_found ? _values_dictionary[binary_search_result._dictionary_index]._value_index : -1;
+      int index = binary_search_result._was_found ? 
+        ( case_sensitive ? 
+          _values_dictionary_cs[binary_search_result._dictionary_index]._value_index 
+          :
+          _values_dictionary_ci[binary_search_result._dictionary_index]._value_index
+        )
+        : -1;
+
       return index != -1 ? _values[index] : nullptr;
     }
 
@@ -678,9 +771,14 @@ namespace TinyJSON
     TJMember** _values;
 
     /// <summary>
-    /// The key value pairs to help binary search.
+    /// The key value pairs to help case sensitive binary search.
     /// </summary>
-    dictionary_data* _values_dictionary;
+    dictionary_data* _values_dictionary_cs;
+
+    /// <summary>
+    /// The key value pairs to help case insensitive binary search.
+    /// </summary>
+    dictionary_data* _values_dictionary_ci;
 
     /// <summary>
     /// The number of items in the array
@@ -688,16 +786,41 @@ namespace TinyJSON
     unsigned int _number_of_items;
 
     /// <summary>
-    /// The current number of items in the dictionayr
+    /// The current number of items in the case sensitive dictionary
     /// This might not always be the same, (for a brief time)
     /// As the number of items
     /// </summary>
-    unsigned int _number_of_items_dictionary;
+    unsigned int _number_of_items_dictionary_cs;
+
+    /// <summary>
+    /// The current number of items in the case insensitive dictionary
+    /// This might not always be the same, (for a brief time)
+    /// As the number of items
+    /// </summary>
+    unsigned int _number_of_items_dictionary_ci;
 
     /// <summary>
     /// The capacity of both the dictionary and the values.
+    /// When we grow the value we grow both dictionaries as well.
     /// </summary>
     unsigned int _capacity;
+
+    /// <summary>
+    /// Update the value of the key for a given dictionary.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="dictionary_index"></param>
+    /// <param name="dictionary"></param>
+    static void replace_dictionary_data
+    (
+      const TJCHAR* key,
+      unsigned int dictionary_index,
+      dictionary_data*& dictionary
+    )
+    {
+      // we also need to update the name as we are now pointing somewhere else
+      dictionary[dictionary_index]._key = key;
+    }
 
     /// <summary>
     /// Delete all the pointers in the arrays and the array themselves.
@@ -709,7 +832,7 @@ namespace TinyJSON
         return;
       }
 
-      TJASSERT(_number_of_items == _number_of_items_dictionary);
+      TJASSERT(_number_of_items == _number_of_items_dictionary_cs);
       for (unsigned int i = 0; i < _number_of_items; ++i)
       {
         delete _values[i];
@@ -719,8 +842,11 @@ namespace TinyJSON
       delete[] _values;
       _values = nullptr;
 
-      delete[] _values_dictionary;
-      _values_dictionary = nullptr;
+      delete[] _values_dictionary_cs;
+      _values_dictionary_cs = nullptr;
+
+      delete[] _values_dictionary_ci;
+      _values_dictionary_ci = nullptr;
     }
 
     /// <summary>
@@ -734,19 +860,195 @@ namespace TinyJSON
 
       // create the new containers as temp containers
       auto temp_values = new TJMember*[_capacity];
-      auto temp_values_dictionary = new dictionary_data[_capacity];
+      auto temp_values_dictionary_cs = new dictionary_data[_capacity];
+      auto temp_values_dictionary_ci = new dictionary_data[_capacity];
 
       // just move the data from one to the other as we will take ownership of it.
       memmove(temp_values, _values, _number_of_items * sizeof(TJMember*));
-      memmove(temp_values_dictionary, _values_dictionary, _number_of_items_dictionary * sizeof(dictionary_data));
+      memmove(temp_values_dictionary_cs, _values_dictionary_cs, _number_of_items_dictionary_cs * sizeof(dictionary_data));
+      memmove(temp_values_dictionary_ci, _values_dictionary_ci, _number_of_items_dictionary_ci * sizeof(dictionary_data));
 
       // replace the old values
       delete[] _values;
       _values = temp_values;
 
       // replace the old dictionary values.
-      delete[] _values_dictionary;
-      _values_dictionary = temp_values_dictionary;
+      delete[] _values_dictionary_cs;
+      _values_dictionary_cs = temp_values_dictionary_cs;
+
+      // replace the old dictionary values.
+      delete[] _values_dictionary_ci;
+      _values_dictionary_ci = temp_values_dictionary_ci;
+    }
+
+    /// <summary>
+    /// Remove a directory index at a given entry
+    /// </summary>
+    /// <param name="key">The key we are looking to remove.</param>
+    /// <param name="case_sensitive">If we want to remove it from the case sensitive dictionary or not.</param>
+    bool remove_dictionary_data(const TJCHAR* key, bool case_sensitive)
+    {
+      // search for the key 
+      auto binary_search_result = binary_search(key, case_sensitive);
+      if (false == binary_search_result._was_found)
+      {
+        return false;
+      }
+
+      if (case_sensitive == true)
+      {
+        remove_dictionary_data_by_dictionary_index
+        (
+          binary_search_result._dictionary_index,
+          _number_of_items_dictionary_cs,
+          _values_dictionary_cs
+        );
+        return true;
+      }
+
+      remove_dictionary_data_by_dictionary_index
+      (
+        binary_search_result._dictionary_index,
+        _number_of_items_dictionary_ci,
+        _values_dictionary_ci
+      );
+      return true;
+    }
+
+    /// <summary>
+    /// Remove a dictionary entry at a given index.
+    /// </summary>
+    /// <param name="dictionary_index">The dictionary index.</param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="dictionary">The dictionary we will be looking in</param>
+    static void remove_dictionary_data_by_dictionary_index
+    (
+      const unsigned int& dictionary_index,
+      unsigned int& dictionary_size,
+      dictionary_data*& dictionary
+    )
+    {
+      auto index = dictionary[dictionary_index]._value_index;
+      remove_dictionary_data(
+        dictionary_index,
+        dictionary,
+        dictionary_size
+      );
+
+      // finally we need to move all the index _after_ the dictionary index down by one.
+      uppdate_dictionary_data_by_value_index(
+        index,
+        dictionary_size,
+        dictionary
+      );
+    }
+
+    /// <summary>
+    /// Remove a dictionary entry given the value index we are looking for.
+    /// </summary>
+    /// <param name="index">The value index we are looking for.</param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="dictionary">The dictionary we will be looking in</param>
+    static void remove_dictionary_data_by_value_index(
+      const unsigned int& index,
+      unsigned int& dictionary_size,
+      dictionary_data*& dictionary
+    )
+    {
+      // finally we need to move all the index _after_ the dictionary index down by one.
+      for (unsigned int i = 0; i < dictionary_size; ++i)
+      {
+        auto value_index = dictionary[i]._value_index;
+        if (value_index != index)
+        {
+          continue;
+        }
+        shift_dictionary_right(value_index, dictionary, dictionary_size);
+
+        // update the counter
+        --dictionary_size;
+
+        // finally we need to move all the index _after_ the dictionary index down by one.
+        uppdate_dictionary_data_by_value_index(
+          value_index,
+          dictionary_size,
+          dictionary
+        );
+
+        // we have to get out as we removed them one and only.
+        return;
+      }
+    }
+
+    /// <summary>
+    /// As we removed a value index we need to shift all the value indexes
+    /// That are past the value index.
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="dictionary"></param>
+    static void uppdate_dictionary_data_by_value_index(
+      const unsigned int& index,
+      const unsigned int& dictionary_size,
+      dictionary_data*& dictionary
+    )
+    {
+      // finally we need to move all the index _after_ the dictionary index down by one.
+      for (unsigned int i = 0; i < dictionary_size; ++i)
+      {
+        if (dictionary[i]._value_index >= index)
+        {
+          --dictionary[i]._value_index;
+        }
+      }
+    }
+    
+    /// <summary>
+    /// Replace both the dictionarry data.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="dictionary_index_cs"></param>
+    void replace_dictionaries_data(TJMember* value, unsigned int dictionary_index_cs)
+    {
+      // we need to search the case insensitive one now
+      // this is because the key is actually shared around.
+      // so we first look for it ... then we replace it.
+      auto binary_search_result_ci = binary_search(value->name(), false);
+
+      auto index = _values_dictionary_cs[dictionary_index_cs]._value_index;
+      if (_values[index] != value)
+      {
+        delete _values[index];
+        _values[index] = value;
+      }
+      replace_dictionary_data(value->name(), dictionary_index_cs, _values_dictionary_cs);
+
+      // remove the case insensitive
+      auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
+      TJASSERT(true == binary_search_result_ci._was_found);
+      if (true == binary_search_result_ci._was_found)
+      {
+        TJASSERT(dictionary_index_ci == dictionary_index_cs);
+        replace_dictionary_data(value->name(), dictionary_index_ci, _values_dictionary_ci);
+      }
+    }
+
+    /// <summary>
+    /// Remove a single dictionary entry shift the data.
+    /// </summary>
+    /// <param name="dictionary_index"></param>
+    /// <param name="dictionary"></param>
+    /// <param name="dictionary_size"></param>
+    static void remove_dictionary_data(
+      unsigned int dictionary_index,
+      dictionary_data*& dictionary,
+      unsigned int& dictionary_size
+    )
+    {
+      shift_dictionary_right(dictionary_index, dictionary, dictionary_size);
+
+      // we don't have any cleanup to do so we just subtract the index.
+      --dictionary_size;
     }
 
     /// <summary>
@@ -755,14 +1057,26 @@ namespace TinyJSON
     /// <param name="key"></param>
     /// <param name="value_index"></param>
     /// <param name="dictionary_index"></param>
-    void add_dictionary_data(const TJCHAR* key, unsigned int value_index, unsigned int dictionary_index)
+    static void add_dictionary_data(
+      const TJCHAR* key, 
+      unsigned int value_index, 
+      unsigned int dictionary_index,
+      dictionary_data*& dictionary,
+      unsigned int& dictionary_size
+    )
     {
+      shift_dictionary_left(
+        dictionary_index,
+        dictionary,
+        dictionary_size
+      );
+
       // build the new dictionary dta data
-      dictionary_data dictionary = { value_index, key };
+      dictionary_data dictionary_data = { value_index, key };
 
       // finally set the dictionary at the correct value
-      _values_dictionary[dictionary_index] = dictionary;
-      ++_number_of_items_dictionary;
+      dictionary[dictionary_index] = dictionary_data;
+      ++dictionary_size;
     }
 
     /// <summary>
@@ -772,8 +1086,13 @@ namespace TinyJSON
     /// <param name="s1"></param>
     /// <param name="s2"></param>
     /// <returns></returns>
-    int case_compare(const TJCHAR* s1, const TJCHAR* s2) const
+    static int case_compare(const TJCHAR* s1, const TJCHAR* s2, bool case_sensitive)
     {
+      if (true == case_sensitive)
+      {
+        return strcmp(s1, s2);
+      }
+
       while (tolower(*s1) == tolower(*s2))
       {
         if (*s1++ == TJ_NULL_TERMINATOR)
@@ -791,10 +1110,35 @@ namespace TinyJSON
     /// the key order valid.
     /// </summary>
     /// <param name="key"></param>
+    /// <param name="case_sensitive">If the search is case sensitive or not.</param>
     /// <returns></returns>
-    search_result binary_search(const TJCHAR* key) const
+    search_result binary_search(const TJCHAR* key, bool case_sensitive) const
     {
-      if (_number_of_items_dictionary == 0)
+      if (case_sensitive == true)
+      {
+        return binary_search(key, _values_dictionary_cs, _number_of_items_dictionary_cs, true);
+      }
+      return binary_search(key, _values_dictionary_ci, _number_of_items_dictionary_ci, false);
+    }
+
+    /// <summary>
+    /// Do a binary search and return either the exact location of the item
+    /// or the location of the item we should insert in the dictionary if we want to keep 
+    /// the key order valid.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="dictionary"></param>
+    /// <param name="dictionary_size"></param>
+    /// <param name="case_sensitive"></param>
+    /// <returns></returns>
+    static search_result binary_search(
+      const TJCHAR* key, 
+      const dictionary_data* dictionary,
+      const unsigned int& dictionary_size,
+      bool case_sensitive
+    )
+    {
+      if (dictionary_size == 0)
       {
         //  we have no data, so we have to put it in the first place.
         search_result result = {};
@@ -804,13 +1148,14 @@ namespace TinyJSON
       }
 
       int first = 0;
-      int last = _number_of_items_dictionary - 1;
+      int last = dictionary_size - 1;
       int middle = 0;
       while (first <= last)
       {
         // the middle is the floor.
         middle = static_cast<unsigned int>(first + (last - first) / 2);
-        auto compare = case_compare(_values_dictionary[middle]._key, key);
+        // we do not want duplicate keys
+        auto compare = case_compare(dictionary[middle]._key, key, case_sensitive);
         if (compare == 0)
         {
           search_result result = {};
@@ -838,19 +1183,22 @@ namespace TinyJSON
     /// Shift everything one position to the right from the index value given.
     /// </summary>
     /// <param name="dictionary_index"></param>
-    void shift_dictionary_right(int dictionary_index)
+    static void shift_dictionary_right(
+      int dictionary_index,
+      dictionary_data*& dictionary,
+      const unsigned int& dictionary_size
+    )
     {
-      if (_number_of_items_dictionary == 0)
+      if (dictionary_size == 0)
       {
         return;
       }
 
       // shift everything in memory a little to the left.
       memmove(
-        &_values_dictionary[dictionary_index],                                  // we are moving +1 to the left
-        &_values_dictionary[dictionary_index+1],                                      // we are moving from here.
-        (_number_of_items_dictionary - dictionary_index -1) * sizeof(dictionary_data)); // we are moving the total number of elements less were we are shifting from.
-      --_number_of_items_dictionary;
+        &dictionary[dictionary_index],                                  // we are moving +1 to the left
+        &dictionary[dictionary_index+1],                                      // we are moving from here.
+        (dictionary_size - dictionary_index -1) * sizeof(dictionary_data)); // we are moving the total number of elements less were we are shifting from.
     }
 
     /// <summary>
@@ -871,27 +1219,28 @@ namespace TinyJSON
         &_values[value_index],                                  // we are moving +1 to the left
         &_values[value_index + 1],                                      // we are moving from here.
         (_number_of_items - value_index - 1) * sizeof(TJMember*)); // we are moving the total number of elements less were we are shifting from.
-      --_number_of_items;
     }
 
     /// <summary>
     /// Shift everything one position to the left from the index value given.
     /// </summary>
     /// <param name="dictionary_index"></param>
-    void shift_dictionary_left(int dictionary_index)
+    static void shift_dictionary_left(
+      int dictionary_index,
+      dictionary_data*& dictionary,
+      const unsigned int& dictionary_size
+      )
     {
-      if (_number_of_items_dictionary == 0)
+      if (dictionary_size == 0)
       {
         return;
       }
 
-      // check that we will have space.
-      TJASSERT((_number_of_items_dictionary + 1) >= _capacity);
       // shift everything in memory a little to the left.
       memmove(
-        &_values_dictionary[dictionary_index + 1],                                  // we are moving +1 to the left
-        &_values_dictionary[dictionary_index],                                      // we are moving from here.
-        (_number_of_items_dictionary- dictionary_index) * sizeof(dictionary_data)); // we are moving the total number of elements less were we are shifting from.
+        &dictionary[dictionary_index + 1],                                  // we are moving +1 to the left
+        &dictionary[dictionary_index],                                      // we are moving from here.
+        (dictionary_size - dictionary_index) * sizeof(dictionary_data)); // we are moving the total number of elements less were we are shifting from.
     }
 
     // no copies.
@@ -1331,13 +1680,39 @@ namespace TinyJSON
       }
     }
 
+
+    /// <summary>
+    /// Custom case compare that probably will not work with
+    /// locals and so on.
+    /// </summary>
+    /// <param name="s1"></param>
+    /// <param name="s2"></param>
+    /// <returns></returns>
+    static int case_compare(const TJCHAR* s1, const TJCHAR* s2, bool case_sensitive)
+    {
+      if (true == case_sensitive)
+      {
+        return strcmp(s1, s2);
+      }
+
+      while (tolower(*s1) == tolower(*s2))
+      {
+        if (*s1++ == TJ_NULL_TERMINATOR)
+        {
+          return 0;
+        }
+        ++s2;
+      }
+      return tolower(*s1) - tolower(*s2);
+    }
+
     /// <summary>
     /// Compare if 2 strings are the same
     /// </summary>
     /// <param name="lhs"></param>
     /// <param name="rhs"></param>
     /// <returns></returns>
-    static bool are_same(const TJCHAR* lhs, const TJCHAR* rhs)
+    static bool are_same(const TJCHAR* lhs, const TJCHAR* rhs, bool case_sensitive)
     {
       if (nullptr == lhs && nullptr == rhs)
       {
@@ -1347,23 +1722,7 @@ namespace TinyJSON
       {
         return false;
       }
-
-      for (auto i = 0;; ++i)
-      {
-        if (lhs[i] == TJ_NULL_TERMINATOR && rhs[i] == TJ_NULL_TERMINATOR)
-        {
-          return true;
-        }
-        else if (lhs[i] == TJ_NULL_TERMINATOR || rhs[i] == TJ_NULL_TERMINATOR)
-        {
-          return false;
-        }
-        if (lhs[i] != rhs[i])
-        {
-          return false;
-        }
-      }
-      return true;
+      return case_compare(lhs, rhs, case_sensitive) == 0;
     }
 
     static void free_members(TJDICTIONARY* members)
@@ -2357,7 +2716,7 @@ namespace TinyJSON
       {
         auto current = std::find_if(members->begin(), members->end(), [&](TJMember*& elem) 
           { 
-            return TJHelper::are_same( elem->name(), member->name());
+            return TJHelper::are_same(elem->name(), member->name(), true);
           });
         if (current != members->end())
         {
@@ -3367,7 +3726,7 @@ namespace TinyJSON
     }
 #if TJ_INCLUDE_STDVECTOR == 1
     auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
-      return TJHelper::are_same(key, value->name());
+      return TJHelper::are_same(key, value->name(), true);
       });
     if (it != _members->end())
     {
@@ -3594,9 +3953,14 @@ namespace TinyJSON
     _members = nullptr;
   }
 
-  const TJValue* TJValueObject::try_get_value(const TJCHAR* name) const
+  /// <summary>
+  /// Try and get the value of this member if it exists.
+  /// </summary>
+  /// <param name="key"></param>
+  /// <returns></returns>
+  const TJValue* TJValueObject::try_get_value(const TJCHAR* key, bool case_sensitive) const
   {
-    if (nullptr == name)
+    if (nullptr == key)
     {
       return nullptr;
     }
@@ -3607,12 +3971,12 @@ namespace TinyJSON
 
 #if TJ_INCLUDE_STDVECTOR == 1
     auto it = std::find_if(_members->begin(), _members->end(), [&](TJMember* value) {
-      return TJHelper::are_same(name, value->name());
+      return TJHelper::are_same(key, value->name(), case_sensitive);
     });
 
     return (it == _members->end()) ? nullptr : (*it)->value();
 #else
-    auto member = _members->at(name);
+    auto member = _members->at(key, case_sensitive);
     if (nullptr == member)
     {
       return nullptr;
@@ -3621,9 +3985,14 @@ namespace TinyJSON
 #endif
   }
 
-  const TJCHAR* TJValueObject::try_get_string(const TJCHAR* name) const
+  /// <summary>
+  /// Try and get a string value, if it does not exist, then we return null.
+  /// </summary>
+  /// <param name="key"></param>
+  /// <returns></returns>
+  const TJCHAR* TJValueObject::try_get_string(const TJCHAR* key, bool case_sensitive) const
   {
-    auto value = try_get_value(name);
+    auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
       return nullptr;

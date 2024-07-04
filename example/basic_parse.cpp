@@ -150,6 +150,40 @@ bool object_parse()
   return true;
 }
 
+bool object_keys_valid()
+{
+  std::cout << "Object Keys \n";
+  auto json = R"({
+    "a" : 12,
+    "A" : "Hello world"
+  })";
+
+  if (!TinyJSON::TJ::is_valid(json))
+  {
+    // this should have been valid!
+    std::cout << "Bad!!!\n\n";
+    return false;
+  }
+  auto tjjson = TinyJSON::TJ::parse(json);
+
+  auto tjobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
+  auto o1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(tjobject->try_get_value("a"));
+  auto o2 = dynamic_cast<const TinyJSON::TJValueString*>(tjobject->try_get_value("A"));
+  if(o1 == nullptr)
+  {
+    std::cout << "Bad!!!\n\n";
+    return false;
+  }
+
+  if(o2 == nullptr)
+  {
+    std::cout << "Bad!!!\n\n";
+    return false;
+  }
+  std::cout << "Good\n\n";
+  return true;
+}
+
 bool object_find_values()
 {
   std::cout << "Object Find Value\n";
@@ -219,5 +253,9 @@ int main()
   {
     return -1;
   }
+  if(!object_keys_valid())
+  {
+    return -1;
+  } 
   return 0;
 }

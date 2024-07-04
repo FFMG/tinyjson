@@ -330,16 +330,28 @@ class TJDictionary;
     /// <summary>
     /// Try and get a string value, if it does not exist, then we return null.
     /// </summary>
-    /// <param name="name"></param>
+    /// <param name="key"></param>
     /// <returns></returns>
-    const TJCHAR* try_get_string(const TJCHAR* name) const;
+    const TJCHAR* try_get_string(const TJCHAR* key, bool case_sensitive = true) const;    
+
+#if TJ_INCLUDE_STD_STRING == 1
+    /// <summary>
+    /// Try and get a string value, if it does not exist, then we return null.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    inline const TJCHAR* try_get_string(const std::string& key, bool case_sensitive = true) const    
+    {
+      return try_get_string(key.c_str(), case_sensitive);
+    }
+#endif
 
     /// <summary>
     /// Try and get the value of this member if it exists.
     /// </summary>
-    /// <param name="name"></param>
+    /// <param name="key"></param>
     /// <returns></returns>
-    virtual const TJValue* try_get_value(const TJCHAR* name) const;
+    virtual const TJValue* try_get_value(const TJCHAR* key, bool case_sensitive = true) const;
 
 #if TJ_INCLUDE_STD_STRING == 1
     /// <summary>
@@ -347,9 +359,9 @@ class TJDictionary;
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
-    inline const TJValue* try_get_value(const std::string& name) const
+    inline const TJValue* try_get_value(const std::string& key, bool case_sensitive = true) const
     {
-      return try_get_value(name.c_str());
+      return try_get_value(key.c_str(), case_sensitive);
     }
 #endif
 
