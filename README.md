@@ -2,6 +2,10 @@
 
 TinyJSON is a fast and small C++ JSON parser
 
+## Contents
+  * [Supported JSON](#supported-json)
+  * [Simple examples](#simple-examples)
+  
 ## Supported JSON
 
 [RFC 8259](https://www.wikidata.org/wiki/Q47322594) (replaces [RFC 7159](https://www.wikidata.org/wiki/Q47470410))
