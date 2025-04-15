@@ -7,6 +7,8 @@
 #include <algorithm>
 #endif
 
+#include <limits>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -4273,7 +4275,7 @@ namespace TinyJSON
     delete objectBoolean;
   }
 
-  void TJValueArray::add_string(const const char* value)
+  void TJValueArray::add_string(const char* value)
   {
     auto* objectString = new TJValueString(value);
     add(objectString);

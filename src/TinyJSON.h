@@ -510,7 +510,7 @@ class TJDictionary;
     void add_number(long long value);
     void add_float(long double value);
     void add_boolean(bool value);
-    void add_string(const const char* value);
+    void add_string(const char* value);
 #if TJ_INCLUDE_STD_STRING == 1
     void add_string(const std::string& value)
     {
