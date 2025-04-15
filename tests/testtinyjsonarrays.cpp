@@ -205,3 +205,91 @@ TEST(TestArrays, ArrayHasACommaButThenTheArrayEnds) {
 );
   ASSERT_EQ(nullptr, json);
 }
+
+TEST(TestArrays, CreateWithNumbersAndStrings)
+{
+  auto json = new TinyJSON::TJValueArray();
+  json->add_number(42);
+  json->add_string("Hello");
+  json->add_string("World");
+
+  ASSERT_EQ(3, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42,"Hello","World"])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, CreateWithNegativeNumbers) 
+{
+  auto json = new TinyJSON::TJValueArray();
+  json->add_number(42);
+  json->add_number(0);
+  json->add_number(-42);
+
+  ASSERT_EQ(3, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42,0,-42])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, CreateWithBoolean)
+{
+  auto json = new TinyJSON::TJValueArray();
+  json->add_boolean(true);
+  json->add_boolean(0);
+  json->add_boolean(false);
+
+  ASSERT_EQ(3, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([true,false,false])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, CreateWithFloats)
+{
+  auto json = new TinyJSON::TJValueArray();
+  json->add_float(42.5);
+  json->add_float(0.05);
+  json->add_float(1.00);
+
+  ASSERT_EQ(3, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42.5,0.05,1])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, CreateWithFloatsAndNegativeNumbers)
+{
+  auto json = new TinyJSON::TJValueArray();
+  json->add_float(42.5);
+  json->add_float(0.05);
+  json->add_float(1.00);
+  json->add_float(-1.00); //  this is actually a whole number
+  json->add_float(-42.5);
+  json->add_float(-0.05);
+
+  ASSERT_EQ(6, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+
+  delete json;
+}

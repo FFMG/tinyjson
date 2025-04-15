@@ -506,6 +506,18 @@ class TJDictionary;
 
     bool is_array() const;
 
+    void add(const TJValue* value);
+    void add_number(long long value);
+    void add_float(long double value);
+    void add_boolean(bool value);
+    void add_string(const const char* value);
+#if TJ_INCLUDE_STD_STRING == 1
+    void add_string(const std::string& value)
+    {
+      add_string(value.c_str());
+    }
+#endif
+
   protected:
     /// <summary>
     /// Clone an array into an identical array
@@ -521,7 +533,7 @@ class TJDictionary;
     static TJValueArray* move(TJLIST*& values);
 
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
-
+    
   private:
     // All the key value pairs in this object.
     TJLIST* _values;

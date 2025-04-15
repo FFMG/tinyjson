@@ -4203,6 +4203,83 @@ namespace TinyJSON
     _values = nullptr;
   }
 
+  void TJValueArray::add(const TJValue* value)
+  {
+    if (nullptr == value)
+    {
+      auto* nullObject = new TJValueNull();
+      add(nullObject);
+      delete nullObject;
+      return;
+    }
+
+    if (_values == nullptr)
+    {
+      _values = new TJLIST();
+    }
+#if TJ_INCLUDE_STDVECTOR == 1
+    _values->push_back(value->clone());
+#else
+    _values->add(value->clone());
+#endif
+  }
+
+  void TJValueArray::add_number(long long value)
+  {
+    auto* objectNumber = new TJValueNumberInt(value);
+    add(objectNumber);
+    delete objectNumber;
+  }
+  
+  void TJValueArray::add_float(long double value)
+  {
+    auto is_negative = false;
+    if (value < 0)
+    {
+      value = std::abs(value);
+      is_negative = true;
+    }
+    auto initial_pos_value = value;
+    long double int_part;
+    long double frac_part = std::modf(value, &int_part);
+    long long whole = static_cast<long long>(int_part);
+
+    int decimal_digits = 0;
+    while (std::abs(frac_part) > std::numeric_limits<long double>::epsilon() && decimal_digits < TJ_MAX_NUMBER_OF_DIGGITS)
+    {
+      value *= 10;
+      frac_part = std::modf(value, &int_part);
+      ++decimal_digits;
+    }
+
+    // Shift the fractional part to preserve `precision` decimal digits
+    long double scaled_frac = std::modf(initial_pos_value, &int_part) * std::pow(10.0L, decimal_digits);
+    long long fraction = static_cast<long long>(scaled_frac);
+    if (fraction == 0)
+    {
+      add_number(is_negative? -1*whole:whole);
+      return;
+    }
+
+    auto* objectNumber = new TJValueNumberFloat(whole, fraction, decimal_digits, is_negative);
+    add(objectNumber);
+    delete objectNumber;
+  }
+  
+  void TJValueArray::add_boolean(bool value)
+  {
+    auto* objectBoolean = new TJValueBoolean(value);
+    add(objectBoolean);
+    delete objectBoolean;
+  }
+
+  void TJValueArray::add_string(const const char* value)
+  {
+    auto* objectString = new TJValueString(value);
+    add(objectString);
+    delete objectString;
+  }
+
   ///////////////////////////////////////
   /// TJValue Number
   TJValueNumber::TJValueNumber(const bool is_negative) : 
