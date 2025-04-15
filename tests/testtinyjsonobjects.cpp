@@ -471,7 +471,6 @@ TEST(TestObjects, PopAllTheItems)
   delete object;
 }
 
-
 TEST(TestObjects, PopTheLastItem)
 {
   auto object = new TinyJSON::TJValueObject();
@@ -526,4 +525,48 @@ TEST(TestObjects, CaseInSensitiveSearch) {
   const auto b1 = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("world", true));
   ASSERT_EQ(nullptr, b1);
   delete json;
+}
+
+TEST(TestObjects, AddAnArrayToObject)
+{
+  auto object = new TinyJSON::TJValueObject();
+  auto array = new TinyJSON::TJValueArray();
+  array->add_number(1);
+  array->add_number(2);
+  array->add_number(3);
+  object->set("a", array);
+  delete array;
+
+  const auto& text = object->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ(R"({"a":[1,2,3]})", text);
+
+  delete object;
+}
+
+TEST(TestObjects, AddMultipleArraysToObject)
+{
+  auto object = new TinyJSON::TJValueObject();
+  auto array_out = new TinyJSON::TJValueArray();
+
+  auto array1 = new TinyJSON::TJValueArray();
+  array1->add_number(1);
+  array1->add_number(2);
+  array1->add_number(3);
+  auto array2 = new TinyJSON::TJValueArray();
+  array2->add_number(4);
+  array2->add_number(5);
+  array2->add_number(6);
+  array_out->add(array1);
+  array_out->add(array2);
+  object->set("a", array_out);
+  delete array1;
+  delete array2;
+  delete array_out;
+
+  const auto& text = object->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ(R"({"a":[[1,2,3],[4,5,6]]})", text);
+
+  delete object;
 }
