@@ -373,6 +373,20 @@ Each objects are read into `TJValue*` classes of type `TJValueObject`.
   delete json;
 ```
 
+#### Adding values to an object
+
+You can dynamically create a new object and then add a named values to it.
+
+```cpp
+  auto object = new TinyJSON::TJValueObject();
+  object->set("a", 42);
+  object->set("b", 0.005);
+
+  ...
+
+  delete json;
+```
+
 ### Arrays
 
 Each arrays are read into `TJValue*` classes of type `TJValueArray`.
@@ -390,7 +404,22 @@ Then each items in the array are also `TJValue*` of type string, number and so o
   delete json;
 ```
 
-#### Data type
+#### Adding values to an arrays
+
+You can dynamically create a new array and then add string, numbers and so on.
+
+```cpp
+  auto json = new TinyJSON::TJValueArray();
+  json->add_boolean(true);
+  json->add_boolean(false);
+  json->add_number(42);
+
+  ...
+
+  delete json;
+```
+
+### Data type
 
 Each `TJValue*` item can be of different type
 
