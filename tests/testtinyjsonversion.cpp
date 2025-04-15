@@ -10,7 +10,7 @@ TEST(TestVersion, CheckVersionMajor) {
 }
 
 TEST(TestVersion, CheckVersionMinor) {
-  ASSERT_EQ(0, TJ_VERSION_MINOR);
+  ASSERT_EQ(1, TJ_VERSION_MINOR);
 }
 
 TEST(TestVersion, CheckVersionPatch) {
@@ -18,5 +18,5 @@ TEST(TestVersion, CheckVersionPatch) {
 }
 
 TEST(TestVersion, CheckVersionString) {
-  ASSERT_STREQ("0.0.1", TJ_VERSION_STRING);
+  ASSERT_STREQ("0.1.1", TJ_VERSION_STRING);
 }
