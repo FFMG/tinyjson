@@ -127,7 +127,7 @@ TEST(JSONchecker, LargeShallowObjectCheck)
   {
     auto key = generateRandomString(10);  //  long string to prevent colisions.
     auto value = generateRandomNumber(0, 5000);
-    object->set(key.c_str(), value);
+    object->set_number(key.c_str(), value);
     data[ key ] = value;
   }
 
@@ -170,7 +170,7 @@ bool object_shallow()
   {
     auto key = generateRandomString(20);  //  long string to prevent colisions.
     auto value = generateRandomNumber(0, 5000);
-    object->set(key.c_str(), value);
+    object->set_number(key.c_str(), value);
     data[key] = value;
   }
 
@@ -204,10 +204,10 @@ TEST(JSONchecker, object_shallow)
 TEST(JSONchecker, CaseSensitiveCaseEdgeCases)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a1", 1);
-  object->set("b2", 2);
-  object->set("c3", 3);
-  object->set("A4", 4);
+  object->set_number("a1", 1);
+  object->set_number("b2", 2);
+  object->set_number("c3", 3);
+  object->set_number("A4", 4);
 
   const TinyJSON::TJValueNumberInt* a = nullptr;
   a = dynamic_cast<const TinyJSON::TJValueNumberInt *>(object->try_get_value("a1", false)); //  case is correct
@@ -268,7 +268,7 @@ bool object_dump(const int numbers_to_add)
   {
     auto key = generateRandomString(20);  //  long string to prevent colisions.
     auto value = generateRandomNumber(0, 5000);
-    object->set(key.c_str(), value);
+    object->set_number(key.c_str(), value);
     data[key] = value;
   }
 

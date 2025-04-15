@@ -597,8 +597,8 @@ TEST(TestBasic, DeleteItemWhenWeHaeCaseInsensitiveItems)
 {
   // inser 2 items that are the same
   auto object = new TinyJSON::TJValueObject();
-  object->set("a1", 1);
-  object->set("A1", 2);
+  object->set_number("a1", 1);
+  object->set_number("A1", 2);
 
   // remove the upper case one
   object->pop("A1");
@@ -615,8 +615,8 @@ TEST(TestBasic, DeleteItemWhenWeHaeCaseInsensitiveItemsOppositeOrder)
 {
   // inser 2 items that are the same
   auto object = new TinyJSON::TJValueObject();
-  object->set("a1", 1);
-  object->set("A1", 2);
+  object->set_number("a1", 1);
+  object->set_number("A1", 2);
 
   // remove the lower case one
   // this is the exact opposite of the previous test
@@ -634,10 +634,10 @@ TEST(TestBasic, DeleteAnIemAndMakeSureAllTheValuesAreShiftedProperly)
 {
   // inser 2 items that are the same
   auto object = new TinyJSON::TJValueObject();
-  object->set("a1", 1);
-  object->set("A1", 2);
-  object->set("a2", 3);
-  object->set("A2", 4);
+  object->set_number("a1", 1);
+  object->set_number("A1", 2);
+  object->set_number("a2", 3);
+  object->set_number("A2", 4);
 
   // remove the lower case one
   // this is the exact opposite of the previous test

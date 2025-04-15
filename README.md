@@ -263,9 +263,9 @@ You can load the json either by parsing or creating it manually.
 
 ```cpp
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "Hello");
-  object->set("b", "World");
-  object->set("c", "Bye");
+  object->set_string("a", "Hello");
+  object->set_string("b", "World");
+  object->set_string("c", "Bye");
   ...
   // search for something
   auto case_sensitive = object->try_get_value("Hello");
@@ -279,10 +279,11 @@ You can load the json either by parsing or creating it manually.
 
 ```cpp
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "Hello");
-  object->set("b", "World");
-  object->set("c", "Bye");
-  object->set("d", true);
+  object->set_string("a", "Hello");
+  object->set_string("b", "World");
+  object->set_string("c", "Bye");
+  object->set_boolean("d", true);
+  object->set_boolean("e", 42.15);
 
   auto dump = object->dump();
 
@@ -291,7 +292,8 @@ You can load the json either by parsing or creating it manually.
     "a": "Hello",
     "b": "World",
     "c": "Bye",
-    "d": true
+    "d": true,
+    "e": 42.15
   }
   */
 ```
@@ -302,10 +304,10 @@ You can also remove a value
 
 ```cpp
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "Hello");
-  object->set("b", "World");
-  object->set("c", "Bye");
-  object->set("d", true);
+  object->set_string("a", "Hello");
+  object->set_string("b", "World");
+  object->set_string("c", "Bye");
+  object->set_boolean("d", true);
 
   object->pop("b");
 
@@ -314,6 +316,7 @@ You can also remove a value
   /*
   {
     "a": "Hello",
+    "b": "World",
     "c": "Bye",
     "d": true
   }
@@ -379,8 +382,8 @@ You can dynamically create a new object and then add a named values to it.
 
 ```cpp
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", 42);
-  object->set("b", 0.005);
+  object->set_number("a", 42);
+  object->set_float("b", 0.005);
 
   ...
 

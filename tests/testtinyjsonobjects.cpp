@@ -308,7 +308,7 @@ TEST(TestObjects, DeepQueries)
 TEST(TestObjects, SetInteger)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", 42);
+  object->set_number("a", 42);
   auto dump = object->dump();
   ASSERT_STREQ(dump, R"({
   "a": 42
@@ -319,7 +319,7 @@ TEST(TestObjects, SetInteger)
 TEST(TestObjects, SetString)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "World");
+  object->set_string("a", "World");
   auto dump = object->dump();
   ASSERT_STREQ(dump, R"({
   "a": "World"
@@ -330,13 +330,40 @@ TEST(TestObjects, SetString)
 TEST(TestObjects, SetBoolean)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", true);
-  object->set("b", false);
+  object->set_boolean("a", true);
+  object->set_boolean("b", false);
   auto dump = object->dump();
   ASSERT_STREQ(dump, R"({
   "a": true,
   "b": false
 })");
+  delete object;
+}
+
+TEST(TestObjects, SetNumber)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 42);
+  object->set_number("b", -42);
+  
+  const auto& text = object->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ(R"({"a":42,"b":-42})", text);
+
+  delete object;
+}
+
+TEST(TestObjects, SetFloats)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 42.0);
+  object->set_float("b", -42.0);
+  object->set_float("c", -00.012);
+
+  const auto& text = object->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ(R"({"a":42,"b":-42,"c":-0.012})", text);
+
   delete object;
 }
 
@@ -386,7 +413,7 @@ TEST(TestObjects, PopWithNoItems)
 TEST(TestObjects, PopAKeyThatDoesNotExist)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "World");
+  object->set_string("a", "World");
 
   ASSERT_NO_THROW(object->pop("b"));
 
@@ -400,9 +427,9 @@ TEST(TestObjects, PopAKeyThatDoesNotExist)
 TEST(TestObjects, PopAKeyThatDoesExist)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "Hello");
-  object->set("b", "World");
-  object->set("c", "Bye");
+  object->set_string("a", "Hello");
+  object->set_string("b", "World");
+  object->set_string("c", "Bye");
 
   auto dump = object->dump();
   ASSERT_STREQ(dump, R"({
@@ -424,9 +451,9 @@ TEST(TestObjects, PopAKeyThatDoesExist)
 TEST(TestObjects, PopAllTheItems)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "Hello");
-  object->set("b", "World");
-  object->set("c", "Bye");
+  object->set_string("a", "Hello");
+  object->set_string("b", "World");
+  object->set_string("c", "Bye");
 
   auto dump = object->dump();
   ASSERT_STREQ(dump, R"({
@@ -448,9 +475,9 @@ TEST(TestObjects, PopAllTheItems)
 TEST(TestObjects, PopTheLastItem)
 {
   auto object = new TinyJSON::TJValueObject();
-  object->set("a", "Hello");
-  object->set("b", "World");
-  object->set("c", "Bye");
+  object->set_string("a", "Hello");
+  object->set_string("b", "World");
+  object->set_string("c", "Bye");
 
   auto dump = object->dump();
   ASSERT_STREQ(dump, R"({
