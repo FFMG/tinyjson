@@ -2227,14 +2227,9 @@ namespace TinyJSON
 
     static unsigned long long get_whole_number_from_float(long double value)
     {
-      auto is_negative = false;
-      if (value < 0)
-      {
-        value = std::abs(value);
-        is_negative = true;
-      }
+      value = std::abs(value);
       long double int_part;
-      long double frac_part = std::modf(value, &int_part);
+      std::modf(value, &int_part);
       // we know it is not negative
       return static_cast<unsigned long long>(int_part);
     }
