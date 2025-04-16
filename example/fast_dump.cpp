@@ -56,7 +56,7 @@ bool object_dump(const int numbers_to_add)
   {
     auto key = generateRandomString(20);  //  long string to prevent colisions.
     auto value = generateRandomNumber(0, 5000);
-    object->set(key.c_str(), value);
+    object->set_number(key.c_str(), value);
     data[key] = value;
   }
 
