@@ -428,3 +428,63 @@ TEST(TestNumbers, JustZeroDecimal) {
   ASSERT_EQ(0, value->get_number());
   delete json;
 }
+
+TEST(TestNumbers, TheNumberZero) {
+  auto json = TinyJSON::TJ::parse("0.0");
+
+  ASSERT_NE(nullptr, json);
+  auto value = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(0, value->get_number());
+  ASSERT_EQ(0, value->get_float());
+  delete json;
+}
+
+TEST(TestNumbers, TheNumberNegative) {
+  auto json = TinyJSON::TJ::parse("-42.0");
+
+  ASSERT_NE(nullptr, json);
+  auto value = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(-42, value->get_number());
+  ASSERT_EQ(-42.0, value->get_float());
+  delete json;
+}
+
+TEST(TestNumbers, TheNumberPositive) {
+  auto json = TinyJSON::TJ::parse("42.0");
+
+  ASSERT_NE(nullptr, json);
+  auto value = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(42, value->get_number());
+  ASSERT_EQ(42.0, value->get_float());
+  delete json;
+}
+
+TEST(TestNumbers, TheNumberNegativeAndFloat) {
+  auto json = TinyJSON::TJ::parse("-42.1234");
+
+  ASSERT_NE(nullptr, json);
+  auto value = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(-42, value->get_number());
+  ASSERT_EQ(-42.1234, value->get_float());
+  delete json;
+}
+
+TEST(TestNumbers, TheNumberPositiveAndFloat) {
+  auto json = TinyJSON::TJ::parse("42.1234");
+
+  ASSERT_NE(nullptr, json);
+  auto value = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(42, value->get_number());
+  ASSERT_EQ(42.1234, value->get_float());
+  delete json;
+}
