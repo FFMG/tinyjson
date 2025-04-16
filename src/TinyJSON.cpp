@@ -2158,7 +2158,7 @@ namespace TinyJSON
       return new TJValueNull();
     }
 
-    static TJValue* try_createnumber_from_float(long double value)
+    static TJValue* try_create_number_from_float(long double value)
     {
       auto is_negative = false;
       if (value < 0)
@@ -2187,6 +2187,56 @@ namespace TinyJSON
         return new TJValueNumberInt(is_negative ? -1 * whole : whole);
       }
       return new TJValueNumberFloat(whole, fraction, decimal_digits, is_negative);
+    }
+
+    static unsigned int get_unsigned_exponent_from_float(long double value)
+    {
+      value = std::abs(value);
+      long double int_part;
+      long double frac_part = std::modf(value, &int_part);
+
+      int decimal_digits = 0;
+      while (std::abs(frac_part) > std::numeric_limits<long double>::epsilon() && decimal_digits < TJ_MAX_NUMBER_OF_DIGGITS)
+      {
+        value *= 10;
+        frac_part = std::modf(value, &int_part);
+        ++decimal_digits;
+      }
+      return decimal_digits;
+    }
+
+    static unsigned long long get_fraction_from_float(long double value)
+    {
+      value = std::abs(value);
+      auto initial_pos_value = value;
+      long double int_part;
+      long double frac_part = std::modf(value, &int_part);
+
+      int decimal_digits = 0;
+      while (std::abs(frac_part) > std::numeric_limits<long double>::epsilon() && decimal_digits < TJ_MAX_NUMBER_OF_DIGGITS)
+      {
+        value *= 10;
+        frac_part = std::modf(value, &int_part);
+        ++decimal_digits;
+      }
+
+      // Shift the fractional part to preserve `precision` decimal digits
+      long double scaled_frac = std::modf(initial_pos_value, &int_part) * std::pow(10.0L, decimal_digits);
+      return static_cast<unsigned long long>(scaled_frac);
+    }
+
+    static unsigned long long get_whole_number_from_float(long double value)
+    {
+      auto is_negative = false;
+      if (value < 0)
+      {
+        value = std::abs(value);
+        is_negative = true;
+      }
+      long double int_part;
+      long double frac_part = std::modf(value, &int_part);
+      // we know it is not negative
+      return static_cast<unsigned long long>(int_part);
     }
 
     static TJValue* try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent)
@@ -3903,7 +3953,7 @@ namespace TinyJSON
     }
 
     auto member = new TJMember(key, nullptr);
-    TJValue* value_number = TJHelper::try_createnumber_from_float(value);
+    TJValue* value_number = TJHelper::try_create_number_from_float(value);
     member->move_value(value_number);
     TJHelper::move_member_to_members(member, _members);
   }
@@ -4285,7 +4335,7 @@ namespace TinyJSON
   
   void TJValueArray::add_float(long double value)
   {
-    auto* tjNumber = TJHelper::try_createnumber_from_float(value);
+    auto* tjNumber = TJHelper::try_create_number_from_float(value);
     add(tjNumber);
     delete tjNumber;
   }
@@ -4399,6 +4449,15 @@ namespace TinyJSON
     _number(number),
     _fraction(fraction),
     _fraction_exponent(fraction_exponent)
+  {
+  }
+
+  TJValueNumberFloat::TJValueNumberFloat(long double number) :
+    TJValueNumber(number<0),
+    _string(nullptr),
+    _number(TJHelper::get_whole_number_from_float(number)),
+    _fraction(TJHelper::get_fraction_from_float(number)),
+    _fraction_exponent(TJHelper::get_unsigned_exponent_from_float(number))
   {
   }
 

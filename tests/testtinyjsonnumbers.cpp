@@ -488,3 +488,31 @@ TEST(TestNumbers, TheNumberPositiveAndFloat) {
   ASSERT_EQ(42.1234, value->get_float());
   delete json;
 }
+
+TEST(TestNumbers, CreateFloatByPassingNumber) {
+  auto json = new TinyJSON::TJValueNumberFloat(42.5);
+
+  ASSERT_NE(nullptr, json);
+  ASSERT_EQ(42.5, json->get_number());
+
+  auto value = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(42, value->get_number());
+  ASSERT_EQ(42.5, value->get_float());
+  delete json;
+}
+
+TEST(TestNumbers, CreateFloatByPassingNegativeNumber) {
+  auto json = new TinyJSON::TJValueNumberFloat(-42.5);
+
+  ASSERT_NE(nullptr, json);
+  ASSERT_EQ(-42.5, json->get_number());
+
+  auto value = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, value);
+
+  ASSERT_EQ(-42, value->get_number());
+  ASSERT_EQ(-42.5, value->get_float());
+  delete json;
+}

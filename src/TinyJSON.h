@@ -641,6 +641,7 @@ class TJDictionary;
   class TJValueNumberFloat : public TJValueNumber
   {
   public:
+    TJValueNumberFloat(long double number);
     TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative);
     virtual ~TJValueNumberFloat();
 
