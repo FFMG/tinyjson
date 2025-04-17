@@ -4071,7 +4071,7 @@ namespace TinyJSON
     return true;
   }
 
-  int TJValueObject::get_number_of_items() const
+  unsigned int TJValueObject::get_number_of_items() const
   {
     return _members == nullptr ? 0 : _members->size();
   }

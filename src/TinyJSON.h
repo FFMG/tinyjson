@@ -326,7 +326,7 @@ class TJDictionary;
     /// Get the number of items in this array
     /// </summary>
     /// <returns></returns>
-    int get_number_of_items() const;
+    unsigned int get_number_of_items() const;
 
     /// <summary>
     /// Try and get a string value, if it does not exist, then we return null.
@@ -486,7 +486,7 @@ class TJDictionary;
     /// Get the number of items in this array
     /// </summary>
     /// <returns></returns>
-    int get_number_of_items() const;
+    unsigned int get_number_of_items() const;
 
     TJValue* operator [](int idx) const;
     TJValue* at(int idx) const;
@@ -673,7 +673,7 @@ class TJDictionary;
 
   protected:
     /// <summary>
-    /// Clone an array into an identical array
+    /// Clone an array into an identical value object
     /// </summary>
     TJValue* internal_clone() const;
 
