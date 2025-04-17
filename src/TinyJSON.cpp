@@ -2458,11 +2458,19 @@ namespace TinyJSON
       //   so we can get rid of the exponent altogether.
       if (number_of_digit_whole + number_of_digit_fraction + exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
       {
-        // we will shift the whole number to the left by the number of exponent
-        // then we wil shift the number of fraction to the lest by the number if exponent.
+        // we will shift the whole number to the left right by the number of exponents.
+        // so 2e-3 would become 0.002
+        // then we wil shift the number of fraction to the right by the number if exponent.
         // we will then add the two together.
         unsigned long long shifted_unsigned_fraction = 0;
-        const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, exponent, shifted_unsigned_fraction);
+        const auto& shifted_unsigned_whole_number = shift_number_right(
+          unsigned_whole_number, 
+          exponent, 
+          shifted_unsigned_fraction);
+
+        // we then need to shift the faction iseft to the right a little so we can add the given fraction.
+        shifted_unsigned_fraction = shift_number_left(shifted_unsigned_fraction, fraction_exponent);
+        shifted_unsigned_fraction += unsigned_fraction;
 
         if (shifted_unsigned_fraction == 0)
         {
