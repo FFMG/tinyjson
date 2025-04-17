@@ -671,6 +671,8 @@ class TJDictionary;
     TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const int& exponent,bool is_negative);
     virtual ~TJValueNumberExponent();
 
+    long double get_number() const;
+
   protected:
     /// <summary>
     /// Clone an array into an identical value object

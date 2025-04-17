@@ -4260,7 +4260,7 @@ namespace TinyJSON
     return true;
   }
 
-  int TJValueArray::get_number_of_items() const
+  unsigned int TJValueArray::get_number_of_items() const
   {
     return _values == nullptr ? 0 : _values->size();
   }
@@ -4272,7 +4272,7 @@ namespace TinyJSON
 
   TJValue* TJValueArray::at(int idx) const
   {
-    if (idx >= get_number_of_items() || idx < 0)
+    if (idx < 0 || unsigned(idx) >= get_number_of_items())
     {
       return nullptr;
     }
@@ -4374,6 +4374,14 @@ namespace TinyJSON
     {
       return static_cast<long double>(value_int->get_number());
     }
+
+    auto value_exponent = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(this);
+    if (nullptr != value_exponent)
+    {
+      // probably over/underflow
+      return static_cast<long double>(value_exponent->get_number());
+    }
+
     throw TJParseException("The value is not a number!");
   }
 
@@ -4390,6 +4398,14 @@ namespace TinyJSON
     {
       return value_int->get_number();
     }
+
+    auto value_exponent = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(this);
+    if (nullptr != value_exponent)
+    {
+      // probably over/underflow
+      return static_cast<long long>(value_exponent->get_number());
+    }
+
     throw TJParseException("The value is not a number!");
   }
 
@@ -4527,6 +4543,34 @@ namespace TinyJSON
     {
       delete[] _string;
     }
+  }
+
+  long double TJValueNumberExponent::get_number() const
+  {
+    // Convert the fractional part to a long double, properly scaled
+    long double fractional = static_cast<long double>(_fraction);
+    fractional /= std::pow(10.0L, _fraction_exponent);
+
+    // Combine whole and fraction
+    long double value = static_cast<long double>(_number) + fractional;
+    if (_is_negative)
+    {
+      value *= -1.0L;
+    }
+
+    // Apply the exponent
+    value *= std::pow(10.0L, _exponent);
+
+    // Optional: check for overflow/underflow
+    if (value > std::numeric_limits<long double>::max())
+    {
+      return std::numeric_limits<long double>::infinity();
+    }
+    if (value != 0.0L && std::abs(value) < std::numeric_limits<long double>::min())
+    {
+      return 0.0L;
+    }
+    return value;
   }
 
   /// <summary>

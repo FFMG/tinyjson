@@ -5,6 +5,8 @@
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
+constexpr long double EPSILON = 1e-10;
+
 TEST(TestExponents, FractionsWithLeadingZeros) {
   auto json = TinyJSON::TJ::parse(R"(
 {
@@ -543,6 +545,102 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractionsButHasLead
   auto value = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, value);
   ASSERT_EQ(12.3, value->get_number());
+
+  delete json;
+}
+
+TEST(TestExponents, BasicNumber)
+{
+  auto json = TinyJSON::TJ::parse("1.07e4");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+
+  long double result = exponent->get_float(); // 1.07e4 = 10700.0
+  EXPECT_NEAR(result, 10700.0L, EPSILON);
+
+  delete json;
+}
+
+TEST(TestExponents, ZeroFraction)
+{
+  auto json = TinyJSON::TJ::parse("5.0e2");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+
+  long double result = exponent->get_float(); // 5.0e2 = 500.0
+  EXPECT_NEAR(result, 500.0L, EPSILON);
+
+  delete json;
+}
+
+TEST(TestExponents, NegativeExponent)
+{
+  auto json = TinyJSON::TJ::parse("2.5e-2");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+
+  long double result = exponent->get_float(); // 2.5e-2 = 0.025
+  EXPECT_NEAR(result, 0.025L, EPSILON);
+
+  delete json;
+}
+
+TEST(TestExponents, PositiveExponent)
+{
+  auto json = TinyJSON::TJ::parse("2.5e+2");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+
+  long double result = exponent->get_float(); // 2.5e+2 = 250.00
+  EXPECT_NEAR(result, 250.0L, EPSILON);
+
+  delete json;
+}
+
+TEST(TestExponents, NegativeNumberPositiveExponent)
+{
+  auto json = TinyJSON::TJ::parse("-2.5e+2");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+
+  long double result = exponent->get_float(); // -2.5e+2 = -250.00
+  EXPECT_NEAR(result, -250.0L, EPSILON);
+
+  delete json;
+}
+
+TEST(TestExponents, NegativeNumber)
+{
+  auto json = TinyJSON::TJ::parse("-3.33e1");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+
+  long double result = exponent->get_float(); // -3.33e1 = -33.3
+  EXPECT_NEAR(result, -33.3L, EPSILON);
+
+  delete json;
+}
+
+TEST(TestExponents, Overflow)
+{
+  auto json = TinyJSON::TJ::parse("1e10000");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+  
+  long double result = exponent->get_float(); // Force overflow
+  EXPECT_TRUE(std::isinf(result));
+
+  delete json;
+}
+
+TEST(TestExponents, Underflow)
+{
+  auto json = TinyJSON::TJ::parse("1e-50000");
+  auto exponent = dynamic_cast<const TinyJSON::TJValueNumber*>(json);
+  ASSERT_NE(nullptr, exponent);
+
+  long double result = exponent->get_float(); // Force underflow
+  EXPECT_EQ(result, 0.0L);
 
   delete json;
 }
