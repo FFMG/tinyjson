@@ -4091,7 +4091,7 @@ namespace TinyJSON
 
   TJMember* TJValueObject::at(int idx) const
   {
-    if(idx >= get_number_of_items() || idx < 0)
+    if(idx < 0 || unsigned(idx) >= get_number_of_items())
     {
       return nullptr;
     }
