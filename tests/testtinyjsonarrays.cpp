@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
+#include <vector>
 
 TEST(TestArrays, MakeSureThatEmptyStringIsKinkOfValueArray) {
   auto json = TinyJSON::TJ::parse("[]");
@@ -290,6 +291,133 @@ TEST(TestArrays, CreateWithFloatsAndNegativeNumbers)
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, AddVectorOfFloats)
+{
+  std::vector<float> values;
+  values.push_back(42.5);
+  values.push_back(1.00);
+  values.push_back(-1.00); //  this is actually a whole number
+  values.push_back(-42.5);
+
+  auto json = new TinyJSON::TJValueArray();
+  json->add_floats(values);
+
+  ASSERT_EQ(4, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42.5,1,-1,-42.5])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, AddVectorOfDoubles)
+{
+  std::vector<double> values;
+  values.push_back(42.5);
+  values.push_back(0.05);
+  values.push_back(1.00);
+  values.push_back(-1.00); //  this is actually a whole number
+  values.push_back(-42.5);
+  values.push_back(-0.05);
+
+  auto json = new TinyJSON::TJValueArray();
+  json->add_floats(values);
+
+  ASSERT_EQ(6, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, AddVectorOfLongDoubles)
+{
+  std::vector<long double> values;
+  values.push_back(42.5);
+  values.push_back(0.05);
+  values.push_back(1.00);
+  values.push_back(-1.00); //  this is actually a whole number
+  values.push_back(-42.5);
+  values.push_back(-0.05);
+
+  auto json = new TinyJSON::TJValueArray();
+  json->add_floats(values);
+
+  ASSERT_EQ(6, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, AddVectorOfInt)
+{
+  std::vector<int> values;
+  values.push_back(42);
+  values.push_back(0);
+  values.push_back(-42);
+
+  auto json = new TinyJSON::TJValueArray();
+  json->add_numbers(values);
+
+  ASSERT_EQ(3, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42,0,-42])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, AddVectorOfLong)
+{
+  std::vector<long> values;
+  values.push_back(42);
+  values.push_back(0);
+  values.push_back(-42);
+
+  auto json = new TinyJSON::TJValueArray();
+  json->add_numbers(values);
+
+  ASSERT_EQ(3, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42,0,-42])", text);
+
+  delete json;
+}
+
+TEST(TestArrays, AddVectorOfLongLong)
+{
+  std::vector<long long> values;
+  values.push_back(42);
+  values.push_back(0);
+  values.push_back(-42);
+
+  auto json = new TinyJSON::TJValueArray();
+  json->add_numbers(values);
+
+  ASSERT_EQ(3, json->get_number_of_items());
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(R"([42,0,-42])", text);
 
   delete json;
 }

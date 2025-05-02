@@ -4329,6 +4329,54 @@ namespace TinyJSON
 #endif
   }
 
+  void TJValueArray::add_numbers(const std::vector<long long>& values)
+  {
+    for (const auto& value : values)
+    {
+      add_number(value);
+    }
+  }
+
+  void TJValueArray::add_numbers(const std::vector<long>& values)
+  {
+    for (const auto& value : values)
+    {
+      add_number(value);
+    }
+  }
+
+  void TJValueArray::add_numbers(const std::vector<int>& values)
+  {
+    for (const auto& value : values)
+    {
+      add_number(value);
+    }
+  }
+
+  void TJValueArray::add_floats(const std::vector<long double>& values)
+  {
+    for (const auto& value : values)
+    {
+      add_float(value);
+    }
+  }
+
+  void TJValueArray::add_floats(const std::vector<double>& values)
+  {
+    for (const auto& value : values)
+    {
+      add_float(value);
+    }
+  }
+
+  void TJValueArray::add_floats(const std::vector<float>& values)
+  {
+    for (const auto& value : values)
+    {
+      add_float(value);
+    }
+  }
+
   void TJValueArray::add_number(long long value)
   {
     auto* objectNumber = new TJValueNumberInt(value);

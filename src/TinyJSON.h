@@ -18,10 +18,9 @@
 #endif
 
 #include <exception>
-
-#if TJ_INCLUDE_STDVECTOR == 1
 #include <vector>
-#else
+
+#if TJ_INCLUDE_STDVECTOR == 0
 #include <stdexcept>
 #endif
 
@@ -494,6 +493,12 @@ class TJDictionary;
     bool is_array() const;
 
     void add(const TJValue* value);
+    void add_numbers(const std::vector<long long>& values);
+    void add_numbers(const std::vector<long>& values);
+    void add_numbers(const std::vector<int>& values);
+    void add_floats(const std::vector<long double>& values);
+    void add_floats(const std::vector<double>& values);
+    void add_floats(const std::vector<float>& values);
     void add_number(long long value);
     void add_float(long double value);
     void add_boolean(bool value);
