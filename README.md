@@ -3,8 +3,9 @@
 TinyJSON is a fast and small C++ JSON parser
 
 ## Contents
-  * [Supported JSON](#supported-json)
-  * [Simple examples](#simple-examples)
+
+* [Supported JSON](#supported-json)
+* [Simple examples](#simple-examples)
   
 ## Supported JSON
 
@@ -52,9 +53,9 @@ true
 
 We follow Semantic Versioning 2.0.0, [semver.org](https://semver.org/)
 
-- MAJOR version when you make incompatible API changes
-- MINOR version when you add functionality in a backward compatible manner
-- PATCH version when you make backward compatible bug fixes
+* MAJOR version when you make incompatible API changes
+* MINOR version when you add functionality in a backward compatible manner
+* PATCH version when you make backward compatible bug fixes
 
 The version is set in the `TinyJSON.h` file.
 
@@ -69,12 +70,12 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
 
 ### Parse Options
 
-- Depth: (`max_depth:64`) You can set how deep you want to allow the parsing to go.
-- Throw: (`throw_exception:false`) If you want to throw exceptions or simply return null.
-- Specification: (`specification:parse_options::rfc8259`) What specs will the parser be following/enforcing.
-  - rfc4627
-  - rfc7159
-  - rfc8259
+* Depth: (`max_depth:64`) You can set how deep you want to allow the parsing to go.
+* Throw: (`throw_exception:false`) If you want to throw exceptions or simply return null.
+* Specification: (`specification:parse_options::rfc8259`) What specs will the parser be following/enforcing.
+  * rfc4627
+  * rfc7159
+  * rfc8259
 
 For example ...
 
@@ -96,13 +97,13 @@ catch(TinyJSON::TJParseException ex)
 
 ### Write Options
 
-- Throw: (`throw_exception:false`) If you want to throw exceptions or simply return false.
-- write_formating: (`write_formating::indented`) The formating we want to write the file with.
-  - none
-  - indented
-- Byte order mark: (`byte_order_mark:none`)
-  - none
-  - uft8
+* Throw: (`throw_exception:false`) If you want to throw exceptions or simply return false.
+* write_formating: (`write_formating::indented`) The formating we want to write the file with.
+  * none
+  * indented
+* Byte order mark: (`byte_order_mark:none`)
+  * none
+  * uft8
 
 For example ...
 
@@ -455,8 +456,8 @@ All you need is to include the .h and .cpp file to your project and you are read
 
 ## Building and testing the project
 
-- Clone this repository
-- init the submodules
+* Clone this repository
+* init the submodules
   `git submodule --init --recursive`
 
 ## Data Range
@@ -467,24 +468,27 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 
 ## TODO
 
-- [x] Make sure that all the code follow our own coding standards.
-- [] Update comments
-- [x] Finish documentation how to use the code.
-- [] Run/Create some benchmark tests, make sure they are up to date.
-- [x] Arrays
-- [x] Objects
-- [x] Values
-- [x] More tests!
-- [x] Add version number (started at version 0.0.1)
-- [x] Copyright
-- [x] Add 2 kinds of error handling, either throw or return an error structure.
-- [] Automated build
-- [] While we do not care about size, (on paper), it would be nice to implement limits in the code.
-  - [x] depth
-  - [] string
-  - [] numbers
-- [x] Automated build
-- [x] Run on linux/gcc/g++ or something other than visual studio.
+* [x] Make sure that all the code follow our own coding standards.
+* [] Update comments
+* [x] Finish documentation how to use the code.
+* [] Run/Create some benchmark tests, make sure they are up to date.
+* [x] Arrays
+* [x] Objects
+* [x] Values
+* [x] More tests!
+* [x] Add version number (started at version 0.0.1)
+* [x] Copyright
+* [x] Add 2 kinds of error handling, either throw or return an error structure.
+* [] Automated build
+* [] While we do not care about size, (on paper), it would be nice to implement limits in the code.
+  * [x] depth
+  * [] string
+  * [] numbers
+* [x] Automated build
+* [x] Run on linux/gcc/g++ or something other than visual studio.
      `g++ -std=c++11 -Wall -Wextra -Werror -O3 src/tinyJSON.cpp -o a.exe`
-- [] We need to add copy and move constructors to `TJValue` and the derived classes.
-- [] Add Macro(s) explaination like `TJ_INCLUDE_STD_STRING` for example.
+* [] We need to add copy and move constructors to `TJValue` and the derived classes.
+* [] Add Macro(s) explaination like `TJ_INCLUDE_STD_STRING` for example.
+* [] Add support for JSON5
+     <https://json5.org>
+  📄 <https://github.com/json5/json5>
