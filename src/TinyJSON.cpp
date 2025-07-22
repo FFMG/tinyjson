@@ -927,7 +927,7 @@ namespace TinyJSON
     /// <param name="dictionary">The dictionary we will be looking in</param>
     static void remove_dictionary_data_by_dictionary_index
     (
-      const unsigned int& dictionary_index,
+      const unsigned int dictionary_index,
       unsigned int& dictionary_size,
       dictionary_data*& dictionary
     )
@@ -954,7 +954,7 @@ namespace TinyJSON
     /// <param name="dictionary_size"></param>
     /// <param name="dictionary">The dictionary we will be looking in</param>
     static void remove_dictionary_data_by_value_index(
-      const unsigned int& index,
+      const unsigned int index,
       unsigned int& dictionary_size,
       dictionary_data*& dictionary
     )
@@ -992,8 +992,8 @@ namespace TinyJSON
     /// <param name="dictionary_size"></param>
     /// <param name="dictionary"></param>
     static void uppdate_dictionary_data_by_value_index(
-      const unsigned int& index,
-      const unsigned int& dictionary_size,
+      const unsigned int index,
+      const unsigned int dictionary_size,
       dictionary_data*& dictionary
     )
     {
@@ -1138,7 +1138,7 @@ namespace TinyJSON
     static search_result binary_search(
       const TJCHAR* key, 
       const dictionary_data* dictionary,
-      const unsigned int& dictionary_size,
+      const unsigned int dictionary_size,
       bool case_sensitive
     )
     {
@@ -1190,7 +1190,7 @@ namespace TinyJSON
     static void shift_dictionary_right(
       int dictionary_index,
       dictionary_data*& dictionary,
-      const unsigned int& dictionary_size
+      const unsigned int dictionary_size
     )
     {
       if (dictionary_size == 0)
@@ -1232,7 +1232,7 @@ namespace TinyJSON
     static void shift_dictionary_left(
       int dictionary_index,
       dictionary_data*& dictionary,
-      const unsigned int& dictionary_size
+      const unsigned int dictionary_size
       )
     {
       if (dictionary_size == 0)
@@ -1402,7 +1402,7 @@ namespace TinyJSON
 
       if (fraction_exponent > reverse_position)
       {
-        const unsigned int& zeros = fraction_exponent - reverse_position;
+        const unsigned int zeros = fraction_exponent - reverse_position;
         for (unsigned int j = 0; j < zeros; ++j)
         {
           reverse_buffer[reverse_position++] = '0';
@@ -2234,7 +2234,7 @@ namespace TinyJSON
       return static_cast<unsigned long long>(int_part);
     }
 
-    static TJValue* try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent)
+    static TJValue* try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent)
     {
       if (unsigned_fraction == 0)
       {
@@ -2326,7 +2326,7 @@ namespace TinyJSON
       return shifted_unsigned_fraction;
     }
 
-    static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
     {
       if (exponent >= fraction_exponent)
       {
@@ -2372,7 +2372,7 @@ namespace TinyJSON
       return nullptr;
     }
 
-    static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
     {
       const auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
 
@@ -2445,7 +2445,7 @@ namespace TinyJSON
         is_negative);
     }
 
-    static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
     {
       // if the number is something like 123.456 with e=2
       // then the number will become 12345.6 e=0
@@ -2519,7 +2519,7 @@ namespace TinyJSON
         is_negative);
     }
 
-    static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
     {
       //
       // remember that this is a negative exponent ...
@@ -2558,7 +2558,7 @@ namespace TinyJSON
         is_negative);
     }
 
-    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int& fraction_exponent, const long long& exponent)
+    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const long long& exponent)
     {
       // no exponent number is int or float
       if (exponent == 0)
@@ -4837,7 +4837,7 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue float Number
-  TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative) :
+  TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, bool is_negative) :
     TJValueNumber(is_negative),
     _string(nullptr),
     _number(number),
@@ -4910,7 +4910,7 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue float Number
-  TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const int& exponent, bool is_negative) :
+  TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, const int exponent, bool is_negative) :
     TJValueNumber(is_negative),
     _string(nullptr),
     _number(number),
