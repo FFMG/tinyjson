@@ -368,7 +368,7 @@ class TJDictionary;
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
 
-    bool is_object() const;
+    bool is_object() const override;
 
     /// <summary>
     /// Set the value of a ... value
@@ -454,7 +454,7 @@ class TJDictionary;
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
     /// <summary>
     /// Move the value ownership to the members.
@@ -464,7 +464,7 @@ class TJDictionary;
     /// <returns></returns>
     static TJValueObject* move(TJDICTIONARY*& members);
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
     // All the key value pairs in this object.
@@ -490,7 +490,7 @@ class TJDictionary;
     TJValue* operator [](int idx) const;
     TJValue* at(int idx) const;
 
-    bool is_array() const;
+    bool is_array() const override;
 
     void add(const TJValue* value);
     void add_numbers(const std::vector<long long>& values);
@@ -514,7 +514,7 @@ class TJDictionary;
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
     /// <summary>
     /// Move the value ownership to the values.
@@ -524,7 +524,7 @@ class TJDictionary;
     /// <returns></returns>
     static TJValueArray* move(TJLIST*& values);
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
     
   private:
     // All the key value pairs in this object.
@@ -541,12 +541,12 @@ class TJDictionary;
     TJValueString(const TJCHAR* value);
     virtual ~TJValueString();
 
-    bool is_string() const;
+    bool is_string() const override;
   protected:
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
     /// <summary>
     /// Move the value ownership of the string.
@@ -556,7 +556,7 @@ class TJDictionary;
     /// <returns></returns>
     static TJValueString* move(TJCHAR*& value);
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
     TJCHAR* _value;
@@ -570,16 +570,16 @@ class TJDictionary;
     TJValueBoolean(bool is_true);
     virtual ~TJValueBoolean() = default;
 
-    bool is_true() const;
-    bool is_false() const;
+    bool is_true() const override;
+    bool is_false() const override;
 
   protected:
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
     const bool _is_true;
@@ -592,15 +592,15 @@ class TJDictionary;
     TJValueNull();
     virtual ~TJValueNull() = default;
 
-    bool is_null() const;
+    bool is_null() const override;
 
   protected:
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
   };
 
   // A number JSon, float or int
@@ -611,7 +611,7 @@ class TJDictionary;
     virtual ~TJValueNumber() = default;
 
   public:
-    bool is_number() const;
+    bool is_number() const override;
 
     long double get_float() const;
     long long get_number() const;
@@ -634,9 +634,9 @@ class TJDictionary;
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
     const long long _number;
@@ -656,9 +656,9 @@ class TJDictionary;
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
   private:
@@ -682,9 +682,9 @@ class TJDictionary;
     /// <summary>
     /// Clone an array into an identical value object
     /// </summary>
-    TJValue* internal_clone() const;
+    TJValue* internal_clone() const override;
 
-    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const;
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
     void make_string_if_needed() const;
