@@ -36,7 +36,7 @@ static constexpr TJCHAR TJ_ESCAPE_TAB = static_cast<TJCHAR>(0x009);             
 
 #ifdef _DEBUG
 # if defined(_MSC_VER)
-#   define TJASSERT(x) for(;;){ if(!x){ __debugbreak();}; break;}
+#   define TJASSERT(x) for(;;){ if(!(x)){ __debugbreak();}; break;}
 #else
 #   include  <assert.h>
 #   define TJASSERT(x) for(;;){ assert(x); break;}
