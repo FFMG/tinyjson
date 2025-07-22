@@ -15,6 +15,7 @@
 #include <string>
 #include <random>
 #include <chrono>
+#include <cstring>
 
 std::string generateRandomString(size_t length) {
   const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

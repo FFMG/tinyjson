@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
+#include <cmath>
 
 constexpr long double EPSILON = 1e-10;
 
