@@ -5,6 +5,7 @@
 #include <vector>
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
+#include <cmath>
 
 TEST(TestNumbers, NumberIsAfterMissingColon) {
   auto json = TinyJSON::TJ::parse(R"(
