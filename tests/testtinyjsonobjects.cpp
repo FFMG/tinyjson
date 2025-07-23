@@ -570,3 +570,448 @@ TEST(TestObjects, AddMultipleArraysToObject)
 
   delete object;
 }
+
+// Float
+TEST(TestObjects, GetFloatFromObjectCaseIsCorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 123.4);
+
+  auto f = object->get_float("a");
+  ASSERT_DOUBLE_EQ(123.4, f);
+
+  delete object;
+}
+
+TEST(TestObjects, GetFloatFromObjectThatIsInteger)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 123);
+
+  auto f = object->get_float("a");
+  ASSERT_DOUBLE_EQ(123, f);
+
+  delete object;
+}
+
+TEST(TestObjects, GetFloatFromObjectThatIsBoolean)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+  object->set_boolean("b", false);
+
+  auto a = object->get_float("a");
+  auto b = object->get_float("b");
+  ASSERT_DOUBLE_EQ(1.0, a);
+  ASSERT_DOUBLE_EQ(0.0, b);
+
+  delete object;
+}
+
+TEST(TestObjects, GetFloatFromObjectCaseIsIncorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 123.4);
+
+  ASSERT_ANY_THROW({auto f = object->get_float("A", true, true); });
+  // We expect an exception here because the case is incorrect and we asked to throw.
+  delete object;
+}
+
+TEST(TestObjects, GetFloatFromObjectCaseIsIncorrectButDontThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 123.4);
+
+  ASSERT_NO_THROW({ 
+    auto f = object->get_float("A", true, false); 
+    ASSERT_DOUBLE_EQ(0.0, f);
+    });
+  delete object;
+}
+
+TEST(TestObjects, GetFloatFromObjectCaseIsIncorrectButWeDontCare)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 123.4);
+
+  ASSERT_NO_THROW({
+    auto f = object->get_float("A", true, false);
+    ASSERT_DOUBLE_EQ(0.0, f);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetFloatFromObjectThatIsAStringNoThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("a", "not a number");
+
+  ASSERT_NO_THROW({
+    auto f = object->get_float("a", false, false);
+    ASSERT_DOUBLE_EQ(0.0, f);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetFloatFromObjectThatIsAStringThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("a", "not a number");
+
+  ASSERT_ANY_THROW({
+    auto f = object->get_float("a", false, true);
+    });
+
+  delete object;
+}
+
+// number
+TEST(TestObjects, GetNumberFromObjectCaseIsCorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 123);
+
+  auto n = object->get_number("a");
+  ASSERT_EQ(123, n);
+
+  delete object;
+}
+
+TEST(TestObjects, GetNumberFromObjectThatIsFloat)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 123.4);
+
+  auto n = object->get_number("a");
+  ASSERT_EQ(123, n);
+
+  delete object;
+}
+
+TEST(TestObjects, GetNumberFromObjectThatIsBoolean)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+  object->set_boolean("b", false);
+
+  auto a = object->get_number("a");
+  auto b = object->get_number("b");
+  ASSERT_EQ(1, a);
+  ASSERT_EQ(0, b);
+
+  delete object;
+}
+
+TEST(TestObjects, GetNumberFromObjectCaseIsIncorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 123);
+
+  ASSERT_ANY_THROW({ auto f = object->get_number("A", true, true); });
+  // We expect an exception here because the case is incorrect and we asked to throw.
+  delete object;
+}
+
+TEST(TestObjects, GetNumberFromObjectCaseIsIncorrectButDontThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 123.4);
+
+  ASSERT_NO_THROW({
+    auto n = object->get_number("A", true, false);
+    ASSERT_EQ(0, n);
+    });
+  delete object;
+}
+
+TEST(TestObjects, GetNumberFromObjectCaseIsIncorrectButWeDontCare)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 123);
+
+  ASSERT_NO_THROW({
+    auto n = object->get_number("A", true, false);
+    ASSERT_EQ(0, n);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetNumberFromObjectThatIsAStringNoThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("a", "not a number");
+
+  ASSERT_NO_THROW({
+    auto n = object->get_number("a", false, false);
+    ASSERT_EQ(0, n);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetNumberFromObjectThatIsAStringThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("a", "not a number");
+
+  ASSERT_ANY_THROW({
+    auto n = object->get_number("a", false, true);
+    });
+
+  delete object;
+}
+
+// Boolean
+TEST(TestObjects, GetBooleanFromObjectCaseIsCorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+  object->set_boolean("b", false);
+
+  auto a = object->get_boolean("a");
+  auto b = object->get_boolean("b");
+  ASSERT_TRUE(a);
+  ASSERT_FALSE(b);
+
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectThatIsInteger)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 1);
+  object->set_number("b", 0);
+
+  auto a = object->get_boolean("a");
+  auto b = object->get_boolean("b");
+  ASSERT_TRUE(a);
+  ASSERT_FALSE(b);
+
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectThatIsFloat)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 1.0);
+  object->set_float("b", 0.0);
+
+  auto a = object->get_boolean("a");
+  auto b = object->get_boolean("b");
+  ASSERT_TRUE(a);
+  ASSERT_FALSE(b);
+
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectCaseIsIncorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+
+  ASSERT_ANY_THROW({ auto b = object->get_boolean("A", true, true); });
+  // We expect an exception here because the case is incorrect and we asked to throw.
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectCaseIsIncorrectButDontThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+
+  ASSERT_NO_THROW({
+    auto b = object->get_boolean("A", true, false);
+    ASSERT_FALSE(b);
+    });
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectCaseIsIncorrectButWeDontCare)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+
+  ASSERT_NO_THROW({
+    auto b = object->get_boolean("A", true, false);
+    ASSERT_FALSE(b);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectThatIsAStringNoThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("a", "not a number");
+
+  ASSERT_NO_THROW({
+    auto b = object->get_boolean("a", false, false);
+    ASSERT_FALSE(b);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectThatIsAStringThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("a", "not a number");
+
+  ASSERT_ANY_THROW({
+    auto f = object->get_boolean("a", false, true);
+    });
+
+  delete object;
+}
+
+// Floats
+TEST(TestObjects, GetFloatsFromObjectCaseIsCorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_floats("a", { 123.4, 42.7 });
+
+  auto fs = object->get_floats("a");
+  ASSERT_TRUE(fs.size() == 2);
+
+  for( auto f : fs ) {
+   ASSERT_TRUE(f == 123.4 || f == 42.7);
+  }
+  delete object;
+}
+
+TEST(TestObjects, GetFloatsFromObjectCaseIsincorrectButWeDontCare)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_floats("a", { 123.25, 42.7 });
+
+  ASSERT_NO_THROW(
+    {
+    auto fs = object->get_floats("A", true, false);
+    ASSERT_TRUE(fs.size() == 0);
+    });
+  delete object;
+}
+
+TEST(TestObjects, GetFloatsFromObjectCaseIsincorrectWeThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_floats("a", { 123.25, 42.7 });
+
+  ASSERT_ANY_THROW(
+    {
+    auto fs = object->get_floats("A", true, true);
+    });
+  delete object;
+}
+
+TEST(TestObjects, GetFloatsFromObjectJustOneNUmber)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_float("a", 123.7);
+
+  auto fs = object->get_floats("a");
+  ASSERT_TRUE(fs.size() == 1);
+
+  for (auto f : fs) {
+    ASSERT_DOUBLE_EQ(123.7, f);
+  }
+  delete object;
+}
+
+TEST(TestObjects, GetFloatsFromObjectJustOneBoolean)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+  object->set_boolean("b", false);
+
+  auto as = object->get_floats("a");
+  ASSERT_TRUE(as.size() == 1);
+  auto bs = object->get_floats("b");
+  ASSERT_TRUE(bs.size() == 1);
+
+  for (auto a : as) {
+    ASSERT_DOUBLE_EQ(1.0, a);
+  }
+  for (auto b : bs) {
+    ASSERT_DOUBLE_EQ(0.0, b);
+  }
+  delete object;
+}
+
+// Numbers
+TEST(TestObjects, GetNumbersFromObjectCaseIsCorrect)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_numbers("a", { 123, 42 });
+
+  auto fs = object->get_numbers("a");
+  ASSERT_TRUE(fs.size() == 2);
+
+  for (auto f : fs) {
+    ASSERT_TRUE(f == 123 || f == 42);
+  }
+  delete object;
+}
+
+TEST(TestObjects, GetNumbersFromObjectCaseIsincorrectButWeDontCare)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_numbers("a", { 123, 42 });
+
+  ASSERT_NO_THROW(
+    {
+    auto fs = object->get_numbers("A", true, false);
+    ASSERT_TRUE(fs.size() == 0);
+    });
+  delete object;
+}
+
+TEST(TestObjects, GetNumbersFromObjectCaseIsincorrectWeThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_numbers("a", { 123, 42 });
+
+  ASSERT_ANY_THROW(
+    {
+    auto fs = object->get_numbers("A", true, true);
+    });
+  delete object;
+}
+
+TEST(TestObjects, GetNumbersFromObjectJustOneNUmber)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_number("a", 123 );
+
+  auto fs = object->get_numbers("a");
+  ASSERT_TRUE(fs.size() == 1);
+
+  for (auto f : fs) {
+    ASSERT_TRUE(f == 123);
+  }
+  delete object;
+}
+
+TEST(TestObjects, GetNumbersFromObjectJustOneBoolean)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_boolean("a", true);
+  object->set_boolean("b", false);
+
+  auto as = object->get_numbers("a");
+  ASSERT_TRUE(as.size() == 1);
+  auto bs = object->get_numbers("b");
+  ASSERT_TRUE(bs.size() == 1);
+
+  for (auto a : as) {
+    ASSERT_EQ(1, a);
+  }
+  for (auto b : bs) {
+    ASSERT_EQ(0, b);
+  }
+  delete object;
+}

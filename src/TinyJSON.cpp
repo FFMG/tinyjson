@@ -3988,6 +3988,217 @@ namespace TinyJSON
     return object;
   }
 
+  long double TJValueObject::get_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  {
+    auto value = try_get_value(key, case_sensitive);
+    if (nullptr == value)
+    {
+      if(throw_if_not_found)
+      { 
+        throw TJParseException("The key was not found!");
+      }
+      return 0.0;
+    }
+
+    if (value->is_false())
+    {
+      return 0.0;
+    }
+    if (value->is_true())
+    {
+      return 1.0;
+    }
+    if (!value->is_number())
+    {
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The value is not a number!");
+      }
+      return 0.0;
+    }
+
+    auto number = static_cast<const TJValueNumber*>(value);
+    return number->get_float();
+  }
+
+  long long TJValueObject::get_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  {
+    auto value = try_get_value(key, case_sensitive);
+    if (nullptr == value)
+    {
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The key was not found!");
+      }
+      return 0.0;
+    }
+    if (value->is_false())
+    {
+      return 0.0;
+    }
+    if (value->is_true())
+    {
+      return 1.0;
+    }
+
+    if (!value->is_number())
+    {
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The value is not a number!");
+      }
+      return 0.0;
+    }
+
+    auto number = static_cast<const TJValueNumber*>(value);
+    return number->get_number();
+  }
+
+  std::vector<long double> TJValueObject::get_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  {
+    auto value = try_get_value(key, case_sensitive);
+    if (nullptr == value)
+    {
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The key was not found!");
+      }
+      return {};
+    }
+
+    if (value->is_number())
+    {
+      auto number = static_cast<const TJValueNumber*>(value);
+      return { number->get_float() };
+    }
+    if (value->is_array())
+    {
+      auto array = static_cast<const TJValueArray*>(value);
+      return array->get_floats(throw_if_not_found);
+    }
+    if (value->is_false())
+    {
+      return { 0.0 };
+    }
+    if (value->is_true())
+    {
+      return { 1.0 };
+    }
+
+    if (throw_if_not_found)
+    {
+      throw TJParseException("The value is not a number or an array of numbers!");
+    }
+    return {};
+  }
+
+  std::vector<long long> TJValueObject::get_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  {
+    auto value = try_get_value(key, case_sensitive);
+    if (nullptr == value)
+    {
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The key was not found!");
+      }
+      return {};
+    }
+
+    if (value->is_number())
+    {
+      auto number = static_cast<const TJValueNumber*>(value);
+      return { number->get_number() };
+    }
+    if (value->is_array())
+    {
+      auto array = static_cast<const TJValueArray*>(value);
+      return array->get_numbers(throw_if_not_found);
+    }
+    if (value->is_false())
+    {
+      return { 0 };
+    }
+    if (value->is_true())
+    {
+      return { 1 };
+    }
+
+    if (throw_if_not_found)
+    {
+      throw TJParseException("The value is not a number or an array of numbers!");
+    }
+    return {};
+  }
+
+  bool TJValueObject::get_boolean(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  {
+    auto value = try_get_value(key, case_sensitive);
+    if (nullptr == value)
+    {
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The key was not found!");
+      }
+      return false;
+    }
+    if (value->is_false())
+    {
+      return false;
+    }
+    if (value->is_true())
+    {
+      return true;
+    }
+    if (!value->is_number())
+    {
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The value is not a number/boolean!");
+      }
+      return 0.0;
+    }
+
+    auto number = static_cast<const TJValueNumber*>(value);
+    return number->get_number() == 1;
+  }
+
+  void TJValueObject::set_floats(const TJCHAR* key, const std::vector<long double>& values)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_array = new TJValueArray();
+    auto array = reinterpret_cast<TJValueArray*>(value_array);
+    for(const auto& value : values)
+    {
+      array->add_float(value);
+    }
+    member->move_value(value_array);
+    TJHelper::move_member_to_members(member, _members);
+  }
+
+  void TJValueObject::set_numbers(const TJCHAR* key, const std::vector<long long>& values)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_array = new TJValueArray();
+    auto array = reinterpret_cast<TJValueArray*>(value_array);
+    for (const auto& value : values)
+    {
+      array->add_number(value);
+    }
+    member->move_value(value_array);
+    TJHelper::move_member_to_members(member, _members);
+  }
+
+
   /// <summary>
   /// Allow each derived class to create a copy of itself.
   /// </summary>
@@ -4307,6 +4518,47 @@ namespace TinyJSON
     delete _values;
     _values = nullptr;
   }
+
+  std::vector<long double> TJValueArray::get_floats(bool throw_if_not_numbers) const
+  {
+    std::vector<long double> values = {};
+    for( auto i = 0; i < get_number_of_items(); ++i)
+    {
+      auto value = _values->at(i);
+      if (!value->is_number())
+      {
+        if (throw_if_not_numbers)
+        {
+          throw TJParseException("One or more values in the array is not a number!");
+        }
+        continue;
+      }
+      auto number = static_cast<TJValueNumber*>(value);
+      values.push_back(number->get_float());
+    }
+    return values;
+  }
+
+  std::vector<long long> TJValueArray::get_numbers(bool throw_if_not_numbers) const
+  {
+    std::vector<long long> values = {};
+    for (auto i = 0; i < get_number_of_items(); ++i)
+    {
+      auto value = _values->at(i);
+      if (!value->is_number())
+      {
+        if (throw_if_not_numbers)
+        {
+          throw TJParseException("One or more values in the array is not a number!");
+        }
+        continue;
+      }
+      auto number = static_cast<TJValueNumber*>(value);
+      values.push_back(number->get_number());
+    }
+    return values;
+  }
+
 
   void TJValueArray::add(const TJValue* value)
   {

@@ -332,7 +332,7 @@ class TJDictionary;
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
-    const TJCHAR* try_get_string(const TJCHAR* key, bool case_sensitive = true) const;    
+    const TJCHAR* try_get_string(const TJCHAR* key, bool case_sensitive = true) const;
 
 #if TJ_INCLUDE_STD_STRING == 1
     /// <summary>
@@ -340,7 +340,7 @@ class TJDictionary;
     /// </summary>
     /// <param name="key"></param>
     /// <returns></returns>
-    inline const TJCHAR* try_get_string(const std::string& key, bool case_sensitive = true) const    
+    inline const TJCHAR* try_get_string(const std::string& key, bool case_sensitive = true) const
     {
       return try_get_string(key.c_str(), case_sensitive);
     }
@@ -353,6 +353,15 @@ class TJDictionary;
     /// <returns></returns>
     virtual const TJValue* try_get_value(const TJCHAR* key, bool case_sensitive = true) const;
 
+    bool get_boolean(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
+    long double get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
+    long long get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
+    std::vector<long double> get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
+    std::vector<long long> get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
+
+    void set_floats(const TJCHAR* key, const std::vector<long double>& values);
+    void set_numbers(const TJCHAR* key, const std::vector<long long>& values);
+    
 #if TJ_INCLUDE_STD_STRING == 1
     /// <summary>
     /// Try and get the value of this member if it exists.
@@ -503,6 +512,10 @@ class TJDictionary;
     void add_float(long double value);
     void add_boolean(bool value);
     void add_string(const char* value);
+
+    std::vector<long double> get_floats(bool throw_if_not_numbers = false) const;
+    std::vector<long long> get_numbers(bool throw_if_not_numbers = false) const;
+
 #if TJ_INCLUDE_STD_STRING == 1
     void add_string(const std::string& value)
     {
