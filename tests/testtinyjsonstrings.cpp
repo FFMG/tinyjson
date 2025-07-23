@@ -624,7 +624,7 @@ TEST(TestStrings, ValidHexValues) {
   delete json;
 }
 
-TEST(TestStrings, KeysAreNotCaseSensitive) 
+TEST(TestStrings, KeysAreNotCaseSensitive)
 {
   auto tjjson = TinyJSON::TJ::parse(R"(
 {
@@ -648,5 +648,38 @@ TEST(TestStrings, KeysAreNotCaseSensitive)
   "HELLO": "b"
 })");
   
+  delete tjjson;
+}
+
+TEST(TestStrings, GetValueAsStringFromObject)
+{
+  auto tjjson = TinyJSON::TJ::parse(R"(
+{
+  "hello" : "world"
+}
+)"
+);
+  ASSERT_NE(nullptr, tjjson);
+  ASSERT_TRUE(tjjson->is_object());
+  
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(tjjson);
+  ASSERT_NE(nullptr, jobject);
+
+  // get the string
+  auto string = jobject->try_get_string("hello");
+  ASSERT_STRCASEEQ("world", string);
+
+  delete tjjson;
+}
+
+TEST(TestStrings, GetValueAsStringFromString)
+{
+  TinyJSON::TJValueString* tjjson = new TinyJSON::TJValueString("world");
+  ASSERT_TRUE(tjjson->is_string());
+
+  // get the string
+  auto string = tjjson->dump_string();
+  ASSERT_STRCASEEQ("world", string);
+
   delete tjjson;
 }
