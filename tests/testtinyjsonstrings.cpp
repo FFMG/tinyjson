@@ -683,3 +683,24 @@ TEST(TestStrings, GetValueAsStringFromString)
 
   delete tjjson;
 }
+
+TEST(TestStrings, GetValueAsStringEscapedString)
+{
+  auto json = TinyJSON::TJ::parse(R"({"message": "This is a JSON string with \"quotes\" and backslashes: \\"})");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto value = jobject->try_get_value("message");
+  ASSERT_NE(nullptr, value);
+  auto dump = value->dump_string();
+  ASSERT_STRCASEEQ(R"(This is a JSON string with "quotes" and backslashes: \)", dump);
+
+  // get the string
+  auto string = jobject->try_get_string("message");
+  ASSERT_NE(nullptr, string);
+  ASSERT_STRCASEEQ(R"(This is a JSON string with "quotes" and backslashes: \)", string);
+
+  delete json;
+}
