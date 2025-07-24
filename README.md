@@ -385,6 +385,7 @@ You can dynamically create a new object and then add a named values to it.
   auto object = new TinyJSON::TJValueObject();
   object->set_number("a", 42);
   object->set_float("b", 0.005);
+  object->set_null("c");
 
   ...
 
@@ -446,6 +447,61 @@ Assuming the array below with multiple items, you can query the type of each `TJ
   delete json;
 ```
 
+### Get values
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"(
+  {
+    "a": true,
+    "b": 123,
+    "c": 0,
+    "d": 42.2
+  }
+  )"
+);
+
+auto valuea = jobject->try_get_value("a");
+if( valuea->get_boolean())
+{
+  // value a is true
+}
+
+auto valuea = jobject->try_get_value("b");
+if( valueb->get_boolean())
+{
+  // value b is not a boolean but it is non zero
+}
+
+```
+
+#### Strict Get values
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"(
+  {
+    "a": true,
+    "b": 123,
+    "c": 0,
+    "d": 42.2
+  }
+  )"
+);
+
+auto valuea = jobject->try_get_value("a");
+if( valuea->get_boolean())
+{
+  // value a is true
+}
+
+auto valuea = jobject->try_get_value("b");
+if( valueb->get_boolean(true))  //  THROW! "b" is not a boolean
+{
+  // value b is not a boolean but it is non zero
+}
+
+```
+
+
 This can be helpful is you are looking for a certain data type.
 
 ## Getting Started
@@ -479,7 +535,6 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 * [x] Add version number (started at version 0.0.1)
 * [x] Copyright
 * [x] Add 2 kinds of error handling, either throw or return an error structure.
-* [] Automated build
 * [] While we do not care about size, (on paper), it would be nice to implement limits in the code.
   * [x] depth
   * [] string

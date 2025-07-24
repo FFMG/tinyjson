@@ -34,10 +34,11 @@
 //   MINOR version when you add functionality in a backward compatible manner
 //   PATCH version when you make backward compatible bug fixes
 // v0.1.1 - added some add( ... ) and set( ... ) methods
+// v0.1.2 - added a but of get/set( ... ) for values and objects.
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 1;
-static const short TJ_VERSION_PATCH = 1;
-static const char TJ_VERSION_STRING[] = "0.1.1";
+static const short TJ_VERSION_PATCH = 2;
+static const char TJ_VERSION_STRING[] = "0.1.2";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
