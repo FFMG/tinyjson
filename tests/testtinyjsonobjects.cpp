@@ -1013,3 +1013,42 @@ TEST(TestObjects, GetNumbersFromObjectJustOneBoolean)
   }
   delete object;
 }
+
+
+TEST(TestObjects, GetStringFromObjectCaseInsensitive)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_null("a");
+
+  ASSERT_NO_THROW({
+    auto b = object->get_string("a", false);
+    ASSERT_STRCASEEQ("null", b);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetStringFromObjectCaseSensitive)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_null("a");
+
+  ASSERT_ANY_THROW({
+    auto b = object->get_string("A", true, true);
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetStringFromObjectCaseSensitiveNoThrow)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_null("a");
+
+  ASSERT_NO_THROW({
+    auto b = object->get_string("A", true, false);
+    ASSERT_STRCASEEQ("", b);
+    });
+
+  delete object;
+}

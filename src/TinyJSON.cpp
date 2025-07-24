@@ -3675,14 +3675,7 @@ namespace TinyJSON
     const auto* boolean_object = dynamic_cast<const TJValueBoolean*>(this);
     if (nullptr != boolean_object)
     {
-      if (boolean_object->is_false())
-      {
-        return false;
-      }
-      if (boolean_object->is_true())
-      {
-        return true;
-      }
+      return boolean_object->is_true();
     }
     if (strict)
     {
@@ -3763,6 +3756,60 @@ namespace TinyJSON
       return boolean_object->is_true() ? 1 : 0;
     }
     return 0;
+  }
+
+  std::vector<long double> TJValue::get_floats(bool strict) const
+  {
+    auto array_object = dynamic_cast<const TJValueArray*>(this);
+    if (nullptr != array_object)
+    {
+      return array_object->get_floats();
+    }
+
+    // not an array then so return what we have.
+    return { get_float(strict) };
+  }
+
+  std::vector<long long> TJValue::get_numbers(bool strict) const
+  {
+    auto array_object = dynamic_cast<const TJValueArray*>(this);
+    if (nullptr != array_object)
+    {
+      return array_object->get_numbers();
+    }
+
+    // not an array then so return what we have.
+    return { get_number(strict) };
+  }
+
+  const TJCHAR* TJValue::get_string(bool strict) const
+  {
+    auto string_object = dynamic_cast<const TJValueString*>(this);
+    if (nullptr != string_object)
+    {
+      return string_object->raw_value();
+    }
+    if (strict)
+    {
+      throw TJParseException("The value is not a string!");
+    }
+    const auto* boolean_object = dynamic_cast<const TJValueBoolean*>(this);
+    if (nullptr != boolean_object)
+    {
+      return boolean_object->is_true() ? TJCHARPREFIX("true") : TJCHARPREFIX("false");
+    }
+    auto null_object = dynamic_cast<const TJValueNull*>(this);
+    if (nullptr != null_object)
+    {
+      return TJCHARPREFIX("null");
+    }
+
+    if (is_array() || is_object())
+    {
+      throw TJParseException("Arrays and objects cannot be converteed to string!");
+    }
+    auto number = static_cast<const TJValueNumber*>(this);
+    return number->dump_string();
   }
 
   ///////////////////////////////////////
@@ -3879,6 +3926,12 @@ namespace TinyJSON
     }
     _value = nullptr;
   }
+
+  const TJCHAR* TJValueString::raw_value() const
+  {
+    return _value == nullptr ? TJCHARPREFIX("") : _value;
+  }
+
 
   ///////////////////////////////////////
   /// TJValue true
@@ -4140,31 +4193,7 @@ namespace TinyJSON
       }
       return {};
     }
-
-    if (value->is_number())
-    {
-      auto number = static_cast<const TJValueNumber*>(value);
-      return { number->get_float() };
-    }
-    if (value->is_array())
-    {
-      auto array = static_cast<const TJValueArray*>(value);
-      return array->get_floats(throw_if_not_found);
-    }
-    if (value->is_false())
-    {
-      return { 0.0 };
-    }
-    if (value->is_true())
-    {
-      return { 1.0 };
-    }
-
-    if (throw_if_not_found)
-    {
-      throw TJParseException("The value is not a number or an array of numbers!");
-    }
-    return {};
+    return value->get_floats();
   }
 
   std::vector<long long> TJValueObject::get_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
@@ -4178,31 +4207,21 @@ namespace TinyJSON
       }
       return {};
     }
+    return value->get_numbers();
+  }
 
-    if (value->is_number())
+  const TJCHAR* TJValueObject::get_string(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  {
+    auto value = try_get_value(key, case_sensitive);
+    if (nullptr == value)
     {
-      auto number = static_cast<const TJValueNumber*>(value);
-      return { number->get_number() };
+      if (throw_if_not_found)
+      {
+        throw TJParseException("The key was not found!");
+      }
+      return TJCHARPREFIX("");
     }
-    if (value->is_array())
-    {
-      auto array = static_cast<const TJValueArray*>(value);
-      return array->get_numbers(throw_if_not_found);
-    }
-    if (value->is_false())
-    {
-      return { 0 };
-    }
-    if (value->is_true())
-    {
-      return { 1 };
-    }
-
-    if (throw_if_not_found)
-    {
-      throw TJParseException("The value is not a number or an array of numbers!");
-    }
-    return {};
+    return value->get_string();
   }
 
   bool TJValueObject::get_boolean(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
@@ -4615,7 +4634,6 @@ namespace TinyJSON
     }
     return values;
   }
-
 
   void TJValueArray::add(const TJValue* value)
   {

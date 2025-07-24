@@ -198,6 +198,9 @@ class TJDictionary;
     bool get_boolean(bool strict = false) const;
     long double get_float(bool strict = false) const;
     long long get_number(bool strict = false) const;
+    const TJCHAR* get_string(bool strict = false) const;
+    std::vector<long double> get_floats(bool strict = false) const;
+    std::vector<long long> get_numbers(bool strict = false) const;
 
   protected:
     /// <summary>
@@ -361,6 +364,7 @@ class TJDictionary;
     bool get_boolean(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     long double get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     long long get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
+    const TJCHAR* get_string(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     std::vector<long double> get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     std::vector<long long> get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
 
@@ -368,6 +372,31 @@ class TJDictionary;
     void set_numbers(const TJCHAR* key, const std::vector<long long>& values);
     
 #if TJ_INCLUDE_STD_STRING == 1
+    inline bool get_boolean(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_boolean(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+    inline long double get_float(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_float(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+    inline long long get_number(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_number(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+    inline const TJCHAR* get_string(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_string(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+    inline std::vector<long double> get_floats(const std::string& key,bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_floats(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+    inline std::vector<long long> get_numbers(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_numbers(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+
     /// <summary>
     /// Try and get the value of this member if it exists.
     /// </summary>
@@ -567,6 +596,9 @@ class TJDictionary;
     virtual ~TJValueString();
 
     bool is_string() const override;
+
+    const TJCHAR* raw_value() const;
+
   protected:
     /// <summary>
     /// Clone an array into an identical array
