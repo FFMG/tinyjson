@@ -3672,7 +3672,7 @@ namespace TinyJSON
 
   bool TJValue::get_boolean(bool strict) const
   {
-    const auto* boolean_object = static_cast<const TJValueBoolean*>(this);
+    const auto* boolean_object = dynamic_cast<const TJValueBoolean*>(this);
     if (nullptr != boolean_object)
     {
       if (boolean_object->is_false())
@@ -3688,12 +3688,81 @@ namespace TinyJSON
     {
       throw TJParseException("The value is not a boolean!");
     }
+    auto null_object = dynamic_cast<const TJValueNull*>(this);
+    if (nullptr != null_object)
+    {
+      return false;
+    }
+    auto string_object = dynamic_cast<const TJValueString*>(this);
+    if (nullptr != string_object)
+    {
+      throw TJParseException("String cannot be converteed to boolean!");
+    }
     if (!is_number())
     {
       return false;
     }
     auto number = static_cast<const TJValueNumber*>(this);
     return number->get_number() != 0;
+  }
+
+  long double TJValue::get_float(bool strict) const
+  {
+    auto number_object = dynamic_cast<const TJValueNumber*>(this);
+    if (nullptr != number_object)
+    {
+      return number_object->get_float();
+    }
+    if (strict)
+    {
+      throw TJParseException("The value is not a number!");
+    }
+    auto null_object = dynamic_cast<const TJValueNull*>(this);
+    if (nullptr != null_object)
+    {
+      return 0.0;
+    }
+    auto string_object = dynamic_cast<const TJValueString*>(this);
+    if (nullptr != string_object)
+    {
+      throw TJParseException("String cannot be converteed to number!");
+    }
+    auto boolean_object = dynamic_cast<const TJValueBoolean*>(this);
+    if (nullptr != boolean_object)
+    {
+      return boolean_object->is_true() ? 1.0 : 0.0;
+    }
+    return 0.0;
+  }
+
+  long long TJValue::get_number(bool strict) const
+  {
+    auto number_object = dynamic_cast<const TJValueNumber*>(this);
+    if (nullptr != number_object)
+    {
+      return number_object->get_number();
+    }
+    if (strict)
+    {
+      throw TJParseException("The value is not a number!");
+    }
+    auto null_object = dynamic_cast<const TJValueNull*>(this);
+    if (nullptr != null_object)
+    {
+      return 0.0;
+    }
+    auto string_object = dynamic_cast<const TJValueString*>(this);
+    if (nullptr != string_object)
+    {
+      throw TJParseException("String cannot be converteed to number!");
+    }
+
+    auto boolean_object = dynamic_cast<const TJValueBoolean*>(this);
+    if (nullptr != boolean_object)
+    {
+      return boolean_object->is_true() ? 1 : 0;
+    }
+    return 0;
   }
 
   ///////////////////////////////////////
@@ -3931,6 +4000,24 @@ namespace TinyJSON
   }
 
   /// <summary>
+  /// Set the value to null.
+  /// </summary>
+  /// <param name="key"></param>
+  /// <returns></returns>
+  void TJValueObject::set_null(const TJCHAR* key)
+  {
+    if (nullptr == _members)
+    {
+      _members = new TJDICTIONARY();
+    }
+
+    auto member = new TJMember(key, nullptr);
+    TJValue* value_null = new TJValueNull();
+    member->move_value(value_null);
+    TJHelper::move_member_to_members(member, _members);
+  }
+
+  /// <summary>
   /// Set the value of a ... value
   /// </summary>
   /// <param name="key"></param>
@@ -4025,26 +4112,7 @@ namespace TinyJSON
       }
       return 0.0;
     }
-
-    if (value->is_false())
-    {
-      return 0.0;
-    }
-    if (value->is_true())
-    {
-      return 1.0;
-    }
-    if (!value->is_number())
-    {
-      if (throw_if_not_found)
-      {
-        throw TJParseException("The value is not a number!");
-      }
-      return 0.0;
-    }
-
-    auto number = static_cast<const TJValueNumber*>(value);
-    return number->get_float();
+    return value->get_float();
   }
 
   long long TJValueObject::get_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
@@ -4058,26 +4126,7 @@ namespace TinyJSON
       }
       return 0.0;
     }
-    if (value->is_false())
-    {
-      return 0.0;
-    }
-    if (value->is_true())
-    {
-      return 1.0;
-    }
-
-    if (!value->is_number())
-    {
-      if (throw_if_not_found)
-      {
-        throw TJParseException("The value is not a number!");
-      }
-      return 0.0;
-    }
-
-    auto number = static_cast<const TJValueNumber*>(value);
-    return number->get_number();
+    return value->get_number();
   }
 
   std::vector<long double> TJValueObject::get_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const

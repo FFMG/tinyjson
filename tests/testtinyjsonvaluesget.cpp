@@ -17,7 +17,9 @@ TEST(TestValueGet, GetBoolean)
       "a": true,
       "b": 123,
       "c": 0,
-      "d": 42.2
+      "d": 42.2,
+      "e": "This is a string",
+      "f": null 
     }
     )"
   );
@@ -29,11 +31,15 @@ TEST(TestValueGet, GetBoolean)
   auto valueb = jobject->try_get_value("b");
   auto valuec = jobject->try_get_value("c");
   auto valued = jobject->try_get_value("d");
+  auto valuee = jobject->try_get_value("e");
+  auto valuef = jobject->try_get_value("f");
 
   ASSERT_TRUE(valuea->get_boolean());
   ASSERT_TRUE(valueb->get_boolean());
   ASSERT_FALSE(valuec->get_boolean());
   ASSERT_TRUE(valued->get_boolean());
+  ASSERT_ANY_THROW(valuee->get_boolean());
+  ASSERT_FALSE(valuef->get_boolean());  //  null is false
 
   delete json;
 }
@@ -45,7 +51,9 @@ TEST(TestValueGet, GetStrictBoolean)
       "a": true,
       "b": 123,
       "c": 0,
-      "d": 42.2
+      "d": 42.2,
+      "e": "This is a string",
+      "f": null 
     }
     )"
   );
@@ -57,11 +65,151 @@ TEST(TestValueGet, GetStrictBoolean)
   auto valueb = jobject->try_get_value("b");
   auto valuec = jobject->try_get_value("c");
   auto valued = jobject->try_get_value("d");
+  auto valuee = jobject->try_get_value("e");
+  auto valuef = jobject->try_get_value("f");
 
   ASSERT_TRUE(valuea->get_boolean(true));
   ASSERT_ANY_THROW(valueb->get_boolean(true));
   ASSERT_ANY_THROW(valuec->get_boolean(true));
   ASSERT_ANY_THROW(valued->get_boolean(true));
+  ASSERT_ANY_THROW(valuee->get_boolean(true));
+  ASSERT_ANY_THROW(valuef->get_boolean(true));
+
+  delete json;
+}
+
+TEST(TestValueGet, GetNumber)
+{
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "a": true,
+      "b": 123,
+      "c": 0,
+      "d": 42.2,
+      "e": "This is a string",
+      "f": null 
+    }
+    )"
+  );
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = jobject->try_get_value("a");
+  auto valueb = jobject->try_get_value("b");
+  auto valuec = jobject->try_get_value("c");
+  auto valued = jobject->try_get_value("d");
+  auto valuee = jobject->try_get_value("e");
+  auto valuef = jobject->try_get_value("f");
+
+  ASSERT_EQ(1, valuea->get_number());
+  ASSERT_EQ(123, valueb->get_number());
+  ASSERT_EQ(0, valuec->get_number());
+  ASSERT_EQ(42, valued->get_number());
+  ASSERT_ANY_THROW(valuee->get_number());
+  ASSERT_EQ(0, valuef->get_number());  //  null is zero
+
+  delete json;
+}
+
+TEST(TestValueGet, GetStrictNumber)
+{
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "a": true,
+      "b": 123,
+      "c": 0,
+      "d": 42.2,
+      "e": "This is a string",
+      "f": null 
+    }
+    )"
+  );
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = jobject->try_get_value("a");
+  auto valueb = jobject->try_get_value("b");
+  auto valuec = jobject->try_get_value("c");
+  auto valued = jobject->try_get_value("d");
+  auto valuee = jobject->try_get_value("e");
+  auto valuef = jobject->try_get_value("f");
+
+  ASSERT_ANY_THROW(valuea->get_number(true));
+  ASSERT_EQ(123, valueb->get_number(true));
+  ASSERT_EQ(0, valuec->get_number(true));
+  ASSERT_EQ(42, valued->get_number(true));
+  ASSERT_ANY_THROW(valuee->get_number(true));
+  ASSERT_ANY_THROW(valuef->get_number(true));
+
+  delete json;
+}
+
+TEST(TestValueGet, GetFloat)
+{
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "a": true,
+      "b": 123,
+      "c": 0,
+      "d": 42.2,
+      "e": "This is a string",
+      "f": null 
+    }
+    )"
+  );
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = jobject->try_get_value("a");
+  auto valueb = jobject->try_get_value("b");
+  auto valuec = jobject->try_get_value("c");
+  auto valued = jobject->try_get_value("d");
+  auto valuee = jobject->try_get_value("e");
+  auto valuef = jobject->try_get_value("f");
+
+  ASSERT_DOUBLE_EQ(1.0, valuea->get_float());
+  ASSERT_DOUBLE_EQ(123.0, valueb->get_float());
+  ASSERT_DOUBLE_EQ(0.0, valuec->get_float());
+  ASSERT_DOUBLE_EQ(42.2, valued->get_float());
+  ASSERT_ANY_THROW(valuee->get_float());
+  ASSERT_DOUBLE_EQ(0.0, valuef->get_float());  //  null is zero
+
+  delete json;
+}
+
+TEST(TestValueGet, GetStrictFloat)
+{
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "a": true,
+      "b": 123,
+      "c": 0,
+      "d": 42.2,
+      "e": "This is a string",
+      "f": null 
+    }
+    )"
+  );
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto valuea = jobject->try_get_value("a");
+  auto valueb = jobject->try_get_value("b");
+  auto valuec = jobject->try_get_value("c");
+  auto valued = jobject->try_get_value("d");
+  auto valuee = jobject->try_get_value("e");
+  auto valuef = jobject->try_get_value("f");
+
+  ASSERT_ANY_THROW(valuea->get_float(true));
+  ASSERT_DOUBLE_EQ(123.0, valueb->get_float(true));
+  ASSERT_DOUBLE_EQ(0.0, valuec->get_float(true));
+  ASSERT_DOUBLE_EQ(42.2, valued->get_float(true));
+  ASSERT_ANY_THROW(valuee->get_float(true));
+  ASSERT_ANY_THROW(valuef->get_float(true));
 
   delete json;
 }

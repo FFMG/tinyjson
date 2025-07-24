@@ -648,9 +648,8 @@ TEST(TestObjects, GetFloatFromObjectThatIsAStringNoThrow)
   auto object = new TinyJSON::TJValueObject();
   object->set_string("a", "not a number");
 
-  ASSERT_NO_THROW({
+  ASSERT_ANY_THROW({
     auto f = object->get_float("a", false, false);
-    ASSERT_DOUBLE_EQ(0.0, f);
     });
 
   delete object;
@@ -745,9 +744,8 @@ TEST(TestObjects, GetNumberFromObjectThatIsAStringNoThrow)
   auto object = new TinyJSON::TJValueObject();
   object->set_string("a", "not a number");
 
-  ASSERT_NO_THROW({
+  ASSERT_ANY_THROW({
     auto n = object->get_number("a", false, false);
-    ASSERT_EQ(0, n);
     });
 
   delete object;
@@ -847,6 +845,18 @@ TEST(TestObjects, GetBooleanFromObjectThatIsAStringNoThrow)
 {
   auto object = new TinyJSON::TJValueObject();
   object->set_string("a", "not a number");
+
+  ASSERT_ANY_THROW({
+    auto b = object->get_boolean("a", false, false);  //  strings are not supported.
+    });
+
+  delete object;
+}
+
+TEST(TestObjects, GetBooleanFromObjectNullIsFalse)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_null("a");
 
   ASSERT_NO_THROW({
     auto b = object->get_boolean("a", false, false);

@@ -195,6 +195,8 @@ class TJDictionary;
     TJValue* clone() const;
 
     bool get_boolean(bool strict = false) const;
+    long double get_float(bool strict = false) const;
+    long long get_number(bool strict = false) const;
 
   protected:
     /// <summary>
@@ -431,6 +433,13 @@ class TJDictionary;
     /// <param name="value"></param>
     /// <returns></returns>
     void set_string(const TJCHAR* key, const char* value);
+
+    /// <summary>
+    /// Set the value to null.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    void set_null(const TJCHAR* key);
 
 #if TJ_INCLUDE_STD_STRING == 1
     /// <summary>
