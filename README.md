@@ -175,7 +175,7 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
 You can simply call the `TinyJSON::TJ::is_valid(...)` method
 
 ```cpp
-    if(TinyJSON::TJ::parse("[123,456]"))
+    if(TinyJSON::TJ::is_valid("[123,456]"))
     {
       // do this
     }
@@ -284,7 +284,7 @@ You can load the json either by parsing or creating it manually.
   object->set_string("b", "World");
   object->set_string("c", "Bye");
   object->set_boolean("d", true);
-  object->set_boolean("e", 42.15);
+  object->set_float("e", 42.15);
 
   auto dump = object->dump();
 
@@ -377,6 +377,17 @@ Each objects are read into `TJValue*` classes of type `TJValueObject`.
   delete json;
 ```
 
+or
+
+```cpp
+  auto json = TinyJSON::TJ::parse( "{ \"Hello\" : \"World\" }" );
+  auto value = json->get_string("Hello"); //  "World"
+  auto no_value = json->get_string("Life", true, false); //  null
+
+  delete json;
+```
+
+
 #### Adding values to an object
 
 You can dynamically create a new object and then add a named values to it.
@@ -449,6 +460,15 @@ Assuming the array below with multiple items, you can query the type of each `TJ
 
 ### Get values
 
+You can get a value from any TJValue*, (as long as the value can actually be converted)
+
+- get_number()
+- get_float()
+- get_string()
+- get_boolean()
+- get_numbers()
+- get_floats()
+
 ```cpp
 auto json = TinyJSON::TJ::parse(R"(
   {
@@ -500,7 +520,6 @@ if( valueb->get_boolean(true))  //  THROW! "b" is not a boolean
 }
 
 ```
-
 
 This can be helpful is you are looking for a certain data type.
 
