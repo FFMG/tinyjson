@@ -3670,6 +3670,32 @@ namespace TinyJSON
     return _last_dump;
   }
 
+  bool TJValue::get_boolean(bool strict) const
+  {
+    const auto* boolean_object = static_cast<const TJValueBoolean*>(this);
+    if (nullptr != boolean_object)
+    {
+      if (boolean_object->is_false())
+      {
+        return false;
+      }
+      if (boolean_object->is_true())
+      {
+        return true;
+      }
+    }
+    if (strict)
+    {
+      throw TJParseException("The value is not a boolean!");
+    }
+    if (!is_number())
+    {
+      return false;
+    }
+    auto number = static_cast<const TJValueNumber*>(this);
+    return number->get_number() != 0;
+  }
+
   ///////////////////////////////////////
   /// TJValue string
   TJValueString::TJValueString(const TJCHAR* value) :
@@ -4141,25 +4167,7 @@ namespace TinyJSON
       }
       return false;
     }
-    if (value->is_false())
-    {
-      return false;
-    }
-    if (value->is_true())
-    {
-      return true;
-    }
-    if (!value->is_number())
-    {
-      if (throw_if_not_found)
-      {
-        throw TJParseException("The value is not a number/boolean!");
-      }
-      return 0.0;
-    }
-
-    auto number = static_cast<const TJValueNumber*>(value);
-    return number->get_number() == 1;
+    return value->get_boolean();
   }
 
   void TJValueObject::set_floats(const TJCHAR* key, const std::vector<long double>& values)

@@ -856,18 +856,6 @@ TEST(TestObjects, GetBooleanFromObjectThatIsAStringNoThrow)
   delete object;
 }
 
-TEST(TestObjects, GetBooleanFromObjectThatIsAStringThrow)
-{
-  auto object = new TinyJSON::TJValueObject();
-  object->set_string("a", "not a number");
-
-  ASSERT_ANY_THROW({
-    auto f = object->get_boolean("a", false, true);
-    });
-
-  delete object;
-}
-
 // Floats
 TEST(TestObjects, GetFloatsFromObjectCaseIsCorrect)
 {

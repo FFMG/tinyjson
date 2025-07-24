@@ -194,6 +194,8 @@ class TJDictionary;
     /// <returns></returns>
     TJValue* clone() const;
 
+    bool get_boolean(bool strict = false) const;
+
   protected:
     /// <summary>
     /// Allow each derived class to create a copy of itself.
