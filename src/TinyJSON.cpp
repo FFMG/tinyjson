@@ -1767,13 +1767,13 @@ namespace TinyJSON
     /// </summary>
     /// <param name="number"></param>
     /// <returns></returns>
-    static unsigned long long get_number_of_digits(const unsigned long long& number)
+    static unsigned int get_number_of_digits(const unsigned long long& number)
     {
       if (number == 0)
       {
         return 0ull;
       }
-      unsigned long long digit = 0;
+      unsigned int digit = 0;
       for (unsigned long long i = 0; i <= number; ++digit)
       {
         //  multiply by 10
@@ -1878,8 +1878,8 @@ namespace TinyJSON
       }
 
       // what we want to add
-      auto length = strlen(string_to_add);
-      int total_length = length + sizeof(TJCHAR);//  we need one extra for the null char
+      auto length = static_cast<int>(strlen(string_to_add));
+      int total_length = static_cast<int>(length + sizeof(TJCHAR));//  we need one extra for the null char
       if (buffer_pos + total_length >= buffer_max_length)
       {
         buffer_max_length = resize_string(buffer, buffer_max_length, buffer_pos+total_length);
@@ -2244,25 +2244,25 @@ namespace TinyJSON
       return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, fraction_exponent, is_negative);
     }
 
-    static unsigned long long shift_number_left(const unsigned long long source, const unsigned long long exponent)
+    static unsigned long long shift_number_left(const unsigned long long source, const unsigned int exponent)
     {
       if (exponent == 0)
       {
         return source;
       }
-      const auto muliplier = fast_power_of_10(static_cast<unsigned int>(exponent));
+      const auto muliplier = fast_power_of_10(exponent);
       return source * muliplier;
     }
 
-    static unsigned long long shift_number_right(const unsigned long long source, const unsigned long long exponent, unsigned long long& shifted_source)
+    static unsigned long long shift_number_right(const unsigned long long source, const unsigned int exponent, unsigned long long& shifted_source)
     {
-      const auto divider = fast_power_of_10(static_cast<unsigned int>(exponent));
+      const auto divider = fast_power_of_10(exponent);
       auto new_source = static_cast<unsigned long long>(source / divider);
       shifted_source = source - new_source * divider;
       return new_source;
     }
 
-    static unsigned long long shift_fraction_left(const unsigned long long& fraction, const unsigned long long& fraction_exponent, const unsigned long long& exponent, unsigned long long& shifted_fraction, unsigned long long& shitfed_unsigned_fraction_exponent)
+    static unsigned long long shift_fraction_left(const unsigned long long& fraction, const unsigned int fraction_exponent, const unsigned int exponent, unsigned long long& shifted_fraction, unsigned int& shitfed_unsigned_fraction_exponent)
     {
       if (exponent > fraction_exponent)
       {
@@ -2292,7 +2292,7 @@ namespace TinyJSON
 
       if (fraction_length == fraction_exponent)
       {
-        const auto& divider = fast_power_of_10(static_cast<unsigned int>(shitfed_unsigned_fraction_exponent));
+        const auto& divider = fast_power_of_10(shitfed_unsigned_fraction_exponent);
         const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
         shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
         return shifted_unsigned_fraction;
@@ -2320,18 +2320,18 @@ namespace TinyJSON
         return 0ll;
       }
 
-      auto divider = fast_power_of_10(static_cast<unsigned int>(shitfed_unsigned_fraction_exponent));
+      auto divider = fast_power_of_10(shitfed_unsigned_fraction_exponent);
       const auto& shifted_unsigned_fraction = static_cast<unsigned long long>(fraction / divider);
       shifted_fraction = fraction - static_cast<unsigned long long>(shifted_unsigned_fraction * divider);
       return shifted_unsigned_fraction;
     }
 
-    static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
     {
       if (exponent >= fraction_exponent)
       {
         unsigned long long shifted_unsigned_fraction = 0;
-        unsigned long long shitfed_unsigned_fraction_exponent = 0;
+        unsigned int shitfed_unsigned_fraction_exponent = 0;
         const auto& fraction_length = get_number_of_digits(unsigned_fraction);
         const auto& leading_zeros = fraction_exponent - fraction_length;
         // we just want the first number so we are passing a 1x exponent only
@@ -2349,7 +2349,7 @@ namespace TinyJSON
           return new TJValueNumberFloat(
             shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent),
             shifted_unsigned_fraction,
-            static_cast<unsigned int>(shifted_fraction_exponent),
+            shifted_fraction_exponent,
             is_negative);
         }
 
@@ -2365,14 +2365,14 @@ namespace TinyJSON
       {
         // the number cannot be an int as it would mean that both
         // the whole number and the fraction are zer0
-        return new TJValueNumberFloat(0ull, unsigned_fraction, static_cast<unsigned int>(shifted_fraction_exponent), is_negative);
+        return new TJValueNumberFloat(0ull, unsigned_fraction, shifted_fraction_exponent, is_negative);
       }
 
       // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
       return nullptr;
     }
 
-    static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
     {
       const auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
 
@@ -2399,13 +2399,13 @@ namespace TinyJSON
         auto shifted_unsigned_whole_number = shift_number_left(unsigned_whole_number, exponent);
 
         // we then want to shift the fraction by the number of exponent and add that to the list.
-        unsigned long long shifted_unsigned_fraction_exponent = 0;
+        unsigned int shifted_unsigned_fraction_exponent = 0;
         unsigned long long shifted_unsigned_fraction = 0;
         shifted_unsigned_whole_number += shift_fraction_left(unsigned_fraction, fraction_exponent, exponent, shifted_unsigned_fraction, shifted_unsigned_fraction_exponent);
 
         // as we sifted the fraction by the number of exponent
         // then the size of the fraction is smaller by the exponent.
-        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, static_cast<unsigned int>(shifted_unsigned_fraction_exponent), is_negative);
+        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_unsigned_fraction_exponent, is_negative);
       }
 
       // case 2:
@@ -2426,26 +2426,26 @@ namespace TinyJSON
       // case 2b:
       //   The whole number is more than zero _and_ the fraction is also non zero.
       //   The total is, (currently), greater than TJ_MAX_NUMBER_OF_DIGGITS
-      const unsigned long long shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
+      const unsigned int shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
       unsigned long long shifted_unsigned_fraction = 0;
       const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, shifted_unsigned_whole_number_exponent, shifted_unsigned_fraction);
 
       // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
       auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(static_cast<unsigned int>(shifted_fraction_exponent))) + unsigned_fraction;
+      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(shifted_fraction_exponent)) + unsigned_fraction;
 
       // and the exponent also shitt byt the number we moved.
-      const unsigned long long shifted_exponent = exponent + shifted_unsigned_whole_number_exponent;
+      const unsigned int shifted_exponent = exponent + shifted_unsigned_whole_number_exponent;
 
       return new TJValueNumberExponent(
         shifted_unsigned_whole_number,
         shifted_unsigned_fraction,
-        static_cast<unsigned int>(shifted_unsigned_whole_number_exponent + fraction_exponent),
-        static_cast<int>(shifted_exponent),
+        (shifted_unsigned_whole_number_exponent + fraction_exponent),
+        shifted_exponent,
         is_negative);
     }
 
-    static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
     {
       // if the number is something like 123.456 with e=2
       // then the number will become 12345.6 e=0
@@ -2478,7 +2478,7 @@ namespace TinyJSON
         }
 
         const auto& shifted_fraction_exponent = fraction_exponent + exponent;
-        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, static_cast<unsigned int>(shifted_fraction_exponent), is_negative);
+        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_fraction_exponent, is_negative);
       }
 
       // case 2:
@@ -2499,34 +2499,34 @@ namespace TinyJSON
       // case 2b:
       //   The whole number is more than zero _and_ the fraction is also non zero.
       //   The total is, (currently), greater than TJ_MAX_NUMBER_OF_DIGGITS
-      const unsigned long long shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
+      const unsigned int shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
       unsigned long long shifted_unsigned_fraction = 0;
       const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, shifted_unsigned_whole_number_exponent, shifted_unsigned_fraction);
 
       // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
       auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(static_cast<unsigned int>(shifted_fraction_exponent))) + unsigned_fraction;
+      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(shifted_fraction_exponent)) + unsigned_fraction;
 
       // and the exponent also shitt by the number we moved.
       // as it is a negative exponent we need to move to the left.
-      const unsigned long long shifted_exponent = exponent - shifted_unsigned_whole_number_exponent;
+      const unsigned int shifted_exponent = exponent - shifted_unsigned_whole_number_exponent;
 
       return new TJValueNumberExponent(
         shifted_unsigned_whole_number,
         shifted_unsigned_fraction,
-        static_cast<unsigned int>(shifted_unsigned_whole_number_exponent + fraction_exponent),
-        -1 * static_cast<int>(shifted_exponent),
+        (shifted_unsigned_whole_number_exponent + fraction_exponent),
+        -1 * shifted_exponent,
         is_negative);
     }
 
-    static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned long long& exponent)
+    static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
     {
       //
       // remember that this is a negative exponent ...
       //
 
       // if we have a fraction and no whole number then we can move the number to the right
-      unsigned long long shifted_unsigned_fraction_exponent = 0;
+      unsigned int shifted_unsigned_fraction_exponent = 0;
       unsigned long long shifted_unsigned_fraction = 0;
       const auto& fraction_length = get_number_of_digits(unsigned_fraction);
       const auto& leading_zeros = fraction_exponent - fraction_length;
@@ -2545,7 +2545,7 @@ namespace TinyJSON
         return new TJValueNumberFloat(
           shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent),
           shifted_unsigned_fraction,
-          static_cast<unsigned int>(shifted_unsigned_fraction_exponent),
+          shifted_unsigned_fraction_exponent,
           is_negative);
       }
 
@@ -2553,12 +2553,12 @@ namespace TinyJSON
       return new TJValueNumberExponent(
         shifted_unsigned_whole_number,
         shifted_unsigned_fraction,
-        static_cast<unsigned int>(shifted_unsigned_fraction_exponent),
-        -1 * static_cast<int>(actual_shifted_fraction_exponent),
+        shifted_unsigned_fraction_exponent,
+        -1 * actual_shifted_fraction_exponent,
         is_negative);
     }
 
-    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const long long& exponent)
+    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const int exponent)
     {
       // no exponent number is int or float
       if (exponent == 0)
@@ -2629,7 +2629,7 @@ namespace TinyJSON
         return nullptr;
       }
       // Calculate the length of the text inside the quotes
-      const auto& length = end - start - spaces;
+      const auto& length = static_cast<unsigned int>(end - start - spaces);
       // Allocate memory for the result string
       TJCHAR* result = new TJCHAR[length + 1];
       TJHelper::copy_string(start, result, length);
@@ -2803,7 +2803,7 @@ namespace TinyJSON
       }
 
       // try read the exponent if there is one.
-      long long exponent = 0;
+      int exponent = 0;
       if (*p == 'e' || *p == 'E')
       {
         p++;
@@ -2827,7 +2827,7 @@ namespace TinyJSON
           return nullptr;
         }
 
-        const auto& unsigned_exponent = fast_string_to_long_long(possible_exponent);
+        const auto& unsigned_exponent = static_cast<unsigned int>(fast_string_to_long_long(possible_exponent));
         delete[] possible_exponent;
 
         // as per the spec it is allowed to have 1e00
@@ -3742,7 +3742,7 @@ namespace TinyJSON
     auto null_object = dynamic_cast<const TJValueNull*>(this);
     if (nullptr != null_object)
     {
-      return 0.0;
+      return 0;
     }
     auto string_object = dynamic_cast<const TJValueString*>(this);
     if (nullptr != string_object)
@@ -4177,7 +4177,7 @@ namespace TinyJSON
       {
         throw TJParseException("The key was not found!");
       }
-      return 0.0;
+      return 0;
     }
     return value->get_number();
   }
