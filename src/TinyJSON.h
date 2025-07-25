@@ -704,7 +704,7 @@ class TJDictionary;
   {
   public:
     TJValueNumberFloat(long double number);
-    TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, bool is_negative);
+    TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, bool is_negative);
     virtual ~TJValueNumberFloat();
 
     long double get_number() const;
@@ -730,7 +730,7 @@ class TJDictionary;
   class TJValueNumberExponent : public TJValueNumber
   {
   public:
-    TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int& fraction_exponent, const int& exponent,bool is_negative);
+    TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, const int exponent,bool is_negative);
     virtual ~TJValueNumberExponent();
 
     long double get_number() const;
