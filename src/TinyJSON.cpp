@@ -4635,13 +4635,12 @@ namespace TinyJSON
     return values;
   }
 
-  void TJValueArray::add(const TJValue* value)
+  void TJValueArray::add_move(TJValue* value)
   {
     if (nullptr == value)
     {
       auto* nullObject = new TJValueNull();
-      add(nullObject);
-      delete nullObject;
+      add_move(nullObject);
       return;
     }
 
@@ -4650,10 +4649,21 @@ namespace TinyJSON
       _values = new TJLIST();
     }
 #if TJ_INCLUDE_STDVECTOR == 1
-    _values->push_back(value->clone());
+    _values->push_back(value);
 #else
-    _values->add(value->clone());
+    _values->add(value);
 #endif
+  }
+
+  void TJValueArray::add(const TJValue* value)
+  {
+    if (nullptr == value)
+    {
+      auto* nullObject = new TJValueNull();
+      add_move(nullObject);
+      return;
+    }
+    add_move(value->clone());
   }
 
   void TJValueArray::add_raw_numbers(const std::vector<long long>& values)
@@ -4675,29 +4685,25 @@ namespace TinyJSON
   void TJValueArray::add_raw_number(long long value)
   {
     auto* objectNumber = new TJValueNumberInt(value);
-    add(objectNumber);
-    delete objectNumber;
+    add_move(objectNumber);
   }
   
   void TJValueArray::add_raw_float(long double value)
   {
     auto* tjNumber = TJHelper::try_create_number_from_float(value);
-    add(tjNumber);
-    delete tjNumber;
+    add_move(tjNumber);
   }
   
   void TJValueArray::add_boolean(bool value)
   {
     auto* objectBoolean = new TJValueBoolean(value);
-    add(objectBoolean);
-    delete objectBoolean;
+    add_move(objectBoolean);
   }
 
   void TJValueArray::add_string(const char* value)
   {
     auto* objectString = new TJValueString(value);
-    add(objectString);
-    delete objectString;
+    add_move(objectString);
   }
 
   ///////////////////////////////////////

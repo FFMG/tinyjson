@@ -803,6 +803,8 @@ class TJDictionary;
     std::vector<long double> get_raw_floats(bool throw_if_not_numbers) const;
     std::vector<long long> get_raw_numbers(bool throw_if_not_numbers) const;
 
+    void add_move(TJValue* value);
+
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>

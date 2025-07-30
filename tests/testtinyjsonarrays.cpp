@@ -6,7 +6,7 @@
 #include "../src/TinyJSON.h"
 #include <vector>
 
-TEST(TestArrays, MakeSureThatEmptyStringIsKinkOfValueArray) {
+TEST(TJValueArray, MakeSureThatEmptyStringIsKinkOfValueArray) {
   auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
   ASSERT_NE(nullptr, dynamic_cast<TinyJSON::TJValue*>(json));
@@ -16,29 +16,29 @@ TEST(TestArrays, MakeSureThatEmptyStringIsKinkOfValueArray) {
   delete json;
 }
 
-TEST(TestArrays, ArrayOpensButNeverCloses) {
+TEST(TJValueArray, ArrayOpensButNeverCloses) {
   auto json = TinyJSON::TJ::parse("[");
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, ArrayOpensAndHasValuesButNeverCloses) {
+TEST(TJValueArray, ArrayOpensAndHasValuesButNeverCloses) {
   auto json = TinyJSON::TJ::parse(R"([
     "a", "b"
     )");
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, ArrayHasTwoColons) {
+TEST(TJValueArray, ArrayHasTwoColons) {
   auto json = TinyJSON::TJ::parse("[ 1,2,3,,4,5]");
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, ArrayHasTwoColonsAtTheEnd) {
+TEST(TJValueArray, ArrayHasTwoColonsAtTheEnd) {
   auto json = TinyJSON::TJ::parse("[ 1,2,3,,]");
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, EmptyArrayInObject) {
+TEST(TJValueArray, EmptyArrayInObject) {
   auto json = TinyJSON::TJ::parse(R"(
 {
   "Hello" : []
@@ -56,7 +56,7 @@ TEST(TestArrays, EmptyArrayInObject) {
   delete json;
 }
 
-TEST(TestArrays, ArrayInObjectIsAfterMissingColon) {
+TEST(TJValueArray, ArrayInObjectIsAfterMissingColon) {
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a" [
@@ -68,7 +68,7 @@ TEST(TestArrays, ArrayInObjectIsAfterMissingColon) {
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, EmptyArrayOfNumbersHasNoItems) {
+TEST(TJValueArray, EmptyArrayOfNumbersHasNoItems) {
   auto json = TinyJSON::TJ::parse(R"(
 [
 ]
@@ -80,7 +80,7 @@ TEST(TestArrays, EmptyArrayOfNumbersHasNoItems) {
   delete json;
 }
 
-TEST(TestArrays, ArrayOfNumbersHasCorrectNumberOfItems) {
+TEST(TJValueArray, ArrayOfNumbersHasCorrectNumberOfItems) {
   auto json = TinyJSON::TJ::parse(R"(
 [
   12, 13, 14
@@ -93,7 +93,7 @@ TEST(TestArrays, ArrayOfNumbersHasCorrectNumberOfItems) {
   delete json;
 }
 
-TEST(TestArrays, EmptyArrayInSideArrayHasNoItemsInIt) {
+TEST(TJValueArray, EmptyArrayInSideArrayHasNoItemsInIt) {
   auto json = TinyJSON::TJ::parse(R"(
     [
       [
@@ -116,7 +116,7 @@ TEST(TestArrays, EmptyArrayInSideArrayHasNoItemsInIt) {
   delete json;
 }
 
-TEST(TestArrays, CheckThatValueIsArray) {
+TEST(TJValueArray, CheckThatValueIsArray) {
   auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
 
@@ -130,7 +130,7 @@ TEST(TestArrays, CheckThatValueIsArray) {
   delete json;
 }
 
-TEST(TestArrays, TryingToGetAnItemThatDoesNotExitReturnsNull) {
+TEST(TJValueArray, TryingToGetAnItemThatDoesNotExitReturnsNull) {
   auto json = TinyJSON::TJ::parse(R"(
 [
   12, 13, 14
@@ -146,7 +146,7 @@ TEST(TestArrays, TryingToGetAnItemThatDoesNotExitReturnsNull) {
   delete json;
 }
 
-TEST(TestArrays, TryingToGetANegativeItemReturnsNull) {
+TEST(TJValueArray, TryingToGetANegativeItemReturnsNull) {
   auto json = TinyJSON::TJ::parse(R"(
 [
   12, 13, 14
@@ -163,7 +163,7 @@ TEST(TestArrays, TryingToGetANegativeItemReturnsNull) {
   delete json;
 }
 
-TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaNumbers) {
+TEST(TJValueArray, ItemsInArrayMustBeSeparatedByCommaNumbers) {
   auto json = TinyJSON::TJ::parse(R"(
 [
   12
@@ -174,7 +174,7 @@ TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaNumbers) {
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
+TEST(TJValueArray, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
   auto json = TinyJSON::TJ::parse(R"(
 [
   "A"
@@ -185,7 +185,7 @@ TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithStrings) {
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithNumbersAndStrings) {
+TEST(TJValueArray, ItemsInArrayMustBeSeparatedByCommaWithNumbersAndStrings) {
   auto json = TinyJSON::TJ::parse(R"(
 [
   12
@@ -196,7 +196,7 @@ TEST(TestArrays, ItemsInArrayMustBeSeparatedByCommaWithNumbersAndStrings) {
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, ArrayHasACommaButThenTheArrayEnds) {
+TEST(TJValueArray, ArrayHasACommaButThenTheArrayEnds) {
   auto json = TinyJSON::TJ::parse(R"(
 [
   12,
@@ -207,7 +207,7 @@ TEST(TestArrays, ArrayHasACommaButThenTheArrayEnds) {
   ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestArrays, CreateWithNumbersAndStrings)
+TEST(TJValueArray, CreateWithNumbersAndStrings)
 {
   auto json = new TinyJSON::TJValueArray();
   json->add_number(42);
@@ -224,7 +224,7 @@ TEST(TestArrays, CreateWithNumbersAndStrings)
   delete json;
 }
 
-TEST(TestArrays, CreateWithNegativeNumbers) 
+TEST(TJValueArray, CreateWithNegativeNumbers) 
 {
   auto json = new TinyJSON::TJValueArray();
   json->add_number(42);
@@ -241,7 +241,7 @@ TEST(TestArrays, CreateWithNegativeNumbers)
   delete json;
 }
 
-TEST(TestArrays, CreateWithBoolean)
+TEST(TJValueArray, CreateWithBoolean)
 {
   auto json = new TinyJSON::TJValueArray();
   json->add_boolean(true);
@@ -258,7 +258,7 @@ TEST(TestArrays, CreateWithBoolean)
   delete json;
 }
 
-TEST(TestArrays, CreateWithFloats)
+TEST(TJValueArray, CreateWithFloats)
 {
   auto json = new TinyJSON::TJValueArray();
   json->add_float(42.5);
@@ -275,7 +275,7 @@ TEST(TestArrays, CreateWithFloats)
   delete json;
 }
 
-TEST(TestArrays, CreateWithFloatsAndNegativeNumbers)
+TEST(TJValueArray, CreateWithFloatsAndNegativeNumbers)
 {
   auto json = new TinyJSON::TJValueArray();
   json->add_float(42.5);
@@ -295,7 +295,7 @@ TEST(TestArrays, CreateWithFloatsAndNegativeNumbers)
   delete json;
 }
 
-TEST(TestArrays, AddVectorOfFloats)
+TEST(TJValueArray, AddVectorOfFloats)
 {
   std::vector<float> values;
   values.push_back(42.5);
@@ -316,7 +316,7 @@ TEST(TestArrays, AddVectorOfFloats)
   delete json;
 }
 
-TEST(TestArrays, AddVectorOfDoubles)
+TEST(TJValueArray, AddVectorOfDoubles)
 {
   std::vector<double> values;
   values.push_back(42.5);
@@ -339,7 +339,7 @@ TEST(TestArrays, AddVectorOfDoubles)
   delete json;
 }
 
-TEST(TestArrays, AddVectorOfLongDoubles)
+TEST(TJValueArray, AddVectorOfLongDoubles)
 {
   std::vector<long double> values;
   values.push_back(42.5);
@@ -362,7 +362,7 @@ TEST(TestArrays, AddVectorOfLongDoubles)
   delete json;
 }
 
-TEST(TestArrays, AddVectorOfInt)
+TEST(TJValueArray, AddVectorOfInt)
 {
   std::vector<int> values;
   values.push_back(42);
@@ -382,7 +382,7 @@ TEST(TestArrays, AddVectorOfInt)
   delete json;
 }
 
-TEST(TestArrays, AddVectorOfLong)
+TEST(TJValueArray, AddVectorOfLong)
 {
   std::vector<long> values;
   values.push_back(42);
@@ -402,7 +402,7 @@ TEST(TestArrays, AddVectorOfLong)
   delete json;
 }
 
-TEST(TestArrays, AddVectorOfLongLong)
+TEST(TJValueArray, AddVectorOfLongLong)
 {
   std::vector<long long> values;
   values.push_back(42);
@@ -419,5 +419,24 @@ TEST(TestArrays, AddVectorOfLongLong)
 
   ASSERT_STREQ(R"([42,0,-42])", text);
 
+  delete json;
+}
+
+TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
+{
+  auto json = new TinyJSON::TJValueArray();
+  json->add_number(42);
+  json->add_number((long long)43);
+  json->add_number((unsigned)44);
+  json->add_number((long)45);
+  json->add_number((signed)46);
+  json->add_number((long)47);
+
+  const auto& text = json->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+
+  // the order should remain the same as the order of insertion
+  // but it could change, if this fails we need to change the way we verify the output
+  ASSERT_STREQ(R"([42,43,44,45,46,47])", text);
   delete json;
 }
