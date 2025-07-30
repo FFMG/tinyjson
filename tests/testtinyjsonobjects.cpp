@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
+#include "testshelper.h"
 
 TEST(TestObjects, MakeSureThatEmptyStringIsKinkOfValueObject) {
   auto json = TinyJSON::TJ::parse("{}");
@@ -1050,5 +1051,58 @@ TEST(TestObjects, GetStringFromObjectCaseSensitiveNoThrow)
     ASSERT_STRCASEEQ("", b);
     });
 
+  delete object;
+}
+
+TEST(TestObjects, GetFloatsAsVariousTypes)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_floats("a", { 123.4, 42.7 });
+
+  // double
+  auto fds = object->get_floats<double>("a");
+  ASSERT_TRUE(fds.size() == 2);
+
+  for (auto f : fds) {
+    ASSERT_TRUE(areDoublesEqual(f, 123.4) || areDoublesEqual(f, 42.7));
+  }
+  // float
+  auto ffs = object->get_floats<float>("a");
+  ASSERT_TRUE(ffs.size() == 2);
+
+  for (auto f : ffs) {
+    ASSERT_TRUE(areFloatsEqual(f, 123.4) || areFloatsEqual(f, 42.7));
+  }
+  delete object;
+}
+
+TEST(TestObjects, GetNumbersAsVariousTypes)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_numbers("a", { 123, 42 });
+
+  // int
+  auto fints = object->get_numbers<int>("a");
+  ASSERT_TRUE(fints.size() == 2);
+
+  for (auto f : fints) {
+    ASSERT_TRUE(f ==123 || f == 42);
+  }
+
+  // short
+  auto fs = object->get_numbers<short>("a");
+  ASSERT_TRUE(fs.size() == 2);
+
+  for (auto f : fs) {
+    ASSERT_TRUE(f == 123 || f == 42);
+  }
+
+  // long
+  auto fl = object->get_numbers<long>("a");
+  ASSERT_TRUE(fl.size() == 2);
+
+  for (auto f : fl) {
+    ASSERT_TRUE(f == 123 || f == 42);
+  }
   delete object;
 }

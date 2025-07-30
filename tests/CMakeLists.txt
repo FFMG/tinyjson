@@ -35,7 +35,7 @@ set( Sources
 add_executable(
   ${Project}
   ${Headers}
-  ${Sources})
+  ${Sources} "testshelper.h")
 target_link_libraries(${Project} PUBLIC gtest_main TinyJSON)
 
 # Finds all the Google tests associated with the executable

@@ -17,6 +17,7 @@
 #define TJ_INCLUDE_STDVECTOR 0
 #endif
 
+#include <algorithm>
 #include <exception>
 #include <type_traits>
 #include <vector>
@@ -58,6 +59,31 @@ static const char TJ_VERSION_STRING[] = "0.1.2";
 #  define TJCHAR char32_t
 #  define TJCHARPREFIX(x) U ## x
 #endif
+
+#define TJ_TEMPLATE_FLOAT                           \
+  typename std::enable_if<                          \
+    std::is_same<T, float>::value ||                \
+    std::is_same<T, double>::value ||               \
+    std::is_same<T, long double>::value,            \
+  T >::type
+
+#define TJ_TEMPLATE_NUMBER                          \
+  typename std::enable_if<                          \
+    std::is_same<T, signed>::value ||               \
+    std::is_same<T, unsigned>::value ||             \
+    std::is_same<T, short>::value ||                \
+    std::is_same<T, long>::value ||                 \
+    std::is_same<T, int>::value ||                  \
+    std::is_same<T, unsigned int>::value ||         \
+    std::is_same<T, signed int>::value ||           \
+    std::is_same<T, unsigned short int>::value ||   \
+    std::is_same<T, signed short int>::value ||     \
+    std::is_same<T, long int>::value ||             \
+    std::is_same<T, signed long int>::value ||      \
+    std::is_same<T, unsigned long int>::value ||    \
+    std::is_same<T, long long int>::value ||        \
+    std::is_same<T, unsigned long long int>::value, \
+  T >::type
 
 namespace TinyJSON
 {
@@ -198,10 +224,12 @@ class TJDictionary;
 
     bool get_boolean(bool strict = false) const;
     const TJCHAR* get_string(bool strict = false) const;
-    std::vector<long double> get_floats(bool strict = false) const;
-    std::vector<long long> get_numbers(bool strict = false) const;
-
+    
     // Non-template overload for ambiguous case - default to long long
+    inline std::vector<long long> get_numbers(bool strict = false) const
+    {
+      return get_raw_numbers(strict);
+    }
     inline long long get_number(bool strict = false) const
     {
       return get_raw_number(strict);
@@ -214,39 +242,55 @@ class TJDictionary;
     }
 
     template<typename T>
-    typename std::enable_if<
-      std::is_same<T, signed>::value ||
-      std::is_same<T, unsigned>::value ||
-      std::is_same<T, short>::value ||
-      std::is_same<T, long>::value ||
-      std::is_same<T, int>::value ||
-      std::is_same<T, unsigned int>::value ||
-      std::is_same<T, signed int>::value ||
-      std::is_same<T, unsigned short int>::value ||
-      std::is_same<T, signed short int>::value ||
-      std::is_same<T, long int>::value ||
-      std::is_same<T, signed long int>::value ||
-      std::is_same<T, unsigned long int>::value ||
-      std::is_same<T, long long int>::value ||
-      std::is_same<T, unsigned long long int>::value,
-      T >::type
-      get_number(bool strict = false) const
+    std::vector<TJ_TEMPLATE_NUMBER>
+    get_numbers(bool strict = false) const
+    {
+      auto llVector = get_raw_numbers(strict);
+      std::vector<T> tVector;
+      tVector.reserve(llVector.size());
+
+      // Transform and move the values
+      std::transform(std::make_move_iterator(llVector.begin()),
+                     std::make_move_iterator(llVector.end()),
+        std::back_inserter(tVector),
+        [](long long value) { return static_cast<T>(value); });
+      return tVector;
+    }
+
+    template<typename T>
+    TJ_TEMPLATE_FLOAT
+    get_floats(bool strict = false) const
+    {
+      auto ldVector = get_raw_floats(strict);
+      std::vector<T> tVector;
+      tVector.reserve(ldVector.size());
+
+      // Transform and move the values
+      std::transform(std::make_move_iterator(ldVector.begin()),
+        std::make_move_iterator(ldVector.end()),
+        std::back_inserter(tVector),
+        [](long double value) { return static_cast<T>(value); });
+      return tVector;
+    }
+
+    template<typename T>
+    TJ_TEMPLATE_NUMBER
+    get_number(bool strict = false) const
     {
       return static_cast<T>(get_raw_number(strict));
     }
 
     template<typename T>
-    typename std::enable_if<
-      std::is_same<T, float>::value ||
-      std::is_same<T, double>::value,
-      T >::type
-      get_float(bool strict = false) const
+    TJ_TEMPLATE_FLOAT
+    get_float(bool strict = false) const
     {
       return static_cast<T>(get_raw_float(strict));
     }
   protected:
     long long get_raw_number(bool strict) const;
     long double get_raw_float(bool strict) const;
+    std::vector<long long> get_raw_numbers(bool strict) const;
+    std::vector<long double> get_raw_floats(bool strict) const;
 
     /// <summary>
     /// Allow each derived class to create a copy of itself.
@@ -408,13 +452,15 @@ class TJDictionary;
 
     bool get_boolean(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     const TJCHAR* get_string(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
-    std::vector<long double> get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
-    std::vector<long long> get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
 
     // Non-template overload for ambiguous case - default to long long
     inline long long get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
       return get_raw_number(key, case_sensitive, throw_if_not_found);
+    }
+    inline std::vector<long long> get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_raw_numbers(key, case_sensitive, throw_if_not_found);
     }
 
     // Non-template overload for ambiguous case - default to long double
@@ -422,37 +468,53 @@ class TJDictionary;
     {
       return get_raw_float(key, case_sensitive, throw_if_not_found);
     }
+    inline std::vector<long double> get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_raw_floats(key, case_sensitive, throw_if_not_found);
+    }
 
     template<typename T>
-    typename std::enable_if<
-      std::is_same<T, signed>::value ||
-      std::is_same<T, unsigned>::value ||
-      std::is_same<T, short>::value ||
-      std::is_same<T, long>::value ||
-      std::is_same<T, int>::value ||
-      std::is_same<T, unsigned int>::value ||
-      std::is_same<T, signed int>::value ||
-      std::is_same<T, unsigned short int>::value ||
-      std::is_same<T, signed short int>::value ||
-      std::is_same<T, long int>::value ||
-      std::is_same<T, signed long int>::value ||
-      std::is_same<T, unsigned long int>::value ||
-      std::is_same<T, long long int>::value ||
-      std::is_same<T, unsigned long long int>::value,
-      T >::type
+    TJ_TEMPLATE_NUMBER
     get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
       return static_cast<T>(get_raw_number(key, case_sensitive, throw_if_not_found));
     }
+    template<typename T>
+    std::vector<TJ_TEMPLATE_NUMBER>
+    get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      auto llVector = get_raw_numbers(key, case_sensitive, throw_if_not_found);
+      std::vector<T> tVector;
+      tVector.reserve(llVector.size());
+
+      // Transform and move the values
+      std::transform(std::make_move_iterator(llVector.begin()),
+        std::make_move_iterator(llVector.end()),
+        std::back_inserter(tVector),
+        [](long long value) { return static_cast<T>(value); });
+      return tVector;
+    }
 
     template<typename T>
-    typename std::enable_if<
-      std::is_same<T, float>::value ||
-      std::is_same<T, double>::value,
-      T >::type
+    TJ_TEMPLATE_FLOAT
     get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
       return static_cast<T>(get_raw_float(key, case_sensitive, throw_if_not_found));
+    }
+    template<typename T>
+    std::vector<TJ_TEMPLATE_FLOAT>
+    get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      auto ldVector = get_raw_floats(key, case_sensitive, throw_if_not_found);
+      std::vector<T> tVector;
+      tVector.reserve(ldVector.size());
+
+      // Transform and move the values
+      std::transform(std::make_move_iterator(ldVector.begin()),
+        std::make_move_iterator(ldVector.end()),
+        std::back_inserter(tVector),
+        [](long double value) { return static_cast<T>(value); });
+      return tVector;
     }
 
     void set_floats(const TJCHAR* key, const std::vector<long double>& values);
@@ -477,11 +539,23 @@ class TJDictionary;
     }
     inline std::vector<long double> get_floats(const std::string& key,bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_floats(key.c_str(), case_sensitive, throw_if_not_found);
+      return get_raw_floats(key.c_str(), case_sensitive, throw_if_not_found);
     }
     inline std::vector<long long> get_numbers(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_numbers(key.c_str(), case_sensitive, throw_if_not_found);
+      return get_raw_numbers(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+    template<typename T>
+    std::vector<TJ_TEMPLATE_NUMBER>
+      get_numbers(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_numbers(key, case_sensitive, throw_if_not_found);
+    }
+    template<typename T>
+    std::vector<TJ_TEMPLATE_FLOAT>
+    get_floats(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_floats(key, case_sensitive, throw_if_not_found);
     }
 
     /// <summary>
@@ -590,6 +664,8 @@ class TJDictionary;
   protected:
     long double get_raw_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
     long long get_raw_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+    std::vector<long double> get_raw_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+    std::vector<long long> get_raw_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
 
     /// <summary>
     /// Clone an array into an identical array

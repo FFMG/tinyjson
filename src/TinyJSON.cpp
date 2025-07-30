@@ -3758,7 +3758,7 @@ namespace TinyJSON
     return 0;
   }
 
-  std::vector<long double> TJValue::get_floats(bool strict) const
+  std::vector<long double> TJValue::get_raw_floats(bool strict) const
   {
     auto array_object = dynamic_cast<const TJValueArray*>(this);
     if (nullptr != array_object)
@@ -3770,7 +3770,7 @@ namespace TinyJSON
     return { get_raw_float(strict) };
   }
 
-  std::vector<long long> TJValue::get_numbers(bool strict) const
+  std::vector<long long> TJValue::get_raw_numbers(bool strict) const
   {
     auto array_object = dynamic_cast<const TJValueArray*>(this);
     if (nullptr != array_object)
@@ -4182,7 +4182,7 @@ namespace TinyJSON
     return value->get_raw_number(false);
   }
 
-  std::vector<long double> TJValueObject::get_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  std::vector<long double> TJValueObject::get_raw_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
@@ -4193,10 +4193,10 @@ namespace TinyJSON
       }
       return {};
     }
-    return value->get_floats();
+    return value->get_raw_floats(false);
   }
 
-  std::vector<long long> TJValueObject::get_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  std::vector<long long> TJValueObject::get_raw_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
@@ -4207,7 +4207,7 @@ namespace TinyJSON
       }
       return {};
     }
-    return value->get_numbers();
+    return value->get_raw_numbers(false);
   }
 
   const TJCHAR* TJValueObject::get_string(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
