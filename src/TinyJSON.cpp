@@ -4154,7 +4154,7 @@ namespace TinyJSON
     return object;
   }
 
-  long double TJValueObject::get_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  long double TJValueObject::get_raw_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
@@ -4168,7 +4168,7 @@ namespace TinyJSON
     return value->get_raw_float(false);
   }
 
-  long long TJValueObject::get_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  long long TJValueObject::get_raw_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)

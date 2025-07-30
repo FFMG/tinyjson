@@ -245,7 +245,6 @@ class TJDictionary;
       return static_cast<T>(get_raw_float(strict));
     }
   protected:
-
     long long get_raw_number(bool strict) const;
     long double get_raw_float(bool strict) const;
 
@@ -408,11 +407,53 @@ class TJDictionary;
     virtual const TJValue* try_get_value(const TJCHAR* key, bool case_sensitive = true) const;
 
     bool get_boolean(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
-    long double get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
-    long long get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     const TJCHAR* get_string(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     std::vector<long double> get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     std::vector<long long> get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
+
+    // Non-template overload for ambiguous case - default to long long
+    inline long long get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_raw_number(key, case_sensitive, throw_if_not_found);
+    }
+
+    // Non-template overload for ambiguous case - default to long double
+    inline long double get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_raw_float(key, case_sensitive, throw_if_not_found);
+    }
+
+    template<typename T>
+    typename std::enable_if<
+      std::is_same<T, signed>::value ||
+      std::is_same<T, unsigned>::value ||
+      std::is_same<T, short>::value ||
+      std::is_same<T, long>::value ||
+      std::is_same<T, int>::value ||
+      std::is_same<T, unsigned int>::value ||
+      std::is_same<T, signed int>::value ||
+      std::is_same<T, unsigned short int>::value ||
+      std::is_same<T, signed short int>::value ||
+      std::is_same<T, long int>::value ||
+      std::is_same<T, signed long int>::value ||
+      std::is_same<T, unsigned long int>::value ||
+      std::is_same<T, long long int>::value ||
+      std::is_same<T, unsigned long long int>::value,
+      T >::type
+    get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return static_cast<T>(get_raw_number(key, case_sensitive, throw_if_not_found));
+    }
+
+    template<typename T>
+    typename std::enable_if<
+      std::is_same<T, float>::value ||
+      std::is_same<T, double>::value,
+      T >::type
+    get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return static_cast<T>(get_raw_float(key, case_sensitive, throw_if_not_found));
+    }
 
     void set_floats(const TJCHAR* key, const std::vector<long double>& values);
     void set_numbers(const TJCHAR* key, const std::vector<long long>& values);
@@ -547,6 +588,9 @@ class TJDictionary;
     }
 #endif
   protected:
+    long double get_raw_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+    long long get_raw_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+
     /// <summary>
     /// Clone an array into an identical array
     /// </summary>
