@@ -7,6 +7,7 @@
 #endif // !TJ_INCLUDE_STD_STRING
 
 #include "../src/TinyJSON.h"
+#include "testshelper.h"
 
 #include <gtest/gtest.h>
 

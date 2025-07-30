@@ -4656,62 +4656,30 @@ namespace TinyJSON
 #endif
   }
 
-  void TJValueArray::add_numbers(const std::vector<long long>& values)
+  void TJValueArray::add_raw_numbers(const std::vector<long long>& values)
   {
     for (const auto& value : values)
     {
-      add_number(value);
+      add_raw_number(value);
     }
   }
 
-  void TJValueArray::add_numbers(const std::vector<long>& values)
+  void TJValueArray::add_raw_floats(const std::vector<long double>& values)
   {
     for (const auto& value : values)
     {
-      add_number(value);
+      add_raw_float(value);
     }
   }
 
-  void TJValueArray::add_numbers(const std::vector<int>& values)
-  {
-    for (const auto& value : values)
-    {
-      add_number(value);
-    }
-  }
-
-  void TJValueArray::add_floats(const std::vector<long double>& values)
-  {
-    for (const auto& value : values)
-    {
-      add_float(value);
-    }
-  }
-
-  void TJValueArray::add_floats(const std::vector<double>& values)
-  {
-    for (const auto& value : values)
-    {
-      add_float(value);
-    }
-  }
-
-  void TJValueArray::add_floats(const std::vector<float>& values)
-  {
-    for (const auto& value : values)
-    {
-      add_float(value);
-    }
-  }
-
-  void TJValueArray::add_number(long long value)
+  void TJValueArray::add_raw_number(long long value)
   {
     auto* objectNumber = new TJValueNumberInt(value);
     add(objectNumber);
     delete objectNumber;
   }
   
-  void TJValueArray::add_float(long double value)
+  void TJValueArray::add_raw_float(long double value)
   {
     auto* tjNumber = TJHelper::try_create_number_from_float(value);
     add(tjNumber);
