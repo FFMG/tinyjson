@@ -689,7 +689,7 @@ namespace TinyJSON
       //  shift everything to the left.
       auto dictionary_index_cs = binary_search_result_cs._dictionary_index;
       // check that we will have space.
-      TJASSERT((_number_of_items_dictionary_cs + 1) >= _capacity);
+      TJASSERT((_number_of_items_dictionary_cs + 1) <= _capacity);
 
       // add the dictionary index value
       add_dictionary_data(
@@ -714,7 +714,7 @@ namespace TinyJSON
       // but it does not matter as we will be shifting things around.
 
       // check that we will have space.
-      TJASSERT((_number_of_items_dictionary_ci + 1) >= _capacity);
+      TJASSERT((_number_of_items_dictionary_ci + 1) <= _capacity);
 
       // add the dictionary index value
       add_dictionary_data(
