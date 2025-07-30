@@ -18,6 +18,7 @@
 #endif
 
 #include <exception>
+#include <type_traits>
 #include <vector>
 
 #if TJ_INCLUDE_STDVECTOR == 0
@@ -196,13 +197,58 @@ class TJDictionary;
     TJValue* clone() const;
 
     bool get_boolean(bool strict = false) const;
-    long double get_float(bool strict = false) const;
-    long long get_number(bool strict = false) const;
     const TJCHAR* get_string(bool strict = false) const;
     std::vector<long double> get_floats(bool strict = false) const;
     std::vector<long long> get_numbers(bool strict = false) const;
 
+    // Non-template overload for ambiguous case - default to long long
+    inline long long get_number(bool strict = false) const
+    {
+      return get_raw_number(strict);
+    }
+
+    // Non-template overload for ambiguous case - default to long double
+    inline long double get_float(bool strict = false) const
+    {
+      return get_raw_float(strict);
+    }
+
+    template<typename T>
+    typename std::enable_if<
+      std::is_same<T, signed>::value ||
+      std::is_same<T, unsigned>::value ||
+      std::is_same<T, short>::value ||
+      std::is_same<T, long>::value ||
+      std::is_same<T, int>::value ||
+      std::is_same<T, unsigned int>::value ||
+      std::is_same<T, signed int>::value ||
+      std::is_same<T, unsigned short int>::value ||
+      std::is_same<T, signed short int>::value ||
+      std::is_same<T, long int>::value ||
+      std::is_same<T, signed long int>::value ||
+      std::is_same<T, unsigned long int>::value ||
+      std::is_same<T, long long int>::value ||
+      std::is_same<T, unsigned long long int>::value,
+      T >::type
+      get_number(bool strict = false) const
+    {
+      return static_cast<T>(get_raw_number(strict));
+    }
+
+    template<typename T>
+    typename std::enable_if<
+      std::is_same<T, float>::value ||
+      std::is_same<T, double>::value,
+      T >::type
+      get_float(bool strict = false) const
+    {
+      return static_cast<T>(get_raw_float(strict));
+    }
   protected:
+
+    long long get_raw_number(bool strict) const;
+    long double get_raw_float(bool strict) const;
+
     /// <summary>
     /// Allow each derived class to create a copy of itself.
     /// </summary>

@@ -3699,7 +3699,7 @@ namespace TinyJSON
     return number->get_number() != 0;
   }
 
-  long double TJValue::get_float(bool strict) const
+  long double TJValue::get_raw_float(bool strict) const
   {
     auto number_object = dynamic_cast<const TJValueNumber*>(this);
     if (nullptr != number_object)
@@ -3728,7 +3728,7 @@ namespace TinyJSON
     return 0.0;
   }
 
-  long long TJValue::get_number(bool strict) const
+  long long TJValue::get_raw_number(bool strict) const
   {
     auto number_object = dynamic_cast<const TJValueNumber*>(this);
     if (nullptr != number_object)
@@ -3767,7 +3767,7 @@ namespace TinyJSON
     }
 
     // not an array then so return what we have.
-    return { get_float(strict) };
+    return { get_raw_float(strict) };
   }
 
   std::vector<long long> TJValue::get_numbers(bool strict) const
@@ -3779,7 +3779,7 @@ namespace TinyJSON
     }
 
     // not an array then so return what we have.
-    return { get_number(strict) };
+    return { get_raw_number(strict) };
   }
 
   const TJCHAR* TJValue::get_string(bool strict) const
@@ -4165,7 +4165,7 @@ namespace TinyJSON
       }
       return 0.0;
     }
-    return value->get_float();
+    return value->get_raw_float(false);
   }
 
   long long TJValueObject::get_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
@@ -4179,7 +4179,7 @@ namespace TinyJSON
       }
       return 0;
     }
-    return value->get_number();
+    return value->get_raw_number(false);
   }
 
   std::vector<long double> TJValueObject::get_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
