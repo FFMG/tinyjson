@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <iterator>
 #include <type_traits>
 #include <vector>
 
