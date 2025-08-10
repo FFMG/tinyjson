@@ -11,6 +11,8 @@ A modern C++ JSON library engineered for performance-critical applications. Tiny
 
 * [Supported JSON](#supported-json)
 * [Simple examples](#simple-examples)
+* [Supported C++](#supported-cpp)
+* [TODOs](#todo)
   
 ## Supported JSON
 
@@ -571,3 +573,7 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 * [] Add support for JSON5
      <https://json5.org>
   📄 <https://github.com/json5/json5>
+
+## Supported CPP
+
+The supported versions of c++ are c++ 11 and later.
