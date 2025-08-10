@@ -1,6 +1,11 @@
 # TinyJSON
 
-TinyJSON is a fast and small C++ JSON parser
+A modern C++ JSON library engineered for performance-critical applications. TinyJSON provides a robust and efficient solution for parsing JSON data, focusing on speed, memory efficiency, and ease of integration. Whether you're building a high-throughput server or a resource-constrained embedded application, TinyJSON delivers a no-compromise approach to JSON parsing.
+
+* Zero-dependency: Easy to integrate into any C++ project.
+* Minimal memory overhead: Ideal for resource-constrained environments.
+* High-performance parsing: Benchmarked for speed against other leading parsers.
+* Simple API: Intuitive and easy to use.
 
 ## Contents
 
