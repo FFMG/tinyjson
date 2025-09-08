@@ -3493,6 +3493,11 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJMember
+  TJMember::TJMember(const TJMember& src) :
+    TJMember(src._string, src._value)
+  {
+  }
+
   TJMember::TJMember(const TJCHAR* string, const TJValue* value):
     _string(nullptr),
     _value(nullptr)
@@ -4286,17 +4291,16 @@ namespace TinyJSON
     {
       auto members = new TJDICTIONARY();
 #if TJ_INCLUDE_STDVECTOR == 1
-      for (auto& member : *_members)
+      for (const auto& member : *_members)
       {
-        members->push_back(new TJMember(member->name(), member->value()->clone()));
+        members->push_back(new TJMember(*member));
       }
 #else
       auto size = _members->size();
       for(unsigned int i = 0; i < size; ++i)
       {
         const auto& member = _members->at(i);
-        const auto& name = member->name();
-        members->set(new TJMember(name, member->value()->clone()));
+        members->set(new TJMember(*member));
       }
 #endif
       object->_members = members;

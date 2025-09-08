@@ -388,6 +388,7 @@ class TJDictionary;
     friend TJValueObject;
   public:
     TJMember(const TJCHAR* string, const TJValue* value);
+    TJMember(const TJMember& src);
     virtual ~TJMember();
 
     const TJCHAR* name() const;
@@ -409,6 +410,10 @@ class TJDictionary;
     void move_value(TJValue*& value);
 
   private:
+    TJMember(TJMember&&) = delete;
+    TJMember& operator=(TJMember&&) = delete;
+    TJMember& operator=(const TJMember&) = delete;
+
     TJCHAR* _string;
     TJValue* _value;
     void free_string();

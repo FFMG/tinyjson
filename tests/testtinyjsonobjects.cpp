@@ -1106,3 +1106,14 @@ TEST(TestObjects, GetNumbersAsVariousTypes)
   }
   delete object;
 }
+
+TEST(TestObjects, CloneMemoryLeaks)
+{
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("a", "Hello");
+  object->set_string("b", "World");
+  object->set_string("c", "Bye");
+  auto clone = object->clone();
+  delete object;
+  delete clone;
+}
