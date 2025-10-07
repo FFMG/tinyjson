@@ -399,9 +399,9 @@ class TJDictionary;
 
     virtual void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const = 0;
 
-    virtual int internal_size() const { return 1; } // ourself
-    virtual const TJValue& internal_at(int index) const { return *this; }
-    virtual TJValue& internal_at(int index) { return *this; }
+    virtual int internal_size() const;
+    virtual const TJValue& internal_at(int index) const;
+    virtual TJValue& internal_at(int index);
 
   private:
     TJValue(const TJValue&) = delete;

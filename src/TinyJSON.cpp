@@ -3680,6 +3680,25 @@ namespace TinyJSON
     return _last_dump;
   }
 
+  int TJValue::internal_size() const 
+  { 
+    // default just one value
+    return 1; 
+  } 
+  const TJValue& TJValue::internal_at(int index) const 
+  { 
+    (void)index;
+    // default just one value
+    return *this; 
+  }
+
+  TJValue& TJValue::internal_at(int index) 
+  { 
+    (void)index;
+    // default just one value
+    return *this; 
+  }
+
   bool TJValue::get_boolean(bool strict) const
   {
     const auto* boolean_object = dynamic_cast<const TJValueBoolean*>(this);
