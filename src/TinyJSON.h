@@ -210,7 +210,11 @@ class TJDictionary;
       friend TJValue;
       int _current;
       const int _size;
+#if __cplusplus >= 201402L  // C++14 or later
       using TJValueType = std::conditional_t<IsConst, const TJValue, TJValue>;
+#else
+      using TJValueType = typename std::conditional<IsConst, const TJValue, TJValue>::type;
+#endif            
       TJValueType& _type;
 
       static base_iterator make_begin(TJValueType& value)
