@@ -465,6 +465,34 @@ Assuming the array below with multiple items, you can query the type of each `TJ
   delete json;
 ```
 
+### Iterate values
+
+```cpp
+  auto json = TinyJSON::TJ::parse(R"(
+    1,
+    2,
+    3
+  ])");
+  for (auto& a : *json)
+  {
+    // do stuff
+  }
+  delete json;
+  ...
+```
+
+NB: You can technically everything... 
+
+```cpp
+  auto json = TinyJSON::TJ::parse("2.5");
+  for (auto& a : *json)
+  {
+    // do stuff
+  }
+  ...
+  delete json;
+```
+
 ### Get values
 
 You can get a value from any TJValue*, (as long as the value can actually be converted)
