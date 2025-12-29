@@ -388,6 +388,35 @@ TEST(TestObjects, SetFloatsWithVectors)
   delete object;
 }
 
+TEST(TestObjects, SetNumbersWithVectors)
+{
+  auto object = new TinyJSON::TJValueObject();
+
+  std::vector<int> i_values = { 1, 2 };
+  object->set_numbers("i", i_values);
+
+  std::vector<long> l_values = { 3L, 4L };
+  object->set_numbers("l", l_values);
+
+  std::vector<long long> ll_values = { 5LL, 6LL };
+  object->set_numbers("ll", ll_values);
+
+  std::vector<unsigned int> ui_values = { 7u, 8u };
+  object->set_numbers("ui", ui_values);
+
+  std::vector<unsigned long long> ull_values = { 9ULL, 10ULL };
+  object->set_numbers("ull", ull_values);
+
+  std::vector<short> s_values = { 11, 12 };
+  object->set_numbers("s", s_values);
+
+  const auto& text = object->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ(R"({"i":[1,2],"l":[3,4],"ll":[5,6],"ui":[7,8],"ull":[9,10],"s":[11,12]})", text);
+
+  delete object;
+}
+
 TEST(TestObjects, SetAValueDirectlyAsReference)
 {
   auto object = new TinyJSON::TJValueObject();
