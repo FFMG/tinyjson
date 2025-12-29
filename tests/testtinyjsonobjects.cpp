@@ -368,6 +368,26 @@ TEST(TestObjects, SetFloats)
   delete object;
 }
 
+TEST(TestObjects, SetFloatsWithVectors)
+{
+  auto object = new TinyJSON::TJValueObject();
+
+  std::vector<float> f_values = { 1.5f, 2.5f };
+  object->set_floats("f", f_values);
+
+  std::vector<double> d_values = { 3.5, 4.5 };
+  object->set_floats("d", d_values);
+
+  std::vector<long double> ld_values = { 5.5, 6.5 };
+  object->set_floats("ld", ld_values);
+
+  const auto& text = object->dump(TinyJSON::formating::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ(R"({"f":[1.5,2.5],"d":[3.5,4.5],"ld":[5.5,6.5]})", text);
+
+  delete object;
+}
+
 TEST(TestObjects, SetAValueDirectlyAsReference)
 {
   auto object = new TinyJSON::TJValueObject();
