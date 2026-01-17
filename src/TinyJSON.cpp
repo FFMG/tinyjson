@@ -200,7 +200,7 @@ namespace TinyJSON
       {
         return;
       }
-      _options.Callback(parse_options::message_type::fatal, _exception_message);
+      _options.callback_function(parse_options::message_type::fatal, _exception_message);
       if (!_options.throw_exception)
       {
         return;

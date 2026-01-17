@@ -153,7 +153,7 @@ class TJDictionary;
     //  4 = error
     //  5 = fatal/panic/exception
     /// <summary>
-    std::function<void(message_type, const TJCHAR*)> Callback = [] (message_type, const TJCHAR*) {
+    std::function<void(message_type, const TJCHAR*)> callback_function = [] (message_type, const TJCHAR*) {
       // do nothing
     };
   };

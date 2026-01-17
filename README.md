@@ -83,6 +83,14 @@ static const char TJ_VERSION_STRING[] = "0.0.1";
   * rfc4627
   * rfc7159
   * rfc8259
+* Callback: (`callback_function:std::function<void(message_type, const TJCHAR*)>`)  Callback function called where there is an error, warning etc.
+  NB: The Callback function is called even if Throw is false.
+  * trace
+  * debug
+  * info
+  * warning
+  * error
+  * fatal
 
 For example ...
 
@@ -90,6 +98,9 @@ For example ...
 TinyJSON::parse_options options = {};
 options.throw_exception = true;
 options.max_depth = 10;
+options.Callback = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+  // something, something ...
+};
 
 try
 {
@@ -498,11 +509,41 @@ NB: You can technically everything...
 You can get a value from any TJValue*, (as long as the value can actually be converted)
 
 - get_number()
+  -get_mumber<signed|
+              unsigned|
+              short|
+              long|
+              int|
+              unsigned int|
+              signed int|
+              unsigned short int|
+              signed short int|
+              long int|
+              signed long int|
+              unsigned long int|
+              long long int|
+              unsigned long long int>()
 - get_float()
+  -get_float<long double|double|float>()
 - get_string()
 - get_boolean()
 - get_numbers()
+  -get_mumbers<signed|
+              unsigned|
+              short|
+              long|
+              int|
+              unsigned int|
+              signed int|
+              unsigned short int|
+              signed short int|
+              long int|
+              signed long int|
+              unsigned long int|
+              long long int|
+              unsigned long long int>()
 - get_floats()
+  -get_floats<long double|double|float>()
 
 ```cpp
 auto json = TinyJSON::TJ::parse(R"(

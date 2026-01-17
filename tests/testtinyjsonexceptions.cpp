@@ -256,7 +256,7 @@ TEST(TestException, EscapedTabCharacterInStringWillLogAndThrow) {
   bool called = false;
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  options.Callback = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
     EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
     EXPECT_TRUE(nullptr != exception_message);
     called = true;
@@ -269,7 +269,7 @@ TEST(TestException, EscapedTabCharacterInStringWillLogAndNotThrow) {
   bool called = false;
   TinyJSON::parse_options options = {};
   options.throw_exception = false;
-  options.Callback = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
     EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
     EXPECT_TRUE(nullptr != exception_message);
     called = true;
