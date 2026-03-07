@@ -627,6 +627,25 @@ class TJDictionary;
     /// <returns></returns>
     virtual const TJValue* try_get_value(const TJCHAR* key, bool case_sensitive = true) const;
 
+    /// <summary>
+    /// Check if a key exists in this object.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    bool has_key(const TJCHAR* key, bool case_sensitive = true) const;
+
+#if TJ_INCLUDE_STD_STRING == 1
+    /// <summary>
+    /// Check if a key exists in this object.
+    /// </summary>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    inline bool has_key(const std::string& key, bool case_sensitive = true) const
+    {
+      return has_key(key.c_str(), case_sensitive);
+    }
+#endif
+
     bool get_boolean(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
     const TJCHAR* get_string(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const;
 

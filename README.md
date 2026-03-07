@@ -283,6 +283,23 @@ You can load the json either by parsing or creating it manually.
   delete object;
 ```
 
+### Check if key exists
+
+You can use `has_key` to check if an object contains a specific key.
+
+```cpp
+  auto json = TinyJSON::TJ::parse(R"({"a": 42})");
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+
+  if (jobject->has_key("a")) 
+  {
+    // do something
+  }
+
+  // Case insensitive check
+  bool exists = jobject->has_key("A", false); // returns true
+```
+
 ### How to create a JSON value?
 
 ```cpp

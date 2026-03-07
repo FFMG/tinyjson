@@ -4481,6 +4481,11 @@ namespace TinyJSON
 #endif
   }
 
+  bool TJValueObject::has_key(const TJCHAR* key, bool case_sensitive) const
+  {
+    return try_get_value(key, case_sensitive) != nullptr;
+  }
+
   /// <summary>
   /// Try and get a string value, if it does not exist, then we return null.
   /// </summary>
