@@ -1166,3 +1166,21 @@ TEST(TestObjects, CloneMemoryLeaks)
   delete object;
   delete clone;
 }
+
+TEST(TestObjects, HasKey)
+{
+  auto json = TinyJSON::TJ::parse(R"({"a": 1, "b": "hello"})");
+  ASSERT_NE(nullptr, json);
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  ASSERT_TRUE(jobject->has_key("a"));
+  ASSERT_TRUE(jobject->has_key("b"));
+  ASSERT_FALSE(jobject->has_key("c"));
+
+  // Case sensitivity
+  ASSERT_FALSE(jobject->has_key("A", true));
+  ASSERT_TRUE(jobject->has_key("A", false));
+
+  delete json;
+}

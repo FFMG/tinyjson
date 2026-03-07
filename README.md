@@ -294,6 +294,23 @@ You can load the json either by parsing or creating it manually.
   delete object;
 ```
 
+### Check if key exists
+
+You can use `has_key` to check if an object contains a specific key.
+
+```cpp
+  auto json = TinyJSON::TJ::parse(R"({"a": 42})");
+  auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
+
+  if (jobject->has_key("a")) 
+  {
+    // do something
+  }
+
+  // Case insensitive check
+  bool exists = jobject->has_key("A", false); // returns true
+```
+
 ### How to create a JSON value?
 
 ```cpp
@@ -506,44 +523,42 @@ NB: You can technically everything...
 
 ### Get values
 
-You can get a value from any TJValue*, (as long as the value can actually be converted)
+#### Generic Get values
 
-- get_number()
-  -get_mumber<signed|
-              unsigned|
-              short|
-              long|
-              int|
-              unsigned int|
-              signed int|
-              unsigned short int|
-              signed short int|
-              long int|
-              signed long int|
-              unsigned long int|
-              long long int|
-              unsigned long long int>()
-- get_float()
-  -get_float<long double|double|float>()
-- get_string()
-- get_boolean()
-- get_numbers()
-  -get_mumbers<signed|
-              unsigned|
-              short|
-              long|
-              int|
-              unsigned int|
-              signed int|
-              unsigned short int|
-              signed short int|
-              long int|
-              signed long int|
-              unsigned long int|
-              long long int|
-              unsigned long long int>()
-- get_floats()
-  -get_floats<long double|double|float>()
+The generic `get<...>( ... )` method provides a convenient way to retrieve values of various types directly.
+
+For `TJValueObject` (key-based):
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"({"a": 42, "b": "hello", "c": true})");
+auto obj = dynamic_cast<TJValueObject*>(json);
+
+int a = obj->get<int>("a");              // 42
+std::string b = obj->get<std::string>("b"); // "hello"
+bool c = obj->get<bool>("c");            // true
+```
+
+The `get` method on objects also supports two optional parameters:
+- `case_sensitive`: Defaults to `true`.
+- `throw_if_not_found`: Defaults to `false`.
+
+For any `TJValue*` (direct value):
+
+```cpp
+auto val = obj->try_get_value("a");
+int a = val->get<int>(); // 42
+```
+
+The generic `get` also supports `std::vector` for arrays of numbers or floats:
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"({"ints": [1, 2, 3], "floats": [1.1, 2.2]})");
+auto obj = dynamic_cast<TJValueObject*>(json);
+
+auto ints = obj->get<std::vector<int>>("ints");
+auto doubles = obj->get<std::vector<double>>("floats");
+```
+>>>>>>> main
 
 ```cpp
 auto json = TinyJSON::TJ::parse(R"(
@@ -571,6 +586,41 @@ if( valueb->get_boolean())
 ```
 
 #### Strict Get values
+
+You can get a value from any TJValue*, (as long as the value can actually be converted)
+
+  - get_mumber<signed|
+              unsigned|
+              short|
+              long|
+              int|
+              unsigned int|
+              signed int|
+              unsigned short int|
+              signed short int|
+              long int|
+              signed long int|
+              unsigned long int|
+              long long int|
+              unsigned long long int>()
+  - get_float<long double|double|float>()
+  - get_string()
+  - get_boolean()
+  - get_mumbers<signed|
+              unsigned|
+              short|
+              long|
+              int|
+              unsigned int|
+              signed int|
+              unsigned short int|
+              signed short int|
+              long int|
+              signed long int|
+              unsigned long int|
+              long long int|
+              unsigned long long int>()
+  -get_floats<long double|double|float>()
 
 ```cpp
 auto json = TinyJSON::TJ::parse(R"(
