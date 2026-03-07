@@ -512,15 +512,6 @@ NB: You can technically everything...
 
 ### Get values
 
-You can get a value from any TJValue*, (as long as the value can actually be converted)
-
-- get_number()
-- get_float()
-- get_string()
-- get_boolean()
-- get_numbers()
-- get_floats()
-
 #### Generic Get values
 
 The generic `get<...>( ... )` method provides a convenient way to retrieve values of various types directly.
@@ -583,6 +574,16 @@ if( valueb->get_boolean())
 ```
 
 #### Strict Get values
+
+You can get a value from any TJValue*, (as long as the value can actually be converted)
+
+- get_number()
+- get_float()
+- get_string()
+- get_boolean()
+- get_numbers()
+- get_floats()
+
 
 ```cpp
 auto json = TinyJSON::TJ::parse(R"(
