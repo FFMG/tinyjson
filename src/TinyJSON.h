@@ -106,6 +106,9 @@ class TJDictionary;
     indented
   };
 
+  template<typename T> struct is_vector : std::false_type {};
+  template<typename T, typename A> struct is_vector<std::vector<T, A>> : std::true_type {};
+
   /// <summary>
   /// The parsing options.
   /// </summary>
@@ -364,7 +367,72 @@ class TJDictionary;
       return static_cast<T>(get_raw_float(strict));
     }
 
+    // For integral types (excluding bool)
+    template<typename T>
+    typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value, T>::type
+    get(bool strict = false) const
+    {
+      return get_number<T>(strict);
+    }
 
+    // For floating point types
+    template<typename T>
+    typename std::enable_if<std::is_floating_point<T>::value, T>::type
+    get(bool strict = false) const
+    {
+      return get_float<T>(strict);
+    }
+
+    // For boolean
+    template<typename T>
+    typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+    get(bool strict = false) const
+    {
+      return get_boolean(strict);
+    }
+
+    // For strings (const TJCHAR*)
+    template<typename T>
+    typename std::enable_if<std::is_same<T, const TJCHAR*>::value, const TJCHAR*>::type
+    get(bool strict = false) const
+    {
+      return get_string(strict);
+    }
+
+#if TJ_INCLUDE_STD_STRING == 1
+    // For std::string
+    template<typename T>
+    typename std::enable_if<std::is_same<T, std::string>::value, std::string>::type
+    get(bool strict = false) const
+    {
+      const TJCHAR* str = get_string(strict);
+      return str ? std::string(str) : std::string();
+    }
+#endif
+
+    // For vectors
+    template<typename T>
+    typename std::enable_if<is_vector<T>::value, T>::type
+    get(bool strict = false) const
+    {
+      typedef typename T::value_type V;
+      return get_vector_internal<V>(strict, std::is_integral<V>());
+    }
+
+  private:
+    template<typename V>
+    std::vector<V> get_vector_internal(bool strict, std::true_type) const
+    {
+      return get_numbers<V>(strict);
+    }
+
+    template<typename V>
+    std::vector<V> get_vector_internal(bool strict, std::false_type) const
+    {
+      return get_floats<V>(strict);
+    }
+
+  public:
     using iterator = base_iterator<false>;
     using const_iterator = base_iterator<true>;
 
@@ -626,6 +694,79 @@ class TJDictionary;
       return tVector;
     }
 
+    // For integral types (excluding bool)
+    template<typename T>
+    typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value, T>::type
+    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_number<T>(key, case_sensitive, throw_if_not_found);
+    }
+
+    // For floating point types
+    template<typename T>
+    typename std::enable_if<std::is_floating_point<T>::value, T>::type
+    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_float<T>(key, case_sensitive, throw_if_not_found);
+    }
+
+    // For boolean
+    template<typename T>
+    typename std::enable_if<std::is_same<T, bool>::value, bool>::type
+    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_boolean(key, case_sensitive, throw_if_not_found);
+    }
+
+    // For strings (const TJCHAR*)
+    template<typename T>
+    typename std::enable_if<std::is_same<T, const TJCHAR*>::value, const TJCHAR*>::type
+    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get_string(key, case_sensitive, throw_if_not_found);
+    }
+
+#if TJ_INCLUDE_STD_STRING == 1
+    // For std::string
+    template<typename T>
+    typename std::enable_if<std::is_same<T, std::string>::value, std::string>::type
+    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      const TJCHAR* str = get_string(key, case_sensitive, throw_if_not_found);
+      return str ? std::string(str) : std::string();
+    }
+
+    // Overloads for std::string key
+    template<typename T>
+    T get(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      return get<T>(key.c_str(), case_sensitive, throw_if_not_found);
+    }
+#endif
+
+    // For vectors
+    template<typename T>
+    typename std::enable_if<is_vector<T>::value, T>::type
+    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    {
+      typedef typename T::value_type V;
+      return get_vector_internal<V>(key, case_sensitive, throw_if_not_found, std::is_integral<V>());
+    }
+
+  private:
+    template<typename V>
+    std::vector<V> get_vector_internal(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found, std::true_type) const
+    {
+      return get_numbers<V>(key, case_sensitive, throw_if_not_found);
+    }
+
+    template<typename V>
+    std::vector<V> get_vector_internal(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found, std::false_type) const
+    {
+      return get_floats<V>(key, case_sensitive, throw_if_not_found);
+    }
+
+  public:
     template<typename T>
     void set_floats(const TJCHAR* key, const std::vector<T>& values)
     {

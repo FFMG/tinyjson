@@ -504,6 +504,42 @@ You can get a value from any TJValue*, (as long as the value can actually be con
 - get_numbers()
 - get_floats()
 
+#### Generic Get values
+
+The generic `get<...>( ... )` method provides a convenient way to retrieve values of various types directly.
+
+For `TJValueObject` (key-based):
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"({"a": 42, "b": "hello", "c": true})");
+auto obj = dynamic_cast<TJValueObject*>(json);
+
+int a = obj->get<int>("a");              // 42
+std::string b = obj->get<std::string>("b"); // "hello"
+bool c = obj->get<bool>("c");            // true
+```
+
+The `get` method on objects also supports two optional parameters:
+- `case_sensitive`: Defaults to `true`.
+- `throw_if_not_found`: Defaults to `false`.
+
+For any `TJValue*` (direct value):
+
+```cpp
+auto val = obj->try_get_value("a");
+int a = val->get<int>(); // 42
+```
+
+The generic `get` also supports `std::vector` for arrays of numbers or floats:
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"({"ints": [1, 2, 3], "floats": [1.1, 2.2]})");
+auto obj = dynamic_cast<TJValueObject*>(json);
+
+auto ints = obj->get<std::vector<int>>("ints");
+auto doubles = obj->get<std::vector<double>>("floats");
+```
+
 ```cpp
 auto json = TinyJSON::TJ::parse(R"(
   {
