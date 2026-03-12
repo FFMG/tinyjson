@@ -766,10 +766,10 @@ class TJDictionary;
     // For vectors
     template<typename T>
     typename std::enable_if<is_vector<T>::value, T>::type
-    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    get(const TJCHAR* key) const
     {
       typedef typename T::value_type V;
-      return get_vector_internal<V>(key, case_sensitive, throw_if_not_found, std::is_integral<V>());
+      return get_vector_internal<V>(key, true, true, std::is_integral<V>());
     }
 
   private:
