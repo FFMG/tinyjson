@@ -716,50 +716,50 @@ class TJDictionary;
     // For integral types (excluding bool)
     template<typename T>
     typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value, T>::type
-    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    get(const TJCHAR* key) const
     {
-      return get_number<T>(key, case_sensitive, throw_if_not_found);
+      return get_number<T>(key, true, true);
     }
 
     // For floating point types
     template<typename T>
     typename std::enable_if<std::is_floating_point<T>::value, T>::type
-    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    get(const TJCHAR* key) const
     {
-      return get_float<T>(key, case_sensitive, throw_if_not_found);
+      return get_float<T>(key, true, true);
     }
 
     // For boolean
     template<typename T>
     typename std::enable_if<std::is_same<T, bool>::value, bool>::type
-    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    get(const TJCHAR* key) const
     {
-      return get_boolean(key, case_sensitive, throw_if_not_found);
+      return get_boolean(key, true, true);
     }
 
     // For strings (const TJCHAR*)
     template<typename T>
     typename std::enable_if<std::is_same<T, const TJCHAR*>::value, const TJCHAR*>::type
-    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    get(const TJCHAR* key) const
     {
-      return get_string(key, case_sensitive, throw_if_not_found);
+      return get_string(key, true, true);
     }
 
 #if TJ_INCLUDE_STD_STRING == 1
     // For std::string
     template<typename T>
     typename std::enable_if<std::is_same<T, std::string>::value, std::string>::type
-    get(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    get(const TJCHAR* key) const
     {
-      const TJCHAR* str = get_string(key, case_sensitive, throw_if_not_found);
+      const TJCHAR* str = get_string(key, true, true);
       return str ? std::string(str) : std::string();
     }
 
     // Overloads for std::string key
     template<typename T>
-    T get(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
+    T get(const std::string& key) const
     {
-      return get<T>(key.c_str(), case_sensitive, throw_if_not_found);
+      return get<T>(key.c_str());
     }
 #endif
 

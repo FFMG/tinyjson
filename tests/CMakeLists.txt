@@ -18,6 +18,7 @@ set( Headers
 set( Sources
   "testjsonchecker.cpp"
   "testgenericget.cpp"
+  "testdefaultget.cpp"
   "testtinyjson.cpp"
   "testtinyjsonarrays.cpp"
   "testtinyjsonbooleans.cpp"
