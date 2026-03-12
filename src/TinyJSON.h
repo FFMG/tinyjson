@@ -809,40 +809,49 @@ class TJDictionary;
     // Non-template overload for ambiguous case - default to long long
     inline long long get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_raw_number(key, case_sensitive, throw_if_not_found);
+      auto value = get_raw_number(key, case_sensitive, throw_if_not_found);
+      return value.has_value() ? value.value() : 0.0;
     }
     inline std::vector<long long> get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_raw_numbers(key, case_sensitive, throw_if_not_found);
+      auto value = get_raw_numbers(key, case_sensitive, throw_if_not_found);
+      return value.has_value() ? value.value() : std::vector<long long>();
     }
 
     // Non-template overload for ambiguous case - default to long double
     inline long double get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_raw_float(key, case_sensitive, throw_if_not_found);
+      auto value = get_raw_float(key, case_sensitive, throw_if_not_found);
+      return value.has_value() ? value.value() : 0.0;
     }
     inline std::vector<long double> get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_raw_floats(key, case_sensitive, throw_if_not_found);
+      auto value = get_raw_floats(key, case_sensitive, throw_if_not_found);
+      return value.has_value() ? value.value() : std::vector<long double>();
     }
 
     template<typename T>
     TJ_TEMPLATE_NUMBER::type
     get_number(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return static_cast<T>(get_raw_number(key, case_sensitive, throw_if_not_found));
+      auto value = get_raw_number(key, case_sensitive, throw_if_not_found);
+      return value.has_value() ? value.value() : 0.0;
     }
     template<typename T>
     std::vector<TJ_TEMPLATE_NUMBER::type>
     get_numbers(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
       auto llVector = get_raw_numbers(key, case_sensitive, throw_if_not_found);
+      if (!llVector.has_value())
+      {
+        return {};
+      }
       std::vector<T> tVector;
-      tVector.reserve(llVector.size());
+      tVector.reserve(llVector.value().size());
 
       // Transform and move the values
-      std::transform(std::make_move_iterator(llVector.begin()),
-        std::make_move_iterator(llVector.end()),
+      std::transform(std::make_move_iterator(llVector.value().begin()),
+        std::make_move_iterator(llVector.value().end()),
         std::back_inserter(tVector),
         [](long long value) { return static_cast<T>(value); });
       return tVector;
@@ -852,19 +861,24 @@ class TJDictionary;
     TJ_TEMPLATE_FLOAT::type
     get_float(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return static_cast<T>(get_raw_float(key, case_sensitive, throw_if_not_found));
+      auto value = get_raw_float(key, case_sensitive, throw_if_not_found);
+      return value.has_value() ? static_cast<T>(value.value()) : 0.0;
     }
     template<typename T>
     std::vector<TJ_TEMPLATE_FLOAT::type>
     get_floats(const TJCHAR* key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
       auto ldVector = get_raw_floats(key, case_sensitive, throw_if_not_found);
+      if (!ldVector.has_value())
+      {
+        return {};
+      }
       std::vector<T> tVector;
-      tVector.reserve(ldVector.size());
+      tVector.reserve(ldVector.value().size());
 
       // Transform and move the values
-      std::transform(std::make_move_iterator(ldVector.begin()),
-        std::make_move_iterator(ldVector.end()),
+      std::transform(std::make_move_iterator(ldVector.value().begin()),
+        std::make_move_iterator(ldVector.value().end()),
         std::back_inserter(tVector),
         [](long double value) { return static_cast<T>(value); });
       return tVector;
@@ -1014,11 +1028,11 @@ class TJDictionary;
     }
     inline std::vector<long double> get_floats(const std::string& key,bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_raw_floats(key.c_str(), case_sensitive, throw_if_not_found);
+      return get_floats(key.c_str(), case_sensitive, throw_if_not_found);
     }
     inline std::vector<long long> get_numbers(const std::string& key, bool case_sensitive = true, bool throw_if_not_found = false) const
     {
-      return get_raw_numbers(key.c_str(), case_sensitive, throw_if_not_found);
+      return get_numbers(key.c_str(), case_sensitive, throw_if_not_found);
     }
 
     template<typename T>
@@ -1241,10 +1255,10 @@ class TJDictionary;
     }
 #endif
   protected:
-    long double get_raw_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
-    long long get_raw_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
-    std::vector<long double> get_raw_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
-    std::vector<long long> get_raw_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+    Optional<long double> get_raw_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+    Optional<long long> get_raw_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+    Optional<std::vector<long double>> get_raw_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
+    Optional<std::vector<long long>> get_raw_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const;
 
     void set_raw_numbers(const TJCHAR* key, const std::vector<long long>& values);
     void set_raw_floats(const TJCHAR* key, const std::vector<long double>& values);
