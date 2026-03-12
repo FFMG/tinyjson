@@ -98,6 +98,163 @@ class TJDictionary;
 #define TJDICTIONARY TJDictionary
 #define TJLIST TJList
 #endif
+ 
+  // optional class
+  template<typename T>
+  class Optional
+  {
+  public:
+    Optional() noexcept : _has_value(false) {}
+
+    Optional(const T& value) noexcept(std::is_nothrow_copy_constructible<T>::value) :
+      _has_value(true)
+    {
+      new(&_storage.value) T(value);
+    }
+
+    Optional(T&& value) noexcept(std::is_nothrow_move_constructible<T>::value) :
+      _has_value(true)
+    {
+      new(&_storage.value) T(std::move(value));
+    }
+
+    Optional(const Optional& other) noexcept(std::is_nothrow_copy_constructible<T>::value) :
+      _has_value(other._has_value)
+    {
+      if (_has_value)
+      {
+        new(&_storage.value) T(other._storage.value);
+      }
+    }
+
+    Optional(Optional&& other) noexcept(std::is_nothrow_move_constructible<T>::value) :
+      _has_value(other._has_value)
+    {
+      if (_has_value)
+      {
+        new(&_storage.value) T(std::move(other._storage.value));
+      }
+    }
+
+    ~Optional()
+    {
+      reset();
+    }
+
+    Optional& operator=(const Optional& other) noexcept(std::is_nothrow_copy_constructible<T>::value)
+    {
+      if (this != &other)
+      {
+        if (other._has_value)
+        {
+          if (_has_value)
+          {
+            _storage.value = other._storage.value;
+          }
+          else
+          {
+            new(&_storage.value) T(other._storage.value);
+            _has_value = true;
+          }
+        }
+        else
+        {
+          reset();
+        }
+      }
+      return *this;
+    }
+
+    Optional& operator=(Optional&& other) noexcept(std::is_nothrow_move_constructible<T>::value)
+    {
+      if (this != &other)
+      {
+        if (other._has_value)
+        {
+          if (_has_value)
+          {
+            _storage.value = std::move(other._storage.value);
+          }
+          else
+          {
+            new(&_storage.value) T(std::move(other._storage.value));
+            _has_value = true;
+          }
+        }
+        else
+        {
+          reset();
+        }
+      }
+      return *this;
+    }
+
+    void reset() noexcept
+    {
+      if (_has_value)
+      {
+        _storage.value.~T();
+        _has_value = false;
+      }
+    }
+
+    [[nodiscard]] inline T& value() &
+    {
+      if (!_has_value) throw std::logic_error("Optional has no value");
+      return _storage.value;
+    }
+
+    [[nodiscard]] inline const T& value() const &
+    {
+      if (!_has_value) throw std::logic_error("Optional has no value");
+      return _storage.value;
+    }
+
+    [[nodiscard]] inline const T& value_or(const T& if_has_no_value) const noexcept
+    {
+      return _has_value ? _storage.value : if_has_no_value;
+    }
+
+    [[nodiscard]] inline bool has_value() const noexcept
+    {
+      return _has_value;
+    }
+
+    [[nodiscard]] inline explicit operator bool() const noexcept
+    {
+      return _has_value;
+    }
+
+    [[nodiscard]] inline T& operator*() & noexcept
+    {
+      return _storage.value;
+    }
+
+    [[nodiscard]] inline const T& operator*() const & noexcept
+    {
+      return _storage.value;
+    }
+
+    [[nodiscard]] inline T* operator->() noexcept
+    {
+      return &_storage.value;
+    }
+
+    [[nodiscard]] inline const T* operator->() const noexcept
+    {
+      return &_storage.value;
+    }
+
+  private:
+    union Storage
+    {
+      T value;
+      char dummy;
+      Storage() : dummy(0) {}
+      ~Storage() {}
+    } _storage;
+    bool _has_value;
+  };
 
   // the various types of formating.
   enum class formating
@@ -770,6 +927,20 @@ class TJDictionary;
     {
       typedef typename T::value_type V;
       return get_vector_internal<V>(key, true, true, std::is_integral<V>());
+    }
+
+    template<typename T>
+    T get_or(const TJCHAR* key, const T& if_has_no_value) const noexcept
+    {
+      try
+      {
+        auto value = get<T>(key);
+        return value;
+      }
+      catch (...)
+      {
+        return if_has_no_value;
+      }
     }
 
   private:

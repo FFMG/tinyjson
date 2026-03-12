@@ -34,8 +34,8 @@ set( Sources
   testtinyjsonversion.cpp
   testtinyjsonwrite.cpp
   testtinyjsonset.cpp
+  testtinyjsonoptional.cpp
   )
-
 add_executable(
   ${Project}
   ${Headers}
