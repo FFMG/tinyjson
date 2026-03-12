@@ -30,10 +30,11 @@ set( Sources
   "testtinyjsonnumbers.cpp"
   "testtinyjsonobjects.cpp"
   "testtinyjsonstrings.cpp"
-  "testtinyjsonvaluesget.cpp"
-  "testtinyjsonversion.cpp"
-  "testtinyjsonwrite.cpp"
-)
+  testtinyjsonvaluesget.cpp
+  testtinyjsonversion.cpp
+  testtinyjsonwrite.cpp
+  testtinyjsonset.cpp
+  )
 
 add_executable(
   ${Project}

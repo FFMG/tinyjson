@@ -612,6 +612,54 @@ if( valueb->get_boolean(true))  //  THROW! "b" is not a boolean
 
 This can be helpful is you are looking for a certain data type.
 
+### Set values
+
+#### Generic Set values
+
+The generic `set<...>( ... )` method provides a convenient way to set values of various types directly.
+
+For `TJValueObject` (key-based):
+
+```cpp
+TinyJSON::TJValueObject obj;
+
+obj.set("a", 42);                  // set int
+obj.set("b", "hello");             // set string
+obj.set("c", true);                // set boolean
+obj.set("d", 3.14);                // set double
+```
+
+The generic `set` also supports `std::string` and `std::vector` for arrays of numbers or floats:
+
+```cpp
+TinyJSON::TJValueObject obj;
+
+std::string val = "hello";
+obj.set("b", val);                 // set std::string
+
+std::vector<int> ints = {1, 2, 3};
+obj.set("ints", ints);             // set std::vector<int>
+```
+
+#### Strict Set values
+
+You can also use specific set methods:
+
+- set_number(key, value)
+- set_float(key, value)
+- set_string(key, value)
+- set_boolean(key, value)
+- set_null(key)
+
+```cpp
+TinyJSON::TJValueObject obj;
+
+obj.set_number("a", 42);
+obj.set_string("b", "hello");
+obj.set_boolean("c", true);
+obj.set_null("d");
+```
+
 ## Getting Started
 
 All you need is to include the .h and .cpp file to your project and you are ready to go.

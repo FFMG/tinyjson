@@ -897,7 +897,6 @@ class TJDictionary;
     /// </summary>
     /// <param name="key"></param>
     /// <param name="value"></param>
-    /// <returns></returns>
     void set(const TJCHAR* key, const TJValue* value);
 
     /// <summary>
@@ -905,10 +904,101 @@ class TJDictionary;
     /// </summary>
     /// <param name="key"></param>
     /// <param name="value"></param>
-    /// <returns></returns>
     inline void set(const TJCHAR* key, const TJValue& value)
     {
       set(key, &value);
+    }
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    template<typename T>
+    typename std::enable_if<std::is_integral<T>::value && !std::is_same<T, bool>::value, void>::type
+    set(const TJCHAR* key, T value)
+    {
+      set_number(key, static_cast<long long>(value));
+    }
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    template<typename T>
+    typename std::enable_if<std::is_floating_point<T>::value, void>::type
+    set(const TJCHAR* key, T value)
+    {
+      set_float(key, static_cast<long double>(value));
+    }
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    template<typename T>
+    typename std::enable_if<std::is_same<T, bool>::value, void>::type
+    set(const TJCHAR* key, T value)
+    {
+      set_boolean(key, value);
+    }
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    template<typename T>
+    typename std::enable_if<std::is_same<T, const TJCHAR*>::value, void>::type
+    set(const TJCHAR* key, T value)
+    {
+      set_string(key, value);
+    }
+
+#if TJ_INCLUDE_STD_STRING == 1
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    template<typename T>
+    typename std::enable_if<std::is_same<T, std::string>::value, void>::type
+    set(const TJCHAR* key, const T& value)
+    {
+      set_string(key, value.c_str());
+    }
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    template<typename T>
+    void set(const std::string& key, const T& value)
+    {
+      set<T>(key.c_str(), value);
+    }
+#endif
+
+    /// <summary>
+    /// Set the value of a ... value
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    template<typename T>
+    typename std::enable_if<is_vector<T>::value, void>::type
+    set(const TJCHAR* key, const T& value)
+    {
+      typedef typename T::value_type V;
+      set_vector_internal<V>(key, value, std::is_integral<V>());
     }
 
     /// <summary>
@@ -941,7 +1031,7 @@ class TJDictionary;
     /// <param name="key"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    void set_string(const TJCHAR* key, const char* value);
+    void set_string(const TJCHAR* key, const TJCHAR* value);
 
     /// <summary>
     /// Set the value to null.
@@ -957,9 +1047,9 @@ class TJDictionary;
     /// <param name="key"></param>
     /// <param name="value"></param>
     /// <returns></returns>
-    inline void set_string(const std::string& key, const std::string& value) const
+    inline void set_string(const std::string& key, const std::string& value)
     {
-      return set_string(key.c_str(), value.c_str());
+      set_string(key.c_str(), value.c_str());
     }
 #endif
 
@@ -1008,6 +1098,18 @@ class TJDictionary;
     virtual TJValue& internal_at(int index) override;
 
   private:
+    template<typename V>
+    void set_vector_internal(const TJCHAR* key, const std::vector<V>& values, std::true_type)
+    {
+      set_numbers<V>(key, values);
+    }
+
+    template<typename V>
+    void set_vector_internal(const TJCHAR* key, const std::vector<V>& values, std::false_type)
+    {
+      set_floats<V>(key, values);
+    }
+
     // All the key value pairs in this object.
     TJDICTIONARY* _members;
 

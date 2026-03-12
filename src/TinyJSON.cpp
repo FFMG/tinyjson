@@ -4068,7 +4068,7 @@ namespace TinyJSON
   /// <param name="key"></param>
   /// <param name="value"></param>
   /// <returns></returns>
-  void TJValueObject::set_string(const TJCHAR* key, const char* value)
+  void TJValueObject::set_string(const TJCHAR* key, const TJCHAR* value)
   {
     if (nullptr == _members)
     {
