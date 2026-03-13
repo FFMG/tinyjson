@@ -538,9 +538,18 @@ std::string b = obj->get<std::string>("b"); // "hello"
 bool c = obj->get<bool>("c");            // true
 ```
 
-The `get` method on objects also supports two optional parameters:
-- `case_sensitive`: Defaults to `true`.
-- `throw_if_not_found`: Defaults to `false`.
+#### Get values with default
+
+The `get_or<...>(key, default_value)` method allows you to specify a default value if the key is not found or the type is incorrect.
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"({"a": 42})");
+auto obj = dynamic_cast<TJValueObject*>(json);
+
+int a = obj->get_or<int>("a", 0);        // 42
+int b = obj->get_or<int>("b", 100);      // 100 (key not found)
+std::string c = obj->get_or<std::string>("c", "default"); // "default"
+```
 
 For any `TJValue*` (direct value):
 
@@ -648,6 +657,54 @@ if( valueb->get_boolean(true))  //  THROW! "b" is not a boolean
 ```
 
 This can be helpful is you are looking for a certain data type.
+
+### Set values
+
+#### Generic Set values
+
+The generic `set<...>( ... )` method provides a convenient way to set values of various types directly.
+
+For `TJValueObject` (key-based):
+
+```cpp
+TinyJSON::TJValueObject obj;
+
+obj.set("a", 42);                  // set int
+obj.set("b", "hello");             // set string
+obj.set("c", true);                // set boolean
+obj.set("d", 3.14);                // set double
+```
+
+The generic `set` also supports `std::string` and `std::vector` for arrays of numbers or floats:
+
+```cpp
+TinyJSON::TJValueObject obj;
+
+std::string val = "hello";
+obj.set("b", val);                 // set std::string
+
+std::vector<int> ints = {1, 2, 3};
+obj.set("ints", ints);             // set std::vector<int>
+```
+
+#### Strict Set values
+
+You can also use specific set methods:
+
+- set_number(key, value)
+- set_float(key, value)
+- set_string(key, value)
+- set_boolean(key, value)
+- set_null(key)
+
+```cpp
+TinyJSON::TJValueObject obj;
+
+obj.set_number("a", 42);
+obj.set_string("b", "hello");
+obj.set_boolean("c", true);
+obj.set_null("d");
+```
 
 ## Getting Started
 

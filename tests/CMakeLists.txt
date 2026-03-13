@@ -18,6 +18,7 @@ set( Headers
 set( Sources
   "testjsonchecker.cpp"
   "testgenericget.cpp"
+  "testdefaultget.cpp"
   "testtinyjson.cpp"
   "testtinyjsonarrays.cpp"
   "testtinyjsonbooleans.cpp"
@@ -29,11 +30,12 @@ set( Sources
   "testtinyjsonnumbers.cpp"
   "testtinyjsonobjects.cpp"
   "testtinyjsonstrings.cpp"
-  "testtinyjsonvaluesget.cpp"
-  "testtinyjsonversion.cpp"
-  "testtinyjsonwrite.cpp"
-)
-
+  testtinyjsonvaluesget.cpp
+  testtinyjsonversion.cpp
+  testtinyjsonwrite.cpp
+  testtinyjsonset.cpp
+  testtinyjsonoptional.cpp
+  )
 add_executable(
   ${Project}
   ${Headers}
