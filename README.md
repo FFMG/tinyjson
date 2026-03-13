@@ -527,6 +527,19 @@ std::string b = obj->get<std::string>("b"); // "hello"
 bool c = obj->get<bool>("c");            // true
 ```
 
+#### Get values with default
+
+The `get_or<...>(key, default_value)` method allows you to specify a default value if the key is not found or the type is incorrect.
+
+```cpp
+auto json = TinyJSON::TJ::parse(R"({"a": 42})");
+auto obj = dynamic_cast<TJValueObject*>(json);
+
+int a = obj->get_or<int>("a", 0);        // 42
+int b = obj->get_or<int>("b", 100);      // 100 (key not found)
+std::string c = obj->get_or<std::string>("c", "default"); // "default"
+```
+
 The `get` method on objects also supports two optional parameters:
 - `case_sensitive`: Defaults to `true`.
 - `throw_if_not_found`: Defaults to `false`.
