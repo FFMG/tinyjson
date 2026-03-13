@@ -540,10 +540,6 @@ int b = obj->get_or<int>("b", 100);      // 100 (key not found)
 std::string c = obj->get_or<std::string>("c", "default"); // "default"
 ```
 
-The `get` method on objects also supports two optional parameters:
-- `case_sensitive`: Defaults to `true`.
-- `throw_if_not_found`: Defaults to `false`.
-
 For any `TJValue*` (direct value):
 
 ```cpp
