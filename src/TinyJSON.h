@@ -142,6 +142,47 @@ class TJDictionary;
       reset();
     }
 
+    [[nodiscard]] inline bool operator!() const noexcept
+    {
+      if (!has_value())
+      {
+        return true;
+      }
+      return !(value());
+    }
+
+    [[nodiscard]] inline bool operator==(const Optional& other) const noexcept
+    {
+      if (!other.has_value() && !has_value())
+      {
+        return true;
+      }
+      if (!has_value() || !other.has_value())
+      {
+        return false;
+      }
+      return other.value() == value();
+    }
+
+    [[nodiscard]] inline bool operator!=(const Optional& other) const noexcept
+    {
+      return !(other == *this);
+    }
+
+    [[nodiscard]] inline bool operator==(const T& other) const noexcept
+    {
+      if (!has_value())
+      {
+        return false;
+      }
+      return value() == other;
+    }
+
+    [[nodiscard]] inline bool operator!=(const T& other) const noexcept
+    {
+      return !(*this == other);
+    }
+
     Optional& operator=(const Optional& other) noexcept(std::is_nothrow_copy_constructible<T>::value)
     {
       if (this != &other)
@@ -256,6 +297,18 @@ class TJDictionary;
     } _storage;
     bool _has_value;
   };
+
+  template<typename T>
+  inline bool operator==(const T& lhs, const Optional<T>& rhs)
+  {
+    return rhs == lhs;
+  }
+
+  template<typename T>
+  inline bool operator!=(const T& lhs, const Optional<T>& rhs)
+  {
+    return rhs != lhs;
+  }
 
   // the various types of formating.
   enum class formating
