@@ -37,12 +37,13 @@
 //   MINOR version when you add functionality in a backward compatible manner
 //   PATCH version when you make backward compatible bug fixes
 // v0.1.1 - added some add( ... ) and set( ... ) methods
-// v0.1.2 - added a but of get/set( ... ) for values and objects.
+// v0.1.2 - added a bit of get/set( ... ) for values and objects.
 // v0.1.3 - added iterator.
+// v0.1.4 - added copy/move constructors and operators.
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 1;
-static const short TJ_VERSION_PATCH = 3;
-static const char TJ_VERSION_STRING[] = "0.1.3";
+static const short TJ_VERSION_PATCH = 4;
+static const char TJ_VERSION_STRING[] = "0.1.4";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
@@ -436,6 +437,10 @@ class TJDictionary;
 
   public:
     TJValue();
+    TJValue(const TJValue& other);
+    TJValue(TJValue&& other) noexcept;
+    TJValue& operator=(const TJValue& other);
+    TJValue& operator=(TJValue&& other) noexcept;
     virtual ~TJValue();
 
     virtual bool is_object() const;
@@ -629,11 +634,6 @@ class TJDictionary;
     virtual TJValue& internal_at(int index);
 
   private:
-    TJValue(const TJValue&) = delete;
-    TJValue(TJValue&&) = delete;
-    TJValue& operator=(TJValue&&) = delete;
-    TJValue& operator=(const TJValue&) = delete;
-
     mutable TJCHAR* _last_dump;
     void free_last_dump() const;
   };
@@ -712,6 +712,9 @@ class TJDictionary;
   public:
     TJMember(const TJCHAR* string, const TJValue* value);
     TJMember(const TJMember& src);
+    TJMember(TJMember&& src) noexcept;
+    TJMember& operator=(const TJMember& src);
+    TJMember& operator=(TJMember&& src) noexcept;
     virtual ~TJMember();
 
     const TJCHAR* name() const;
@@ -734,10 +737,6 @@ class TJDictionary;
     void move_value(TJValue*& value);
 
   private:
-    TJMember(TJMember&&) = delete;
-    TJMember& operator=(TJMember&&) = delete;
-    TJMember& operator=(const TJMember&) = delete;
-
     TJCHAR* _string;
     TJValue* _value;
     void free_string();
@@ -750,6 +749,10 @@ class TJDictionary;
     friend TJHelper;
   public:
     TJValueObject();
+    TJValueObject(const TJValueObject& other);
+    TJValueObject(TJValueObject&& other) noexcept;
+    TJValueObject& operator=(const TJValueObject& other);
+    TJValueObject& operator=(TJValueObject&& other) noexcept;
     virtual ~TJValueObject();
 
     /// <summary>
@@ -1307,6 +1310,10 @@ class TJDictionary;
     friend TJHelper;
   public:
     TJValueArray();
+    TJValueArray(const TJValueArray& other);
+    TJValueArray(TJValueArray&& other) noexcept;
+    TJValueArray& operator=(const TJValueArray& other);
+    TJValueArray& operator=(TJValueArray&& other) noexcept;
     virtual ~TJValueArray();
 
     /// <summary>
@@ -1445,6 +1452,10 @@ class TJDictionary;
     friend TJHelper;
   public:
     TJValueString(const TJCHAR* value);
+    TJValueString(const TJValueString& other);
+    TJValueString(TJValueString&& other) noexcept;
+    TJValueString& operator=(const TJValueString& other);
+    TJValueString& operator=(TJValueString&& other) noexcept;
     virtual ~TJValueString();
 
     bool is_string() const override;
@@ -1477,6 +1488,10 @@ class TJDictionary;
   {
   public:
     TJValueBoolean(bool is_true);
+    TJValueBoolean(const TJValueBoolean& other);
+    TJValueBoolean(TJValueBoolean&& other) noexcept;
+    TJValueBoolean& operator=(const TJValueBoolean& other);
+    TJValueBoolean& operator=(TJValueBoolean&& other) noexcept;
     virtual ~TJValueBoolean() = default;
 
     bool is_true() const override;
@@ -1491,7 +1506,7 @@ class TJDictionary;
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
-    const bool _is_true;
+    bool _is_true;
   };
 
   // A null JSon
@@ -1499,6 +1514,10 @@ class TJDictionary;
   {
   public:
     TJValueNull();
+    TJValueNull(const TJValueNull& other);
+    TJValueNull(TJValueNull&& other) noexcept;
+    TJValueNull& operator=(const TJValueNull& other);
+    TJValueNull& operator=(TJValueNull&& other) noexcept;
     virtual ~TJValueNull() = default;
 
     bool is_null() const override;
@@ -1516,7 +1535,11 @@ class TJDictionary;
   class TJValueNumber : public TJValue
   {
   protected:
-    TJValueNumber(const bool is_negative);
+    TJValueNumber(bool is_negative);
+    TJValueNumber(const TJValueNumber& other);
+    TJValueNumber(TJValueNumber&& other) noexcept;
+    TJValueNumber& operator=(const TJValueNumber& other);
+    TJValueNumber& operator=(TJValueNumber&& other) noexcept;
     virtual ~TJValueNumber() = default;
 
   public:
@@ -1526,7 +1549,7 @@ class TJDictionary;
     long long get_number() const;
 
   protected:
-    const bool _is_negative;
+    bool _is_negative;
   };
 
   // A number JSon, float or int
@@ -1535,6 +1558,10 @@ class TJDictionary;
   public:
     TJValueNumberInt(const long long& number);
     TJValueNumberInt(const unsigned long long& number, const bool is_negative);
+    TJValueNumberInt(const TJValueNumberInt& other);
+    TJValueNumberInt(TJValueNumberInt&& other) noexcept;
+    TJValueNumberInt& operator=(const TJValueNumberInt& other);
+    TJValueNumberInt& operator=(TJValueNumberInt&& other) noexcept;
     virtual ~TJValueNumberInt() = default;
 
     long long get_number() const;
@@ -1548,7 +1575,7 @@ class TJDictionary;
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
-    const long long _number;
+    long long _number;
   };
 
   // A number JSon, float or int
@@ -1557,6 +1584,10 @@ class TJDictionary;
   public:
     TJValueNumberFloat(long double number);
     TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, bool is_negative);
+    TJValueNumberFloat(const TJValueNumberFloat& other);
+    TJValueNumberFloat(TJValueNumberFloat&& other) noexcept;
+    TJValueNumberFloat& operator=(const TJValueNumberFloat& other);
+    TJValueNumberFloat& operator=(TJValueNumberFloat&& other) noexcept;
     virtual ~TJValueNumberFloat();
 
     long double get_number() const;
@@ -1570,12 +1601,11 @@ class TJDictionary;
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
-  private:
     void make_string_if_needed() const;
     mutable TJCHAR* _string;
-    const unsigned long long _number;
-    const unsigned long long _fraction;
-    const unsigned int _fraction_exponent;
+    unsigned long long _number;
+    unsigned long long _fraction;
+    unsigned int _fraction_exponent;
   };
 
   // A number JSon, float or int
@@ -1583,6 +1613,10 @@ class TJDictionary;
   {
   public:
     TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, const int exponent,bool is_negative);
+    TJValueNumberExponent(const TJValueNumberExponent& other);
+    TJValueNumberExponent(TJValueNumberExponent&& other) noexcept;
+    TJValueNumberExponent& operator=(const TJValueNumberExponent& other);
+    TJValueNumberExponent& operator=(TJValueNumberExponent&& other) noexcept;
     virtual ~TJValueNumberExponent();
 
     long double get_number() const;
@@ -1598,12 +1632,11 @@ class TJDictionary;
   private:
     void make_string_if_needed() const;
     mutable TJCHAR* _string;
-    const unsigned long long _number;
-    const unsigned long long _fraction;
-    const unsigned int _fraction_exponent;
-    const int _exponent;
+    unsigned long long _number;
+    unsigned long long _fraction;
+    unsigned int _fraction_exponent;
+    int _exponent;
   };
-
 
   // user_literals
   inline TJValue* operator ""_tj(const TJCHAR * source, std::size_t)
