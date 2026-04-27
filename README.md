@@ -49,7 +49,7 @@ true
 | object | TJValueObject                                     |
 | array  | TJValueArray                                      |
 | string | TJValueString                                     |
-| number | TJValueNumber (longl long, long double, exponent) |
+| number | TJValueNumber (long long, long double, exponent) |
 | true   | TJValueBoolean (true)                             |
 | false  | TJValueBoolean (false)                            |
 | null   | TJValueNull (nullptr)                             |
@@ -68,9 +68,9 @@ The version is set in the `TinyJSON.h` file.
 
 ```cpp
 static const short TJ_VERSION_MAJOR = 0;
-static const short TJ_VERSION_MINOR = 0;
-static const short TJ_VERSION_PATCH = 1;
-static const char TJ_VERSION_STRING[] = "0.0.1";
+static const short TJ_VERSION_MINOR = 1;
+static const short TJ_VERSION_PATCH = 4;
+static const char TJ_VERSION_STRING[] = "0.1.4";
 ```
 
 ## Options
@@ -105,7 +105,7 @@ catch(TinyJSON::TJParseException ex)
 ### Write Options
 
 * Throw: (`throw_exception:false`) If you want to throw exceptions or simply return false.
-* write_formating: (`write_formating::indented`) The formating we want to write the file with.
+* write_formating: (`write_formating::indented`) The formatting we want to write the file with.
   * none
   * indented
 * Byte order mark: (`byte_order_mark:none`)
@@ -382,7 +382,7 @@ While you can `dump` a string to (re)write a json string you might want to use i
   delete json;
 ```
 
-The formating types are
+The formatting types are
 
 ```cpp
   TinyJSON::formating::indented
@@ -707,8 +707,8 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
 * [x] Automated build
 * [x] Run on linux/gcc/g++ or something other than visual studio.
      `g++ -std=c++11 -Wall -Wextra -Werror -O3 src/tinyJSON.cpp -o a.exe`
-* [] We need to add copy and move constructors to `TJValue` and the derived classes.
-* [] Add Macro(s) explaination like `TJ_INCLUDE_STD_STRING` for example.
+* [x] We need to add copy and move constructors to `TJValue` and the derived classes.
+* [] Add Macro(s) explanation like `TJ_INCLUDE_STD_STRING` for example.
 * [] Add support for JSON5
      <https://json5.org>
   📄 <https://github.com/json5/json5>
