@@ -79,6 +79,7 @@ static const char TJ_VERSION_STRING[] = "0.1.4";
 
 * Depth: (`max_depth:64`) You can set how deep you want to allow the parsing to go.
 * Throw: (`throw_exception:false`) If you want to throw exceptions or simply return null.
+* Strict: (`strict:false`) If true, getter methods (like `get_boolean`, `get_string`, etc.) will throw an exception if the key is not found or the type is incorrect. If false, they will return a default value (e.g., 0, "", false).
 * Specification: (`specification:parse_options::rfc8259`) What specs will the parser be following/enforcing.
   * rfc4627
   * rfc7159
@@ -417,7 +418,7 @@ or
 ```cpp
   auto json = TinyJSON::TJ::parse( "{ \"Hello\" : \"World\" }" );
   auto value = json->get_string("Hello"); //  "World"
-  auto no_value = json->get_string("Life", true, false); //  null
+  auto no_value = json->get_string("Life"); //  ""
 
   delete json;
 ```
@@ -563,100 +564,45 @@ The generic `get` also supports `std::vector` for arrays of numbers or floats:
 ```cpp
 auto json = TinyJSON::TJ::parse(R"({"ints": [1, 2, 3], "floats": [1.1, 2.2]})");
 auto obj = dynamic_cast<TJValueObject*>(json);
-
+```cpp
 auto ints = obj->get<std::vector<int>>("ints");
 auto doubles = obj->get<std::vector<double>>("floats");
-```
->>>>>>> main
-
-```cpp
-auto json = TinyJSON::TJ::parse(R"(
-  {
-    "a": true,
-    "b": 123,
-    "c": 0,
-    "d": 42.2
-  }
-  )"
-);
-
-auto valuea = jobject->try_get_value("a");
-if( valuea->get_boolean())
-{
-  // value a is true
-}
-
-auto valuea = jobject->try_get_value("b");
-if( valueb->get_boolean())
-{
-  // value b is not a boolean but it is non zero
-}
-
 ```
 
 #### Strict Get values
 
-You can get a value from any TJValue*, (as long as the value can actually be converted)
 
-  - get_mumber<signed|
-              unsigned|
-              short|
-              long|
-              int|
-              unsigned int|
-              signed int|
-              unsigned short int|
-              signed short int|
-              long int|
-              signed long int|
-              unsigned long int|
-              long long int|
-              unsigned long long int>()
-  - get_float<long double|double|float>()
+Getter methods on `TJValue` (or through `TJValueObject` keys) can be used to retrieve specific types. By default, these methods are non-strict and return default values if the type is incorrect. By setting `strict: true` in `parse_options`, these methods will throw a `TJParseException` instead.
+
+  - get_number<T>()
+  - get_float<T>()
   - get_string()
   - get_boolean()
-  - get_mumbers<signed|
-              unsigned|
-              short|
-              long|
-              int|
-              unsigned int|
-              signed int|
-              unsigned short int|
-              signed short int|
-              long int|
-              signed long int|
-              unsigned long int|
-              long long int|
-              unsigned long long int>()
-  -get_floats<long double|double|float>()
+  - get_numbers<T>()
+  - get_floats<T>()
 
 ```cpp
+TinyJSON::parse_options options;
+options.strict = true;
+options.throw_exception = true;
+
 auto json = TinyJSON::TJ::parse(R"(
   {
     "a": true,
-    "b": 123,
-    "c": 0,
-    "d": 42.2
+    "b": 123
   }
-  )"
+  )", options
 );
+auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
 
-auto valuea = jobject->try_get_value("a");
-if( valuea->get_boolean())
-{
-  // value a is true
+auto valuea = jobject->get_boolean("a"); // returns true
+
+try {
+    auto valueb = jobject->get_string("b"); // THROW! "b" is a number, not a string
+} catch (const TinyJSON::TJParseException& e) {
+    // Handle error
 }
-
-auto valuea = jobject->try_get_value("b");
-if( valueb->get_boolean(true))  //  THROW! "b" is not a boolean
-{
-  // value b is not a boolean but it is non zero
-}
-
 ```
-
-This can be helpful is you are looking for a certain data type.
 
 ### Set values
 
