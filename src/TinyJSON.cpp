@@ -3499,6 +3499,48 @@ namespace TinyJSON
   {
   }
 
+  TJMember::TJMember(TJMember&& src) noexcept :
+    _string(src._string),
+    _value(src._value)
+  {
+    src._string = nullptr;
+    src._value = nullptr;
+  }
+
+  TJMember& TJMember::operator=(const TJMember& src)
+  {
+    if (this != &src)
+    {
+      free_string();
+      free_value();
+      if (src._string != nullptr)
+      {
+        const auto& length = TJHelper::string_length(src._string);
+        _string = new TJCHAR[length + 1];
+        TJHelper::copy_string(src._string, _string, length);
+      }
+      if (src._value != nullptr)
+      {
+        _value = src._value->clone();
+      }
+    }
+    return *this;
+  }
+
+  TJMember& TJMember::operator=(TJMember&& src) noexcept
+  {
+    if (this != &src)
+    {
+      free_string();
+      free_value();
+      _string = src._string;
+      _value = src._value;
+      src._string = nullptr;
+      src._value = nullptr;
+    }
+    return *this;
+  }
+
   TJMember::TJMember(const TJCHAR* string, const TJValue* value):
     _string(nullptr),
     _value(nullptr)
@@ -3577,12 +3619,44 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue
-  TJValue::TJValue() : 
+  TJValue::TJValue() :
     _last_dump(nullptr)
   {
   }
 
-  TJValue::~TJValue()
+  TJValue::TJValue(const TJValue& other) :
+    _last_dump(nullptr)
+  {
+    (void)other;
+  }
+
+  TJValue::TJValue(TJValue&& other) noexcept :
+    _last_dump(other._last_dump)
+  {
+    other._last_dump = nullptr;
+  }
+
+  TJValue& TJValue::operator=(const TJValue& other)
+  {
+    if (this != &other)
+    {
+      free_last_dump();
+    }
+    return *this;
+  }
+
+  TJValue& TJValue::operator=(TJValue&& other) noexcept
+  {
+    if (this != &other)
+    {
+      free_last_dump();
+      _last_dump = other._last_dump;
+      other._last_dump = nullptr;
+    }
+    return *this;
+  }
+
+  TJValue::~TJValue() 
   {
     free_last_dump();
   }
@@ -3850,9 +3924,56 @@ namespace TinyJSON
     if (value != nullptr)
     {
       const auto& length = TJHelper::string_length(value);
-      _value = new TJCHAR[length+1];
+      _value = new TJCHAR[length + 1];
       TJHelper::copy_string(value, _value, length);
     }
+  }
+
+  TJValueString::TJValueString(const TJValueString& other) :
+    TJValue(other),
+    _value(nullptr)
+  {
+    if (other._value != nullptr)
+    {
+      const auto& length = TJHelper::string_length(other._value);
+      _value = new TJCHAR[length + 1];
+      TJHelper::copy_string(other._value, _value, length);
+    }
+  }
+
+  TJValueString::TJValueString(TJValueString&& other) noexcept :
+    TJValue(std::move(other)),
+    _value(other._value)
+  {
+    other._value = nullptr;
+  }
+
+  TJValueString& TJValueString::operator=(const TJValueString& other)
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(other);
+      free_value();
+      if (other._value != nullptr)
+      {
+        const auto& length = TJHelper::string_length(other._value);
+        _value = new TJCHAR[length + 1];
+        TJHelper::copy_string(other._value, _value, length);
+      }
+    }
+    return *this;
+  }
+
+  TJValueString& TJValueString::operator=(TJValueString&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(std::move(other));
+      free_value();
+      _value = other._value;
+      other._value = nullptr;
+    }
+    return *this;
   }
 
   TJValueString::~TJValueString()
@@ -3874,7 +3995,7 @@ namespace TinyJSON
   /// <returns></returns>
   TJValue* TJValueString::internal_clone() const
   {
-    return new TJValueString(_value);
+    return new TJValueString(*this);
   }
 
   void TJValueString::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
@@ -3970,13 +4091,45 @@ namespace TinyJSON
   {
   }
 
+  TJValueBoolean::TJValueBoolean(const TJValueBoolean& other) :
+    TJValue(other),
+    _is_true(other._is_true)
+  {
+  }
+
+  TJValueBoolean::TJValueBoolean(TJValueBoolean&& other) noexcept :
+    TJValue(std::move(other)),
+    _is_true(other._is_true)
+  {
+  }
+
+  TJValueBoolean& TJValueBoolean::operator=(const TJValueBoolean& other)
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(other);
+      _is_true = other._is_true;
+    }
+    return *this;
+  }
+
+  TJValueBoolean& TJValueBoolean::operator=(TJValueBoolean&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(std::move(other));
+      _is_true = other._is_true;
+    }
+    return *this;
+  }
+
   /// <summary>
   /// Allow each derived class to create a copy of itself.
   /// </summary>
   /// <returns></returns>
   TJValue* TJValueBoolean::internal_clone() const
   {
-    return new TJValueBoolean(_is_true);
+    return new TJValueBoolean(*this);
   }
 
   void TJValueBoolean::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
@@ -4004,13 +4157,41 @@ namespace TinyJSON
   {
   }
 
+  TJValueNull::TJValueNull(const TJValueNull& other) :
+    TJValue(other)
+  {
+  }
+
+  TJValueNull::TJValueNull(TJValueNull&& other) noexcept :
+    TJValue(std::move(other))
+  {
+  }
+
+  TJValueNull& TJValueNull::operator=(const TJValueNull& other)
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(other);
+    }
+    return *this;
+  }
+
+  TJValueNull& TJValueNull::operator=(TJValueNull&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(std::move(other));
+    }
+    return *this;
+  }
+
   /// <summary>
   /// Allow each derived class to create a copy of itself.
   /// </summary>
   /// <returns></returns>
   TJValue* TJValueNull::internal_clone() const
   {
-    return new TJValueNull();
+    return new TJValueNull(*this);
   }
 
   void TJValueNull::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
@@ -4032,6 +4213,75 @@ namespace TinyJSON
   TJValueObject::TJValueObject() :
     _members(nullptr)
   {
+  }
+
+  TJValueObject::TJValueObject(const TJValueObject& other) :
+    TJValue(other),
+    _members(nullptr)
+  {
+    if (other._members != nullptr)
+    {
+      _members = new TJDICTIONARY();
+#if TJ_INCLUDE_STDVECTOR == 1
+      for (const auto& member : *other._members)
+      {
+        _members->push_back(new TJMember(*member));
+      }
+#else
+      auto size = other._members->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& member = other._members->at(i);
+        _members->set(new TJMember(*member));
+      }
+#endif
+    }
+  }
+
+  TJValueObject::TJValueObject(TJValueObject&& other) noexcept :
+    TJValue(std::move(other)),
+    _members(other._members)
+  {
+    other._members = nullptr;
+  }
+
+  TJValueObject& TJValueObject::operator=(const TJValueObject& other)
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(other);
+      free_members();
+      if (other._members != nullptr)
+      {
+        _members = new TJDICTIONARY();
+#if TJ_INCLUDE_STDVECTOR == 1
+        for (const auto& member : *other._members)
+        {
+          _members->push_back(new TJMember(*member));
+        }
+#else
+        auto size = other._members->size();
+        for (unsigned int i = 0; i < size; ++i)
+        {
+          const auto& member = other._members->at(i);
+          _members->set(new TJMember(*member));
+        }
+#endif
+      }
+    }
+    return *this;
+  }
+
+  TJValueObject& TJValueObject::operator=(TJValueObject&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(std::move(other));
+      free_members();
+      _members = other._members;
+      other._members = nullptr;
+    }
+    return *this;
   }
 
   TJValueObject::~TJValueObject()
@@ -4515,6 +4765,75 @@ namespace TinyJSON
   {
   }
 
+  TJValueArray::TJValueArray(const TJValueArray& other) :
+    TJValue(other),
+    _values(nullptr)
+  {
+    if (other._values != nullptr)
+    {
+      _values = new TJLIST();
+#if TJ_INCLUDE_STDVECTOR == 1
+      for (const auto& value : *other._values)
+      {
+        _values->push_back(value->clone());
+      }
+#else
+      auto size = other._values->size();
+      for (unsigned int i = 0; i < size; ++i)
+      {
+        const auto& value = other._values->at(i);
+        _values->add(value->clone());
+      }
+#endif
+    }
+  }
+
+  TJValueArray::TJValueArray(TJValueArray&& other) noexcept :
+    TJValue(std::move(other)),
+    _values(other._values)
+  {
+    other._values = nullptr;
+  }
+
+  TJValueArray& TJValueArray::operator=(const TJValueArray& other)
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(other);
+      free_values();
+      if (other._values != nullptr)
+      {
+        _values = new TJLIST();
+#if TJ_INCLUDE_STDVECTOR == 1
+        for (const auto& value : *other._values)
+        {
+          _values->push_back(value->clone());
+        }
+#else
+        auto size = other._values->size();
+        for (unsigned int i = 0; i < size; ++i)
+        {
+          const auto& value = other._values->at(i);
+          _values->add(value->clone());
+        }
+#endif
+      }
+    }
+    return *this;
+  }
+
+  TJValueArray& TJValueArray::operator=(TJValueArray&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(std::move(other));
+      free_values();
+      _values = other._values;
+      other._values = nullptr;
+    }
+    return *this;
+  }
+
   TJValueArray::~TJValueArray()
   {
     free_values();
@@ -4777,6 +5096,38 @@ namespace TinyJSON
   {
   }
 
+  TJValueNumber::TJValueNumber(const TJValueNumber& other) :
+    TJValue(other),
+    _is_negative(other._is_negative)
+  {
+  }
+
+  TJValueNumber::TJValueNumber(TJValueNumber&& other) noexcept :
+    TJValue(std::move(other)),
+    _is_negative(other._is_negative)
+  {
+  }
+
+  TJValueNumber& TJValueNumber::operator=(const TJValueNumber& other)
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(other);
+      _is_negative = other._is_negative;
+    }
+    return *this;
+  }
+
+  TJValueNumber& TJValueNumber::operator=(TJValueNumber&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValue::operator=(std::move(other));
+      _is_negative = other._is_negative;
+    }
+    return *this;
+  }
+
   bool TJValueNumber::is_number() const
   {
     return true;
@@ -4840,9 +5191,41 @@ namespace TinyJSON
   }
 
   TJValueNumberInt::TJValueNumberInt(const long long& number) :
-    TJValueNumber(number<0),
-    _number(number < 0 ? -1*number : number)
+    TJValueNumber(number < 0),
+    _number(number < 0 ? -1 * static_cast<unsigned long long>(number) : static_cast<unsigned long long>(number))
   {
+  }
+
+  TJValueNumberInt::TJValueNumberInt(const TJValueNumberInt& other) :
+    TJValueNumber(other),
+    _number(other._number)
+  {
+  }
+
+  TJValueNumberInt::TJValueNumberInt(TJValueNumberInt&& other) noexcept :
+    TJValueNumber(std::move(other)),
+    _number(other._number)
+  {
+  }
+
+  TJValueNumberInt& TJValueNumberInt::operator=(const TJValueNumberInt& other)
+  {
+    if (this != &other)
+    {
+      TJValueNumber::operator=(other);
+      _number = other._number;
+    }
+    return *this;
+  }
+
+  TJValueNumberInt& TJValueNumberInt::operator=(TJValueNumberInt&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValueNumber::operator=(std::move(other));
+      _number = other._number;
+    }
+    return *this;
   }
 
   /// <summary>
@@ -4851,7 +5234,7 @@ namespace TinyJSON
   /// <returns></returns>
   TJValue* TJValueNumberInt::internal_clone() const
   {
-    return new TJValueNumberInt(_number, _is_negative);
+    return new TJValueNumberInt(*this);
   }
 
   void TJValueNumberInt::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
@@ -4870,7 +5253,7 @@ namespace TinyJSON
 
   long long TJValueNumberInt::get_number() const
   {
-    return _is_negative ? -1* _number : _number;
+    return _is_negative ? -1 * static_cast<long long>(_number) : static_cast<long long>(_number);
   }
 
   ///////////////////////////////////////
@@ -4885,12 +5268,78 @@ namespace TinyJSON
   }
 
   TJValueNumberFloat::TJValueNumberFloat(long double number) :
-    TJValueNumber(number<0),
+    TJValueNumber(number < 0.0L),
     _string(nullptr),
     _number(TJHelper::get_whole_number_from_float(number)),
     _fraction(TJHelper::get_fraction_from_float(number)),
     _fraction_exponent(TJHelper::get_unsigned_exponent_from_float(number))
   {
+  }
+
+  TJValueNumberFloat::TJValueNumberFloat(const TJValueNumberFloat& other) :
+    TJValueNumber(other),
+    _string(nullptr),
+    _number(other._number),
+    _fraction(other._fraction),
+    _fraction_exponent(other._fraction_exponent)
+  {
+    if (other._string != nullptr)
+    {
+      const auto& length = TJHelper::string_length(other._string);
+      _string = new TJCHAR[length + 1];
+      TJHelper::copy_string(other._string, _string, length);
+    }
+  }
+
+  TJValueNumberFloat::TJValueNumberFloat(TJValueNumberFloat&& other) noexcept :
+    TJValueNumber(std::move(other)),
+    _string(other._string),
+    _number(other._number),
+    _fraction(other._fraction),
+    _fraction_exponent(other._fraction_exponent)
+  {
+    other._string = nullptr;
+  }
+
+  TJValueNumberFloat& TJValueNumberFloat::operator=(const TJValueNumberFloat& other)
+  {
+    if (this != &other)
+    {
+      TJValueNumber::operator=(other);
+      if (_string != nullptr)
+      {
+        delete[] _string;
+        _string = nullptr;
+      }
+      _number = other._number;
+      _fraction = other._fraction;
+      _fraction_exponent = other._fraction_exponent;
+      if (other._string != nullptr)
+      {
+        const auto& length = TJHelper::string_length(other._string);
+        _string = new TJCHAR[length + 1];
+        TJHelper::copy_string(other._string, _string, length);
+      }
+    }
+    return *this;
+  }
+
+  TJValueNumberFloat& TJValueNumberFloat::operator=(TJValueNumberFloat&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValueNumber::operator=(std::move(other));
+      if (_string != nullptr)
+      {
+        delete[] _string;
+      }
+      _string = other._string;
+      _number = other._number;
+      _fraction = other._fraction;
+      _fraction_exponent = other._fraction_exponent;
+      other._string = nullptr;
+    }
+    return *this;
   }
 
   TJValueNumberFloat::~TJValueNumberFloat()
@@ -4917,7 +5366,7 @@ namespace TinyJSON
   /// <returns></returns>
   TJValue* TJValueNumberFloat::internal_clone() const
   {
-    return new TJValueNumberFloat(_number, _fraction, _fraction_exponent, _is_negative);
+    return new TJValueNumberFloat(*this);
   }
 
   void TJValueNumberFloat::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
@@ -4956,6 +5405,76 @@ namespace TinyJSON
     _fraction_exponent(fraction_exponent),
     _exponent(exponent)    
   {
+  }
+
+  TJValueNumberExponent::TJValueNumberExponent(const TJValueNumberExponent& other) :
+    TJValueNumber(other),
+    _string(nullptr),
+    _number(other._number),
+    _fraction(other._fraction),
+    _fraction_exponent(other._fraction_exponent),
+    _exponent(other._exponent)
+  {
+    if (other._string != nullptr)
+    {
+      const auto& length = TJHelper::string_length(other._string);
+      _string = new TJCHAR[length + 1];
+      TJHelper::copy_string(other._string, _string, length);
+    }
+  }
+
+  TJValueNumberExponent::TJValueNumberExponent(TJValueNumberExponent&& other) noexcept :
+    TJValueNumber(std::move(other)),
+    _string(other._string),
+    _number(other._number),
+    _fraction(other._fraction),
+    _fraction_exponent(other._fraction_exponent),
+    _exponent(other._exponent)
+  {
+    other._string = nullptr;
+  }
+
+  TJValueNumberExponent& TJValueNumberExponent::operator=(const TJValueNumberExponent& other)
+  {
+    if (this != &other)
+    {
+      TJValueNumber::operator=(other);
+      if (_string != nullptr)
+      {
+        delete[] _string;
+        _string = nullptr;
+      }
+      _number = other._number;
+      _fraction = other._fraction;
+      _fraction_exponent = other._fraction_exponent;
+      _exponent = other._exponent;
+      if (other._string != nullptr)
+      {
+        const auto& length = TJHelper::string_length(other._string);
+        _string = new TJCHAR[length + 1];
+        TJHelper::copy_string(other._string, _string, length);
+      }
+    }
+    return *this;
+  }
+
+  TJValueNumberExponent& TJValueNumberExponent::operator=(TJValueNumberExponent&& other) noexcept
+  {
+    if (this != &other)
+    {
+      TJValueNumber::operator=(std::move(other));
+      if (_string != nullptr)
+      {
+        delete[] _string;
+      }
+      _string = other._string;
+      _number = other._number;
+      _fraction = other._fraction;
+      _fraction_exponent = other._fraction_exponent;
+      _exponent = other._exponent;
+      other._string = nullptr;
+    }
+    return *this;
   }
 
   TJValueNumberExponent::~TJValueNumberExponent()
@@ -5000,7 +5519,7 @@ namespace TinyJSON
   /// <returns></returns>
   TJValue* TJValueNumberExponent::internal_clone() const
   {
-    return new TJValueNumberExponent(_number, _fraction, _fraction_exponent, _exponent, _is_negative);
+    return new TJValueNumberExponent(*this);
   }
 
   void TJValueNumberExponent::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
