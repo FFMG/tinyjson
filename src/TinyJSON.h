@@ -41,10 +41,11 @@
 // v0.1.2 - added a bit of get/set( ... ) for values and objects.
 // v0.1.3 - added iterator.
 // v0.1.4 - added copy/move constructors and operators.
+// v0.2.0 - Breaking change: get_* methods no longer take throw parameters, use parse_options::strict instead.
 static const short TJ_VERSION_MAJOR = 0;
-static const short TJ_VERSION_MINOR = 1;
-static const short TJ_VERSION_PATCH = 4;
-static const char TJ_VERSION_STRING[] = "0.1.4";
+static const short TJ_VERSION_MINOR = 2;
+static const short TJ_VERSION_PATCH = 0;
+static const char TJ_VERSION_STRING[] = "0.2.0";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
