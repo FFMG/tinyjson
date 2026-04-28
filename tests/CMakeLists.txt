@@ -36,6 +36,7 @@ set( Sources
   testtinyjsonwrite.cpp
   testtinyjsonset.cpp
   testtinyjsonoptional.cpp
+  testduplicatekeys.cpp
   )
 add_executable(
   ${Project}

@@ -665,7 +665,7 @@ namespace TinyJSON
     /// set a value in our dictionary, if the value exists, (by name)
     /// we will replace the old value with the new value.
     /// </summary>
-    void set(TJMember* value)
+    void set(TJMember* value, const parse_options& options)
     {
       const TJCHAR* key = value->name();
       if (nullptr == _values)
@@ -678,6 +678,7 @@ namespace TinyJSON
       auto binary_search_result_cs = binary_search(key, true);
       if (true == binary_search_result_cs._was_found)
       {
+        options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
         replace_dictionaries_data(value, binary_search_result_cs._dictionary_index);
         return;
       }
@@ -2879,7 +2880,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="member"></param>
     /// <param name="members"></param>
-    static void move_member_to_members(TJMember* member, TJDICTIONARY*& members, const parse_options& options = {})
+    static void move_member_to_members(TJMember* member, TJDICTIONARY*& members, const parse_options& options)
     {
       if (nullptr == members)
       {
@@ -2894,6 +2895,7 @@ namespace TinyJSON
           });
         if (current != members->end())
         {
+          options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
           delete* current;
           *current = member;
           return;
@@ -2901,7 +2903,7 @@ namespace TinyJSON
       }
       members->push_back(member);
 #else
-      members->set(member);
+      members->set(member, options);
 #endif
     }
 
@@ -4325,7 +4327,7 @@ namespace TinyJSON
       for (unsigned int i = 0; i < size; ++i)
       {
         const auto& member = other._members->at(i);
-        _members->set(new TJMember(*member));
+        _members->set(new TJMember(*member), _parse_options);
       }
 #endif
     }
@@ -4357,7 +4359,7 @@ namespace TinyJSON
         for (unsigned int i = 0; i < size; ++i)
         {
           const auto& member = other._members->at(i);
-          _members->set(new TJMember(*member));
+          _members->set(new TJMember(*member), _parse_options);
         }
 #endif
       }
@@ -4674,7 +4676,7 @@ namespace TinyJSON
       for(unsigned int i = 0; i < size; ++i)
       {
         const auto& member = _members->at(i);
-        members->set(new TJMember(*member));
+        members->set(new TJMember(*member), _parse_options);
       }
 #endif
       object->_members = members;
