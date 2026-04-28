@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <cctype>
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
@@ -1096,10 +1097,18 @@ namespace TinyJSON
     {
       if (true == case_sensitive)
       {
-        return strcmp(s1, s2);
+        while (*s1 == *s2)
+        {
+          if (*s1++ == TJ_NULL_TERMINATOR)
+          {
+            return 0;
+          }
+          ++s2;
+        }
+        return (*s1 < *s2) ? -1 : 1;
       }
 
-      while (tolower(*s1) == tolower(*s2))
+      while (tolower(static_cast<unsigned char>(*s1)) == tolower(static_cast<unsigned char>(*s2)))
       {
         if (*s1++ == TJ_NULL_TERMINATOR)
         {
@@ -1107,7 +1116,7 @@ namespace TinyJSON
         }
         ++s2;
       }
-      return tolower(*s1) - tolower(*s2);
+      return tolower(static_cast<unsigned char>(*s1)) - tolower(static_cast<unsigned char>(*s2));
     }
 
     /// <summary>
@@ -1699,10 +1708,18 @@ namespace TinyJSON
     {
       if (true == case_sensitive)
       {
-        return strcmp(s1, s2);
+        while (*s1 == *s2)
+        {
+          if (*s1++ == TJ_NULL_TERMINATOR)
+          {
+            return 0;
+          }
+          ++s2;
+        }
+        return (*s1 < *s2) ? -1 : 1;
       }
 
-      while (tolower(*s1) == tolower(*s2))
+      while (tolower(static_cast<unsigned char>(*s1)) == tolower(static_cast<unsigned char>(*s2)))
       {
         if (*s1++ == TJ_NULL_TERMINATOR)
         {
@@ -1710,7 +1727,7 @@ namespace TinyJSON
         }
         ++s2;
       }
-      return tolower(*s1) - tolower(*s2);
+      return tolower(static_cast<unsigned char>(*s1)) - tolower(static_cast<unsigned char>(*s2));
     }
 
     /// <summary>
@@ -1881,13 +1898,13 @@ namespace TinyJSON
       }
 
       // what we want to add
-      auto length = static_cast<int>(strlen(string_to_add));
-      int total_length = static_cast<int>(length + sizeof(TJCHAR));//  we need one extra for the null char
+      auto length = static_cast<int>(string_length(string_to_add));
+      int total_length = static_cast<int>(length + 1);//  we need one extra for the null char
       if (buffer_pos + total_length >= buffer_max_length)
       {
         buffer_max_length = resize_string(buffer, buffer_max_length, buffer_pos+total_length);
       }
-      memcpy(buffer + buffer_pos, string_to_add, length);
+      memcpy(buffer + buffer_pos, string_to_add, length * sizeof(TJCHAR));
       buffer[buffer_pos+length] = TJ_NULL_TERMINATOR;
       buffer_pos += length;
     }
@@ -3474,7 +3491,8 @@ namespace TinyJSON
       }
     }
 
-    outFile.write(json, strlen(json));
+    auto length = TJHelper::string_length(json);
+    outFile.write((const char*)json, length * sizeof(TJCHAR));
 
     if (!outFile) 
     {
