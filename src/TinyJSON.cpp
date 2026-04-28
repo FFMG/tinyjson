@@ -580,15 +580,16 @@ namespace TinyJSON
       // then we have to make sure that we get the correct one.
       auto binary_search_result_ci = binary_search(key, false);
       auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
-      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_cs[dictionary_index_ci]._value_index : -1;
+      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_ci[dictionary_index_ci]._value_index : -1;
 
       // if we have no indexes then we have noting to pop.
       if (value_index_cs == -1)
       {
-        TJASSERT(value_index_ci == -1); // how can it be???
-                                        // surely if we do not have one we do not have the other 
         return false;
       }
+
+      // surely if we have one we must have the other.
+      TJASSERT(value_index_ci != -1);
 
       // if both indexes are the same, then we can just remove them.
       if (value_index_cs == value_index_ci)
