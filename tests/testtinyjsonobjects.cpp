@@ -660,10 +660,13 @@ TEST(TestObjects, GetFloatFromObjectThatIsBoolean)
 
 TEST(TestObjects, GetFloatFromObjectCaseIsIncorrect)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_float("a", 123.4);
 
-  ASSERT_ANY_THROW({auto f = object->get_float("A", true, true); });
+  ASSERT_ANY_THROW({auto f = object->get_float("A", true); });
   // We expect an exception here because the case is incorrect and we asked to throw.
   delete object;
 }
@@ -674,7 +677,7 @@ TEST(TestObjects, GetFloatFromObjectCaseIsIncorrectButDontThrow)
   object->set_float("a", 123.4);
 
   ASSERT_NO_THROW({ 
-    auto f = object->get_float("A", true, false); 
+    auto f = object->get_float("A", true); 
     ASSERT_DOUBLE_EQ(0.0, f);
     });
   delete object;
@@ -686,7 +689,7 @@ TEST(TestObjects, GetFloatFromObjectCaseIsIncorrectButWeDontCare)
   object->set_float("a", 123.4);
 
   ASSERT_NO_THROW({
-    auto f = object->get_float("A", true, false);
+    auto f = object->get_float("A", true);
     ASSERT_DOUBLE_EQ(0.0, f);
     });
 
@@ -695,11 +698,14 @@ TEST(TestObjects, GetFloatFromObjectCaseIsIncorrectButWeDontCare)
 
 TEST(TestObjects, GetFloatFromObjectThatIsAStringNoThrow)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_string("a", "not a number");
 
   ASSERT_ANY_THROW({
-    auto f = object->get_float("a", false, false);
+    auto f = object->get_float("a", false);
     });
 
   delete object;
@@ -707,11 +713,14 @@ TEST(TestObjects, GetFloatFromObjectThatIsAStringNoThrow)
 
 TEST(TestObjects, GetFloatFromObjectThatIsAStringThrow)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_string("a", "not a number");
 
   ASSERT_ANY_THROW({
-    auto f = object->get_float("a", false, true);
+    auto f = object->get_float("a", false);
     });
 
   delete object;
@@ -756,10 +765,13 @@ TEST(TestObjects, GetNumberFromObjectThatIsBoolean)
 
 TEST(TestObjects, GetNumberFromObjectCaseIsIncorrect)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_number("a", 123);
 
-  ASSERT_ANY_THROW({ auto f = object->get_number("A", true, true); });
+  ASSERT_ANY_THROW({ auto f = object->get_number("A", true); });
   // We expect an exception here because the case is incorrect and we asked to throw.
   delete object;
 }
@@ -770,7 +782,7 @@ TEST(TestObjects, GetNumberFromObjectCaseIsIncorrectButDontThrow)
   object->set_number("a", 123.4);
 
   ASSERT_NO_THROW({
-    auto n = object->get_number("A", true, false);
+    auto n = object->get_number("A", true);
     ASSERT_EQ(0, n);
     });
   delete object;
@@ -782,7 +794,7 @@ TEST(TestObjects, GetNumberFromObjectCaseIsIncorrectButWeDontCare)
   object->set_number("a", 123);
 
   ASSERT_NO_THROW({
-    auto n = object->get_number("A", true, false);
+    auto n = object->get_number("A", true);
     ASSERT_EQ(0, n);
     });
 
@@ -791,11 +803,14 @@ TEST(TestObjects, GetNumberFromObjectCaseIsIncorrectButWeDontCare)
 
 TEST(TestObjects, GetNumberFromObjectThatIsAStringNoThrow)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_string("a", "not a number");
 
   ASSERT_ANY_THROW({
-    auto n = object->get_number("a", false, false);
+    auto n = object->get_number("a", false);
     });
 
   delete object;
@@ -803,11 +818,14 @@ TEST(TestObjects, GetNumberFromObjectThatIsAStringNoThrow)
 
 TEST(TestObjects, GetNumberFromObjectThatIsAStringThrow)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_string("a", "not a number");
 
   ASSERT_ANY_THROW({
-    auto n = object->get_number("a", false, true);
+    auto n = object->get_number("a", false);
     });
 
   delete object;
@@ -858,10 +876,13 @@ TEST(TestObjects, GetBooleanFromObjectThatIsFloat)
 
 TEST(TestObjects, GetBooleanFromObjectCaseIsIncorrect)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_boolean("a", true);
 
-  ASSERT_ANY_THROW({ auto b = object->get_boolean("A", true, true); });
+  ASSERT_ANY_THROW({ auto b = object->get_boolean("A", true); });
   // We expect an exception here because the case is incorrect and we asked to throw.
   delete object;
 }
@@ -872,7 +893,7 @@ TEST(TestObjects, GetBooleanFromObjectCaseIsIncorrectButDontThrow)
   object->set_boolean("a", true);
 
   ASSERT_NO_THROW({
-    auto b = object->get_boolean("A", true, false);
+    auto b = object->get_boolean("A", true);
     ASSERT_FALSE(b);
     });
   delete object;
@@ -884,7 +905,7 @@ TEST(TestObjects, GetBooleanFromObjectCaseIsIncorrectButWeDontCare)
   object->set_boolean("a", true);
 
   ASSERT_NO_THROW({
-    auto b = object->get_boolean("A", true, false);
+    auto b = object->get_boolean("A", true);
     ASSERT_FALSE(b);
     });
 
@@ -893,11 +914,14 @@ TEST(TestObjects, GetBooleanFromObjectCaseIsIncorrectButWeDontCare)
 
 TEST(TestObjects, GetBooleanFromObjectThatIsAStringNoThrow)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_string("a", "not a number");
 
   ASSERT_ANY_THROW({
-    auto b = object->get_boolean("a", false, false);  //  strings are not supported.
+    auto b = object->get_boolean("a", false);  //  strings are not supported.
     });
 
   delete object;
@@ -909,7 +933,7 @@ TEST(TestObjects, GetBooleanFromObjectNullIsFalse)
   object->set_null("a");
 
   ASSERT_NO_THROW({
-    auto b = object->get_boolean("a", false, false);
+    auto b = object->get_boolean("a", false);
     ASSERT_FALSE(b);
     });
 
@@ -938,7 +962,7 @@ TEST(TestObjects, GetFloatsFromObjectCaseIsincorrectButWeDontCare)
 
   ASSERT_NO_THROW(
     {
-    auto fs = object->get_floats("A", true, false);
+    auto fs = object->get_floats("A", true);
     ASSERT_TRUE(fs.size() == 0);
     });
   delete object;
@@ -946,12 +970,15 @@ TEST(TestObjects, GetFloatsFromObjectCaseIsincorrectButWeDontCare)
 
 TEST(TestObjects, GetFloatsFromObjectCaseIsincorrectWeThrow)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_floats("a", { 123.25, 42.7 });
 
   ASSERT_ANY_THROW(
     {
-    auto fs = object->get_floats("A", true, true);
+    auto fs = object->get_floats("A", true);
     });
   delete object;
 }
@@ -1012,7 +1039,7 @@ TEST(TestObjects, GetNumbersFromObjectCaseIsincorrectButWeDontCare)
 
   ASSERT_NO_THROW(
     {
-    auto fs = object->get_numbers("A", true, false);
+    auto fs = object->get_numbers("A", true);
     ASSERT_TRUE(fs.size() == 0);
     });
   delete object;
@@ -1020,12 +1047,15 @@ TEST(TestObjects, GetNumbersFromObjectCaseIsincorrectButWeDontCare)
 
 TEST(TestObjects, GetNumbersFromObjectCaseIsincorrectWeThrow)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_numbers("a", { 123, 42 });
 
   ASSERT_ANY_THROW(
     {
-    auto fs = object->get_numbers("A", true, true);
+    auto fs = object->get_numbers("A", true);
     });
   delete object;
 }
@@ -1080,11 +1110,14 @@ TEST(TestObjects, GetStringFromObjectCaseInsensitive)
 
 TEST(TestObjects, GetStringFromObjectCaseSensitive)
 {
-  auto object = new TinyJSON::TJValueObject();
+  TinyJSON::parse_options options;
+  options.strict = true;
+  options.throw_exception = true;
+  auto object = new TinyJSON::TJValueObject(options);
   object->set_null("a");
 
   ASSERT_ANY_THROW({
-    auto b = object->get_string("A", true, true);
+    auto b = object->get_string("A", true);
     });
 
   delete object;
@@ -1096,7 +1129,7 @@ TEST(TestObjects, GetStringFromObjectCaseSensitiveNoThrow)
   object->set_null("a");
 
   ASSERT_NO_THROW({
-    auto b = object->get_string("A", true, false);
+    auto b = object->get_string("A", true);
     ASSERT_STRCASEEQ("", b);
     });
 

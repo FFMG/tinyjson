@@ -196,13 +196,20 @@ namespace TinyJSON
       }
     }
 
+    void assign_exception_message_and_throw(const char* parse_exception_message)
+    {
+      assign_exception_message(parse_exception_message);
+      throw_if_exception();
+    }
+
     void throw_if_exception()
     {
-      if (!_options.throw_exception)
+      if (!has_exception_message())
       {
         return;
       }
-      if (!has_exception_message())
+      _options.callback_function(parse_options::message_type::fatal, _exception_message);
+      if (!_options.throw_exception)
       {
         return;
       }
@@ -230,7 +237,7 @@ namespace TinyJSON
     }
 
     char* _exception_message;
-    const parse_options& _options;
+    parse_options _options;
     unsigned int _depth;
   };
 
@@ -658,7 +665,7 @@ namespace TinyJSON
     /// set a value in our dictionary, if the value exists, (by name)
     /// we will replace the old value with the new value.
     /// </summary>
-    void set(TJMember* value)
+    void set(TJMember* value, const parse_options& options)
     {
       const TJCHAR* key = value->name();
       if (nullptr == _values)
@@ -671,6 +678,7 @@ namespace TinyJSON
       auto binary_search_result_cs = binary_search(key, true);
       if (true == binary_search_result_cs._was_found)
       {
+        options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
         replace_dictionaries_data(value, binary_search_result_cs._dictionary_index);
         return;
       }
@@ -2111,7 +2119,7 @@ namespace TinyJSON
       return false;
     }
 
-    static TJValue* try_continue_read_true(const TJCHAR*& p)
+    static TJValue* try_continue_read_true(const TJCHAR*& p, ParseResult& parse_result)
     {
       if (*(p) != 'r')
       {
@@ -2129,10 +2137,10 @@ namespace TinyJSON
       p += 3;
 
       // all good.
-      return new TJValueBoolean(true);
+      return new TJValueBoolean(true, parse_result.options());
     }
 
-    static TJValue* try_continue_read_false(const TJCHAR*& p)
+    static TJValue* try_continue_read_false(const TJCHAR*& p, ParseResult& parse_result)
     {
       if (*(p) != 'a')
       {
@@ -2154,10 +2162,10 @@ namespace TinyJSON
       p += 4;
 
       // all good.
-      return new TJValueBoolean(false);
+      return new TJValueBoolean(false, parse_result.options());
     }
 
-    static TJValue* try_continue_read_null(const TJCHAR*& p)
+    static TJValue* try_continue_read_null(const TJCHAR*& p, ParseResult& parse_result)
     {
       if (*(p) != 'u')
       {
@@ -2175,10 +2183,10 @@ namespace TinyJSON
       p += 3;
 
       // all good.
-      return new TJValueNull();
+      return new TJValueNull(parse_result.options());
     }
 
-    static TJValue* try_create_number_from_float(long double value)
+    static TJValue* try_create_number_from_float(long double value, const parse_options& options = {})
     {
       auto is_negative = false;
       if (value < 0)
@@ -2204,9 +2212,9 @@ namespace TinyJSON
       long long fraction = static_cast<long long>(scaled_frac);
       if (fraction == 0)
       {
-        return new TJValueNumberInt(is_negative ? -1 * whole : whole);
+        return new TJValueNumberInt(is_negative ? -1 * whole : whole, options);
       }
-      return new TJValueNumberFloat(whole, fraction, decimal_digits, is_negative);
+      return new TJValueNumberFloat(whole, fraction, decimal_digits, is_negative, options);
     }
 
     static unsigned int get_unsigned_exponent_from_float(long double value)
@@ -2254,14 +2262,14 @@ namespace TinyJSON
       return static_cast<unsigned long long>(int_part);
     }
 
-    static TJValue* try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent)
+    static TJValue* try_create_number_from_parts_no_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const parse_options& options = {})
     {
       if (unsigned_fraction == 0)
       {
         // zero is a positive number
-        return new TJValueNumberInt(unsigned_whole_number, unsigned_whole_number == 0 ? false : is_negative);
+        return new TJValueNumberInt(unsigned_whole_number, unsigned_whole_number == 0 ? false : is_negative, options);
       }
-      return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, fraction_exponent, is_negative);
+      return new TJValueNumberFloat(unsigned_whole_number, unsigned_fraction, fraction_exponent, is_negative, options);
     }
 
     static unsigned long long shift_number_left(const unsigned long long source, const unsigned int exponent)
@@ -2346,7 +2354,7 @@ namespace TinyJSON
       return shifted_unsigned_fraction;
     }
 
-    static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
+    static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
     {
       if (exponent >= fraction_exponent)
       {
@@ -2363,14 +2371,14 @@ namespace TinyJSON
         {
           if (shifted_unsigned_fraction == 0)
           {
-            return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent), is_negative);
+            return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent), is_negative, options);
           }
 
           return new TJValueNumberFloat(
             shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent),
             shifted_unsigned_fraction,
             shifted_fraction_exponent,
-            is_negative);
+            is_negative, options);
         }
 
         // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
@@ -2385,14 +2393,14 @@ namespace TinyJSON
       {
         // the number cannot be an int as it would mean that both
         // the whole number and the fraction are zer0
-        return new TJValueNumberFloat(0ull, unsigned_fraction, shifted_fraction_exponent, is_negative);
+        return new TJValueNumberFloat(0ull, unsigned_fraction, shifted_fraction_exponent, is_negative, options);
       }
 
       // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
       return nullptr;
     }
 
-    static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
+    static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
     {
       const auto number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
 
@@ -2409,7 +2417,7 @@ namespace TinyJSON
         // then shift it again with the rest of the exponent
         shifted_unsigned_whole_number = shift_number_left(shifted_unsigned_whole_number, exponent - fraction_exponent);
 
-        return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
+        return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative, options);
       }
 
       if (fraction_exponent > exponent && (number_of_digit_whole + exponent) <= TJ_MAX_NUMBER_OF_DIGGITS)
@@ -2425,7 +2433,7 @@ namespace TinyJSON
 
         // as we sifted the fraction by the number of exponent
         // then the size of the fraction is smaller by the exponent.
-        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_unsigned_fraction_exponent, is_negative);
+        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_unsigned_fraction_exponent, is_negative, options);
       }
 
       // case 2:
@@ -2440,7 +2448,7 @@ namespace TinyJSON
       //  But the fraction will shift one way or the other.
       if (unsigned_whole_number == 0)
       {
-        return try_create_number_from_parts_positive_exponent_no_whole_number(is_negative, unsigned_fraction, fraction_exponent, exponent);
+        return try_create_number_from_parts_positive_exponent_no_whole_number(is_negative, unsigned_fraction, fraction_exponent, exponent, options);
       }
 
       // case 2b:
@@ -2462,10 +2470,10 @@ namespace TinyJSON
         shifted_unsigned_fraction,
         (shifted_unsigned_whole_number_exponent + fraction_exponent),
         shifted_exponent,
-        is_negative);
+        is_negative, options);
     }
 
-    static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
+    static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
     {
       // if the number is something like 123.456 with e=2
       // then the number will become 12345.6 e=0
@@ -2494,11 +2502,11 @@ namespace TinyJSON
 
         if (shifted_unsigned_fraction == 0)
         {
-          return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative);
+          return new TJValueNumberInt(shifted_unsigned_whole_number, is_negative, options);
         }
 
         const auto& shifted_fraction_exponent = fraction_exponent + exponent;
-        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_fraction_exponent, is_negative);
+        return new TJValueNumberFloat(shifted_unsigned_whole_number, shifted_unsigned_fraction, shifted_fraction_exponent, is_negative, options);
       }
 
       // case 2:
@@ -2513,7 +2521,7 @@ namespace TinyJSON
       //  But the fraction will shift one way or the other.
       if (unsigned_whole_number == 0)
       {
-        return try_create_number_from_parts_negative_exponent_no_whole_number(is_negative, unsigned_fraction, fraction_exponent, exponent);
+        return try_create_number_from_parts_negative_exponent_no_whole_number(is_negative, unsigned_fraction, fraction_exponent, exponent, options);
       }
 
       // case 2b:
@@ -2536,10 +2544,10 @@ namespace TinyJSON
         shifted_unsigned_fraction,
         (shifted_unsigned_whole_number_exponent + fraction_exponent),
         -1 * shifted_exponent,
-        is_negative);
+        is_negative, options);
     }
 
-    static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent)
+    static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
     {
       //
       // remember that this is a negative exponent ...
@@ -2560,13 +2568,13 @@ namespace TinyJSON
       {
         if (shifted_unsigned_fraction == 0)
         {
-          return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent), is_negative);
+          return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent), is_negative, options);
         }
         return new TJValueNumberFloat(
           shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent),
           shifted_unsigned_fraction,
           shifted_unsigned_fraction_exponent,
-          is_negative);
+          is_negative, options);
       }
 
       // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
@@ -2575,27 +2583,27 @@ namespace TinyJSON
         shifted_unsigned_fraction,
         shifted_unsigned_fraction_exponent,
         -1 * actual_shifted_fraction_exponent,
-        is_negative);
+        is_negative, options);
     }
 
-    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const int exponent)
+    static TJValue* try_create_number_from_parts(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const int exponent, const parse_options& options = {})
     {
       // no exponent number is int or float
       if (exponent == 0)
       {
-        return try_create_number_from_parts_no_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent);
+        return try_create_number_from_parts_no_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, options);
       }
 
       // positive exponent.
       if (exponent > 0)
       {
-        return try_create_number_from_parts_positive_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent);
+        return try_create_number_from_parts_positive_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent, options);
       }
 
       // the exponent is negative, so we need to either shift the whole number and the fraction
       // but we have to be careful how it is shifted so we do not overflow one way or another.
       const auto& positive_exponent = -1 * exponent;
-      return try_create_number_from_parts_negative_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, positive_exponent);
+      return try_create_number_from_parts_negative_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, positive_exponent, options);
     }
 
     /// <summary>
@@ -2862,7 +2870,7 @@ namespace TinyJSON
           exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
         }
       }
-      return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent);
+      return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent, parse_result.options());
     }
 
     /// <summary>
@@ -2872,7 +2880,7 @@ namespace TinyJSON
     /// </summary>
     /// <param name="member"></param>
     /// <param name="members"></param>
-    static void move_member_to_members(TJMember* member, TJDICTIONARY*& members)
+    static void move_member_to_members(TJMember* member, TJDICTIONARY*& members, const parse_options& options)
     {
       if (nullptr == members)
       {
@@ -2887,6 +2895,7 @@ namespace TinyJSON
           });
         if (current != members->end())
         {
+          options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
           delete* current;
           *current = member;
           return;
@@ -2894,7 +2903,7 @@ namespace TinyJSON
       }
       members->push_back(member);
 #else
-      members->set(member);
+      members->set(member, options);
 #endif
     }
 
@@ -2940,7 +2949,7 @@ namespace TinyJSON
 
           // we are done, we found it.
           // we give the ownership of the members over.
-          return TJValueObject::move(members);
+          return TJValueObject::move(members, parse_result.options());
 
         TJ_CASE_START_STRING
         {
@@ -2972,7 +2981,7 @@ namespace TinyJSON
           }
 
           found_comma = false;
-          move_member_to_members(member, members);
+          move_member_to_members(member, members, parse_result.options());
           
           after_string = true;
         }
@@ -3048,7 +3057,7 @@ namespace TinyJSON
 
           // we are done, we found it.
           // we give the ownership of the members over.
-          return TJValueArray::move(values);
+          return TJValueArray::move(values, parse_result.options());
 
         TJ_CASE_COMMA
           if (waiting_for_a_value)
@@ -3123,12 +3132,12 @@ namespace TinyJSON
 
           // whave read the string
           // no need to try and move further forward.
-          return TJValueString::move(string_value);
+          return TJValueString::move(string_value, parse_result.options());
         }
 
         case 't':
           {
-            auto true_value = try_continue_read_true(++p);
+            auto true_value = try_continue_read_true(++p, parse_result);
             if (nullptr == true_value)
             {
               //  ERROR could not read the word 'true'
@@ -3140,7 +3149,7 @@ namespace TinyJSON
 
         case 'f':
         {
-          auto false_value = try_continue_read_false(++p);
+          auto false_value = try_continue_read_false(++p, parse_result);
           if (nullptr == false_value)
           {
             //  ERROR: could not read the word 'false'
@@ -3152,7 +3161,7 @@ namespace TinyJSON
 
         case 'n':
         {
-          auto null_value = try_continue_read_null(++p);
+          auto null_value = try_continue_read_null(++p, parse_result);
           if (nullptr == null_value)
           {
             //  ERROR: could not read the word 'null'
@@ -3240,7 +3249,7 @@ namespace TinyJSON
         //  ERROR: Could not read the value, the error was logged.
         return nullptr;
       }
-      return TJMember::move(string_value, value);
+      return TJMember::move(string_value, value, parse_result.options());
     }
 
     /// <summary>
@@ -3515,13 +3524,14 @@ namespace TinyJSON
   ///////////////////////////////////////
   /// TJMember
   TJMember::TJMember(const TJMember& src) :
-    TJMember(src._string, src._value)
+    TJMember(src._string, src._value, src._parse_options)
   {
   }
 
   TJMember::TJMember(TJMember&& src) noexcept :
     _string(src._string),
-    _value(src._value)
+    _value(src._value),
+    _parse_options(std::move(src._parse_options))
   {
     src._string = nullptr;
     src._value = nullptr;
@@ -3543,6 +3553,7 @@ namespace TinyJSON
       {
         _value = src._value->clone();
       }
+      _parse_options = src._parse_options;
     }
     return *this;
   }
@@ -3555,15 +3566,17 @@ namespace TinyJSON
       free_value();
       _string = src._string;
       _value = src._value;
+      _parse_options = std::move(src._parse_options);
       src._string = nullptr;
       src._value = nullptr;
     }
     return *this;
   }
 
-  TJMember::TJMember(const TJCHAR* string, const TJValue* value):
+  TJMember::TJMember(const TJCHAR* string, const TJValue* value, const parse_options& options):
     _string(nullptr),
-    _value(nullptr)
+    _value(nullptr),
+    _parse_options(options)
   {
     if (string != nullptr)
     {
@@ -3590,9 +3603,9 @@ namespace TinyJSON
     value = nullptr;
   }
 
-  TJMember* TJMember::move(TJCHAR*& string, TJValue*& value)
+  TJMember* TJMember::move(TJCHAR*& string, TJValue*& value, const parse_options& options)
   {
-    auto member = new TJMember(nullptr, nullptr);
+    auto member = new TJMember(nullptr, nullptr, options);
     member->_string = string;
     member->_value = value;
 
@@ -3639,18 +3652,20 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue
-  TJValue::TJValue() :
+  TJValue::TJValue(const parse_options& options) :
+    _parse_options(options),
     _last_dump(nullptr)
   {
   }
 
   TJValue::TJValue(const TJValue& other) :
+    _parse_options(other._parse_options),
     _last_dump(nullptr)
   {
-    (void)other;
   }
 
   TJValue::TJValue(TJValue&& other) noexcept :
+    _parse_options(std::move(other._parse_options)),
     _last_dump(other._last_dump)
   {
     other._last_dump = nullptr;
@@ -3661,6 +3676,7 @@ namespace TinyJSON
     if (this != &other)
     {
       free_last_dump();
+      _parse_options = other._parse_options;
     }
     return *this;
   }
@@ -3671,6 +3687,7 @@ namespace TinyJSON
     {
       free_last_dump();
       _last_dump = other._last_dump;
+      _parse_options = std::move(other._parse_options);
       other._last_dump = nullptr;
     }
     return *this;
@@ -3697,6 +3714,44 @@ namespace TinyJSON
   TJValue* TJValue::clone() const
   {
     return internal_clone();
+  }
+
+  void TJValue::set_parse_options(const parse_options& options)
+  {
+    _parse_options = options;
+  }
+
+  void TJValueObject::set_parse_options(const parse_options& options)
+  {
+    TJValue::set_parse_options(options);
+    if (nullptr != _members)
+    {
+      for (unsigned int i = 0; i < _members->size(); ++i)
+      {
+        auto m = _members->at(i);
+        if (nullptr != m && nullptr != m->_value)
+        {
+          m->_parse_options = options;
+          m->_value->set_parse_options(options);
+        }
+      }
+    }
+  }
+
+  void TJValueArray::set_parse_options(const parse_options& options)
+  {
+    TJValue::set_parse_options(options);
+    if (nullptr != _values)
+    {
+      for (unsigned int i = 0; i < _values->size(); ++i)
+      {
+        auto v = _values->at(i);
+        if (nullptr != v)
+        {
+          v->set_parse_options(options);
+        }
+      }
+    }
   }
 
   bool TJValue::is_object() const
@@ -3794,17 +3849,20 @@ namespace TinyJSON
     return *this; 
   }
 
-  bool TJValue::get_boolean(bool strict) const
+  bool TJValue::get_boolean() const
   {
     const auto* boolean_object = dynamic_cast<const TJValueBoolean*>(this);
     if (nullptr != boolean_object)
     {
       return boolean_object->is_true();
     }
-    if (strict)
+    
+    if (_parse_options.strict)
     {
-      throw TJParseException("The value is not a boolean!");
+      ParseResult _parse_result(_parse_options);
+      _parse_result.assign_exception_message_and_throw("The value is not a boolean!");
     }
+    
     auto null_object = dynamic_cast<const TJValueNull*>(this);
     if (nullptr != null_object)
     {
@@ -3813,7 +3871,8 @@ namespace TinyJSON
     auto string_object = dynamic_cast<const TJValueString*>(this);
     if (nullptr != string_object)
     {
-      throw TJParseException("String cannot be converteed to boolean!");
+      ParseResult _parse_result_str(_parse_options);
+      _parse_result_str.assign_exception_message_and_throw("String cannot be converteed to boolean!");
     }
     if (!is_number())
     {
@@ -3823,17 +3882,20 @@ namespace TinyJSON
     return number->get_number() != 0;
   }
 
-  long double TJValue::get_raw_float(bool strict) const
+  long double TJValue::get_raw_float() const
   {
     auto number_object = dynamic_cast<const TJValueNumber*>(this);
     if (nullptr != number_object)
     {
       return number_object->get_float();
     }
-    if (strict)
+    
+    if (_parse_options.strict)
     {
-      throw TJParseException("The value is not a number!");
+      ParseResult _parse_result(_parse_options);
+      _parse_result.assign_exception_message_and_throw("The value is not a number!");
     }
+    
     auto null_object = dynamic_cast<const TJValueNull*>(this);
     if (nullptr != null_object)
     {
@@ -3842,7 +3904,8 @@ namespace TinyJSON
     auto string_object = dynamic_cast<const TJValueString*>(this);
     if (nullptr != string_object)
     {
-      throw TJParseException("String cannot be converteed to number!");
+      ParseResult _parse_result_str(_parse_options);
+      _parse_result_str.assign_exception_message_and_throw("String cannot be converteed to number!");
     }
     auto boolean_object = dynamic_cast<const TJValueBoolean*>(this);
     if (nullptr != boolean_object)
@@ -3852,17 +3915,20 @@ namespace TinyJSON
     return 0.0;
   }
 
-  long long TJValue::get_raw_number(bool strict) const
+  long long TJValue::get_raw_number() const
   {
     auto number_object = dynamic_cast<const TJValueNumber*>(this);
     if (nullptr != number_object)
     {
       return number_object->get_number();
     }
-    if (strict)
+    
+    if (_parse_options.strict)
     {
-      throw TJParseException("The value is not a number!");
+      ParseResult _parse_result(_parse_options);
+      _parse_result.assign_exception_message_and_throw("The value is not a number!");
     }
+    
     auto null_object = dynamic_cast<const TJValueNull*>(this);
     if (nullptr != null_object)
     {
@@ -3871,7 +3937,8 @@ namespace TinyJSON
     auto string_object = dynamic_cast<const TJValueString*>(this);
     if (nullptr != string_object)
     {
-      throw TJParseException("String cannot be converteed to number!");
+      ParseResult _parse_result_str(_parse_options);
+      _parse_result_str.assign_exception_message_and_throw("String cannot be converteed to number!");
     }
 
     auto boolean_object = dynamic_cast<const TJValueBoolean*>(this);
@@ -3882,7 +3949,7 @@ namespace TinyJSON
     return 0;
   }
 
-  std::vector<long double> TJValue::get_raw_floats(bool strict) const
+  std::vector<long double> TJValue::get_raw_floats() const
   {
     auto array_object = dynamic_cast<const TJValueArray*>(this);
     if (nullptr != array_object)
@@ -3891,10 +3958,10 @@ namespace TinyJSON
     }
 
     // not an array then so return what we have.
-    return { get_raw_float(strict) };
+    return { get_raw_float() };
   }
 
-  std::vector<long long> TJValue::get_raw_numbers(bool strict) const
+  std::vector<long long> TJValue::get_raw_numbers() const
   {
     auto array_object = dynamic_cast<const TJValueArray*>(this);
     if (nullptr != array_object)
@@ -3903,20 +3970,23 @@ namespace TinyJSON
     }
 
     // not an array then so return what we have.
-    return { get_raw_number(strict) };
+    return { get_raw_number() };
   }
 
-  const TJCHAR* TJValue::get_string(bool strict) const
+  const TJCHAR* TJValue::get_string() const
   {
     auto string_object = dynamic_cast<const TJValueString*>(this);
     if (nullptr != string_object)
     {
       return string_object->raw_value();
     }
-    if (strict)
+    
+    if (_parse_options.strict)
     {
-      throw TJParseException("The value is not a string!");
+      ParseResult _parse_result(_parse_options);
+      _parse_result.assign_exception_message_and_throw("The value is not a string!");
     }
+    
     const auto* boolean_object = dynamic_cast<const TJValueBoolean*>(this);
     if (nullptr != boolean_object)
     {
@@ -3930,7 +4000,8 @@ namespace TinyJSON
 
     if (is_array() || is_object())
     {
-      throw TJParseException("Arrays and objects cannot be converteed to string!");
+      ParseResult _parse_result_obj(_parse_options);
+      _parse_result_obj.assign_exception_message_and_throw("Arrays and objects cannot be converteed to string!");
     }
     auto number = static_cast<const TJValueNumber*>(this);
     return number->dump_string();
@@ -3938,7 +4009,8 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue string
-  TJValueString::TJValueString(const TJCHAR* value) :
+  TJValueString::TJValueString(const TJCHAR* value, const parse_options& options) :
+    TJValue(options),
     _value(nullptr)
   {
     if (value != nullptr)
@@ -4001,9 +4073,9 @@ namespace TinyJSON
     free_value();
   }
 
-  TJValueString* TJValueString::move(TJCHAR*& value)
+  TJValueString* TJValueString::move(TJCHAR*& value, const parse_options& options)
   {
-    auto string = new TJValueString(nullptr);
+    auto string = new TJValueString(nullptr, options);
     string->_value = value;
     value = nullptr;
     return string;
@@ -4106,7 +4178,8 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue true
-  TJValueBoolean::TJValueBoolean(bool is_true) :
+  TJValueBoolean::TJValueBoolean(bool is_true, const parse_options& options) :
+    TJValue(options),
     _is_true(is_true)
   {
   }
@@ -4173,7 +4246,8 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue null
-  TJValueNull::TJValueNull()
+  TJValueNull::TJValueNull(const parse_options& options) :
+    TJValue(options)
   {
   }
 
@@ -4230,7 +4304,8 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValueObject
-  TJValueObject::TJValueObject() :
+  TJValueObject::TJValueObject(const parse_options& options) :
+    TJValue(options),
     _members(nullptr)
   {
   }
@@ -4252,7 +4327,7 @@ namespace TinyJSON
       for (unsigned int i = 0; i < size; ++i)
       {
         const auto& member = other._members->at(i);
-        _members->set(new TJMember(*member));
+        _members->set(new TJMember(*member), _parse_options);
       }
 #endif
     }
@@ -4284,7 +4359,7 @@ namespace TinyJSON
         for (unsigned int i = 0; i < size; ++i)
         {
           const auto& member = other._members->at(i);
-          _members->set(new TJMember(*member));
+          _members->set(new TJMember(*member), _parse_options);
         }
 #endif
       }
@@ -4346,10 +4421,10 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
-    TJValue* value_string = new TJValueString(value);
+    auto member = new TJMember(key, nullptr, _parse_options);
+    TJValue* value_string = new TJValueString(value, _parse_options);
     member->move_value(value_string);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
   /// <summary>
@@ -4364,10 +4439,10 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
-    TJValue* value_null = new TJValueNull();
+    auto member = new TJMember(key, nullptr, _parse_options);
+    TJValue* value_null = new TJValueNull(_parse_options);
     member->move_value(value_null);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
   /// <summary>
@@ -4383,10 +4458,10 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
+    auto member = new TJMember(key, nullptr, _parse_options);
     auto clone = value->clone();
     member->move_value(clone);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
   /// <summary>
@@ -4402,10 +4477,10 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
-    TJValue* value_int = new TJValueNumberInt(value);
+    auto member = new TJMember(key, nullptr, _parse_options);
+    TJValue* value_int = new TJValueNumberInt(value, _parse_options);
     member->move_value(value_int);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
   /// <summary>
@@ -4421,10 +4496,10 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
-    TJValue* value_number = TJHelper::try_create_number_from_float(value);
+    auto member = new TJMember(key, nullptr, _parse_options);
+    TJValue* value_number = TJHelper::try_create_number_from_float(value, _parse_options);
     member->move_value(value_number);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
   /// <summary>
@@ -4440,98 +4515,104 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
-    TJValue* value_boolean = new TJValueBoolean(value);
+    auto member = new TJMember(key, nullptr, _parse_options);
+    TJValue* value_boolean = new TJValueBoolean(value, _parse_options);
     member->move_value(value_boolean);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
-  TJValueObject* TJValueObject::move(TJDICTIONARY*& members)
+  TJValueObject* TJValueObject::move(TJDICTIONARY*& members, const parse_options& options)
   {
-    auto object = new TJValueObject();
+    auto object = new TJValueObject(options);
     object->_members = members;
     members = nullptr;
     return object;
   }
 
-  Optional<long double> TJValueObject::get_raw_float(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  Optional<long double> TJValueObject::get_raw_float(const TJCHAR* key, bool case_sensitive) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
-      if(throw_if_not_found)
-      { 
-        throw TJParseException("The key was not found!");
+      if (_parse_options.strict)
+      {
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
       return Optional<long double>();
     }
-    return Optional<long double>(value->get_raw_float(false));
+    return Optional<long double>(value->get_raw_float());
   }
 
-  Optional<long long> TJValueObject::get_raw_number(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  Optional<long long> TJValueObject::get_raw_number(const TJCHAR* key, bool case_sensitive) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
-      if (throw_if_not_found)
+      if (_parse_options.strict)
       {
-        throw TJParseException("The key was not found!");
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
       return Optional<long long>();
     }
-    return Optional<long long>(value->get_raw_number(false));
+    return Optional<long long>(value->get_raw_number());
   }
 
-  Optional<std::vector<long double>> TJValueObject::get_raw_floats(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  Optional<std::vector<long double>> TJValueObject::get_raw_floats(const TJCHAR* key, bool case_sensitive) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
-      if (throw_if_not_found)
+      if (_parse_options.strict)
       {
-        throw TJParseException("The key was not found!");
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
       return Optional<std::vector<long double>>();
     }
-    return Optional<std::vector<long double>>(value->get_raw_floats(false));
+    return Optional<std::vector<long double>>(value->get_raw_floats());
   }
 
-  Optional<std::vector<long long>> TJValueObject::get_raw_numbers(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  Optional<std::vector<long long>> TJValueObject::get_raw_numbers(const TJCHAR* key, bool case_sensitive) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
-      if (throw_if_not_found)
+      if (_parse_options.strict)
       {
-        throw TJParseException("The key was not found!");
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
       return Optional<std::vector<long long>>();
     }
-    return Optional<std::vector<long long>>(value->get_raw_numbers(false));
+    return Optional<std::vector<long long>>(value->get_raw_numbers());
   }
 
-  const TJCHAR* TJValueObject::get_string(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  const TJCHAR* TJValueObject::get_string(const TJCHAR* key, bool case_sensitive) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
-      if (throw_if_not_found)
+      if (_parse_options.strict)
       {
-        throw TJParseException("The key was not found!");
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
       return TJCHARPREFIX("");
     }
     return value->get_string();
   }
 
-  bool TJValueObject::get_boolean(const TJCHAR* key, bool case_sensitive, bool throw_if_not_found) const
+  bool TJValueObject::get_boolean(const TJCHAR* key, bool case_sensitive) const
   {
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
-      if (throw_if_not_found)
+      if (_parse_options.strict)
       {
-        throw TJParseException("The key was not found!");
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
       return false;
     }
@@ -4545,15 +4626,15 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
-    TJValue* value_array = new TJValueArray();
+    auto member = new TJMember(key, nullptr, _parse_options);
+    TJValue* value_array = new TJValueArray(_parse_options);
     auto array = reinterpret_cast<TJValueArray*>(value_array);
     for(const auto& value : values)
     {
       array->add_float(value);
     }
     member->move_value(value_array);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
   void TJValueObject::set_raw_numbers(const TJCHAR* key, const std::vector<long long>& values)
@@ -4563,15 +4644,15 @@ namespace TinyJSON
       _members = new TJDICTIONARY();
     }
 
-    auto member = new TJMember(key, nullptr);
-    TJValue* value_array = new TJValueArray();
+    auto member = new TJMember(key, nullptr, _parse_options);
+    TJValue* value_array = new TJValueArray(_parse_options);
     auto array = reinterpret_cast<TJValueArray*>(value_array);
     for (const auto& value : values)
     {
       array->add_number(value);
     }
     member->move_value(value_array);
-    TJHelper::move_member_to_members(member, _members);
+    TJHelper::move_member_to_members(member, _members, _parse_options);
   }
 
 
@@ -4581,7 +4662,7 @@ namespace TinyJSON
   /// <returns></returns>
   TJValue* TJValueObject::internal_clone() const
   {
-    auto object = new TJValueObject();
+    auto object = new TJValueObject(_parse_options);
     if (_members != nullptr)
     {
       auto members = new TJDICTIONARY();
@@ -4595,7 +4676,7 @@ namespace TinyJSON
       for(unsigned int i = 0; i < size; ++i)
       {
         const auto& member = _members->at(i);
-        members->set(new TJMember(*member));
+        members->set(new TJMember(*member), _parse_options);
       }
 #endif
       object->_members = members;
@@ -4780,7 +4861,8 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValueArray
-  TJValueArray::TJValueArray() :
+  TJValueArray::TJValueArray(const parse_options& options) :
+    TJValue(options),
     _values(nullptr)
   {
   }
@@ -4859,9 +4941,9 @@ namespace TinyJSON
     free_values();
   }
 
-  TJValueArray* TJValueArray::move(TJLIST*& values)
+  TJValueArray* TJValueArray::move(TJLIST*& values, const parse_options& options)
   {
-    auto value = new TJValueArray();
+    auto value = new TJValueArray(options);
     value->_values = values;
     values = nullptr;
     return value;
@@ -4932,7 +5014,7 @@ namespace TinyJSON
   /// <returns></returns>
   TJValue* TJValueArray::internal_clone() const
   {
-    auto array = new TJValueArray();
+    auto array = new TJValueArray(_parse_options);
     if (_values != nullptr)
     {
       auto values = new TJLIST();
@@ -4998,18 +5080,16 @@ namespace TinyJSON
     _values = nullptr;
   }
 
-  std::vector<long double> TJValueArray::get_floats(bool throw_if_not_numbers) const
+  std::vector<long double> TJValueArray::get_floats() const
   {
     std::vector<long double> values = {};
     for( unsigned int i = 0; i < get_number_of_items(); ++i)
     {
-      auto value = _values->at(i);
+      auto value = at(i);
       if (!value->is_number())
       {
-        if (throw_if_not_numbers)
-        {
-          throw TJParseException("One or more values in the array is not a number!");
-        }
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("One or more values in the array is not a number!");
         continue;
       }
       auto number = static_cast<TJValueNumber*>(value);
@@ -5018,18 +5098,16 @@ namespace TinyJSON
     return values;
   }
 
-  std::vector<long long> TJValueArray::get_numbers(bool throw_if_not_numbers) const
+  std::vector<long long> TJValueArray::get_numbers() const
   {
     std::vector<long long> values = {};
     for (unsigned int i = 0; i < get_number_of_items(); ++i)
     {
-      auto value = _values->at(i);
+      auto value = at(i);
       if (!value->is_number())
       {
-        if (throw_if_not_numbers)
-        {
-          throw TJParseException("One or more values in the array is not a number!");
-        }
+        ParseResult _parse_result(_parse_options);
+        _parse_result.assign_exception_message_and_throw("One or more values in the array is not a number!");
         continue;
       }
       auto number = static_cast<TJValueNumber*>(value);
@@ -5042,7 +5120,7 @@ namespace TinyJSON
   {
     if (nullptr == value)
     {
-      auto* nullObject = new TJValueNull();
+      auto* nullObject = new TJValueNull(_parse_options);
       add_move(nullObject);
       return;
     }
@@ -5062,7 +5140,7 @@ namespace TinyJSON
   {
     if (nullptr == value)
     {
-      auto* nullObject = new TJValueNull();
+      auto* nullObject = new TJValueNull(_parse_options);
       add_move(nullObject);
       return;
     }
@@ -5087,31 +5165,32 @@ namespace TinyJSON
 
   void TJValueArray::add_raw_number(long long value)
   {
-    auto* objectNumber = new TJValueNumberInt(value);
+    auto* objectNumber = new TJValueNumberInt(value, _parse_options);
     add_move(objectNumber);
   }
   
   void TJValueArray::add_raw_float(long double value)
   {
-    auto* tjNumber = TJHelper::try_create_number_from_float(value);
+    auto* tjNumber = TJHelper::try_create_number_from_float(value, _parse_options);
     add_move(tjNumber);
   }
   
   void TJValueArray::add_boolean(bool value)
   {
-    auto* objectBoolean = new TJValueBoolean(value);
+    auto* objectBoolean = new TJValueBoolean(value, _parse_options);
     add_move(objectBoolean);
   }
 
   void TJValueArray::add_string(const char* value)
   {
-    auto* objectString = new TJValueString(value);
+    auto* objectString = new TJValueString(value, _parse_options);
     add_move(objectString);
   }
 
   ///////////////////////////////////////
   /// TJValue Number
-  TJValueNumber::TJValueNumber(const bool is_negative) : 
+  TJValueNumber::TJValueNumber(const bool is_negative, const parse_options& options) : 
+    TJValue(options),
     _is_negative(is_negative)
   {
   }
@@ -5174,7 +5253,9 @@ namespace TinyJSON
       return static_cast<long double>(value_exponent->get_number());
     }
 
-    throw TJParseException("The value is not a number!");
+    ParseResult _parse_result(_parse_options);
+    _parse_result.assign_exception_message_and_throw("The value is not a number!");
+    return 0.0L;
   }
 
   long long TJValueNumber::get_number() const
@@ -5198,20 +5279,22 @@ namespace TinyJSON
       return static_cast<long long>(value_exponent->get_number());
     }
 
-    throw TJParseException("The value is not a number!");
+    ParseResult _parse_result(_parse_options);
+    _parse_result.assign_exception_message_and_throw("The value is not a number!");
+    return 0LL;
   }
 
 
   ///////////////////////////////////////
   /// TJValue whole Number
-  TJValueNumberInt::TJValueNumberInt(const unsigned long long& number, const bool is_negative) :
-    TJValueNumber(is_negative),
+  TJValueNumberInt::TJValueNumberInt(const unsigned long long& number, const bool is_negative, const parse_options& options) :
+    TJValueNumber(is_negative, options),
     _number(number)
   {
   }
 
-  TJValueNumberInt::TJValueNumberInt(const long long& number) :
-    TJValueNumber(number < 0),
+  TJValueNumberInt::TJValueNumberInt(const long long& number, const parse_options& options) :
+    TJValueNumber(number < 0, options),
     _number(number < 0 ? -1 * static_cast<unsigned long long>(number) : static_cast<unsigned long long>(number))
   {
   }
@@ -5278,8 +5361,8 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue float Number
-  TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, bool is_negative) :
-    TJValueNumber(is_negative),
+  TJValueNumberFloat::TJValueNumberFloat(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, bool is_negative, const parse_options& options) :
+    TJValueNumber(is_negative, options),
     _string(nullptr),
     _number(number),
     _fraction(fraction),
@@ -5287,8 +5370,8 @@ namespace TinyJSON
   {
   }
 
-  TJValueNumberFloat::TJValueNumberFloat(long double number) :
-    TJValueNumber(number < 0.0L),
+  TJValueNumberFloat::TJValueNumberFloat(long double number, const parse_options& options) :
+    TJValueNumber(number < 0.0L, options),
     _string(nullptr),
     _number(TJHelper::get_whole_number_from_float(number)),
     _fraction(TJHelper::get_fraction_from_float(number)),
@@ -5417,8 +5500,8 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// TJValue float Number
-  TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, const int exponent, bool is_negative) :
-    TJValueNumber(is_negative),
+  TJValueNumberExponent::TJValueNumberExponent(const unsigned long long& number, const unsigned long long& fraction, const unsigned int fraction_exponent, const int exponent, bool is_negative, const parse_options& options) :
+    TJValueNumber(is_negative, options),
     _string(nullptr),
     _number(number),
     _fraction(fraction),

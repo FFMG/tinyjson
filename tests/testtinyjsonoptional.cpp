@@ -106,3 +106,41 @@ TEST(TestOptional, Lifecycle) {
   // opt destroyed calls reset() -> destructor
   ASSERT_EQ(Tracker::constructions, Tracker::destructions);
 }
+
+TEST(TestOptional, OptionaslWithNoValuesAreEqual) {
+  Optional<int> opt1;
+  Optional<int> opt2;
+  ASSERT_EQ(opt1, opt2);
+}
+
+TEST(TestOptional, OptionaslWithOneValueButNotTheOtherAreNotEqual) {
+  Optional<int> opt1;
+  Optional<int> opt2(42);
+  ASSERT_NE(opt1, opt2);
+}
+
+TEST(TestOptional, OptionalWithNoValuesAreNotEqual) {
+  Optional<int> opt1;
+  ASSERT_NE(opt1, 42);
+  ASSERT_NE(42, opt1);
+}
+
+TEST(TestOptional, OptionalWithValuesThatAreNotEqual) {
+  Optional<int> opt1(43);
+  ASSERT_NE(opt1, 42);
+  ASSERT_NE(42, opt1);
+}
+
+TEST(TestOptional, OptionalWithValuesThatAreEqual) {
+  Optional<int> opt1(42);
+  ASSERT_EQ(opt1, 42);
+  ASSERT_EQ(42, opt1);
+}
+
+TEST(TestOptional, OptionalBooleanNotOperator) {
+  Optional<bool> opt1(false);
+  Optional<bool> opt2(true);
+
+  ASSERT_FALSE(opt1);
+  ASSERT_TRUE(opt2);
+}

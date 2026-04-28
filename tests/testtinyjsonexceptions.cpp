@@ -251,3 +251,51 @@ TEST(TestException, FractionIsMissingNumber) {
   options.throw_exception = true;
   EXPECT_THROW(TinyJSON::TJ::parse("12.", options), TinyJSON::TJParseException);
 }
+
+TEST(TestException, EscapedTabCharacterInStringWillLogAndThrow) {
+  bool called = false;
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+    EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
+    EXPECT_TRUE(nullptr != exception_message);
+    called = true;
+    };
+  EXPECT_THROW(TinyJSON::TJ::parse("[\"Tab\tin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_TRUE(called);
+}
+
+TEST(TestException, EscapedTabCharacterInStringWillLogAndNotThrow) {
+  bool called = false;
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+    EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
+    EXPECT_TRUE(nullptr != exception_message);
+    called = true;
+    };
+  EXPECT_NO_THROW(TinyJSON::TJ::parse("[\"Tab\tin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_TRUE(called);
+}
+
+TEST(TestException, GettingNonExistentKeyWillLogAndNotThrow) {
+  bool called = false;
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  options.strict = true;
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+    EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
+    EXPECT_STREQ(exception_message, "The key was not found!");
+    called = true;
+    };
+  TinyJSON::TJValue* json = TinyJSON::TJ::parse("{\"a\" : 12}", options);
+  ASSERT_TRUE(json != nullptr);
+  auto* object = static_cast<TinyJSON::TJValueObject*>(json);
+
+  // try and get a non existent key
+  const TJCHAR* value = nullptr;
+  EXPECT_NO_THROW(value = object->get_string("b", true));
+  EXPECT_TRUE(called);
+  EXPECT_STREQ(value, "");
+  delete json;
+}

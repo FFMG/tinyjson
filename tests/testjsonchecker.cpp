@@ -54,7 +54,16 @@ bool matches_file(const std::filesystem::directory_entry& file, const std::strin
 
 TEST(JSONchecker, AllFiles)
 {
-  const std::filesystem::path path{ "../../../../tests/data/JSON_checker/" };
+  std::filesystem::path path{ "../../../../tests/data/JSON_checker/" };
+  if (!std::filesystem::exists(path))
+  {
+    path = "../../../tests/data/JSON_checker/";
+  }
+  if (!std::filesystem::exists(path))
+  {
+    path = "../../tests/data/JSON_checker/";
+  }
+  
   for (const auto& file : std::filesystem::directory_iterator{ path })
   {
     if (file.is_directory())

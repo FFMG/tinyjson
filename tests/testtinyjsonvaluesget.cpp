@@ -13,6 +13,9 @@
 
 TEST(TestValueGet, GetBoolean)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -20,10 +23,11 @@ TEST(TestValueGet, GetBoolean)
       "c": 0,
       "d": 42.2,
       "e": "This is a string",
-      "f": null 
+      "f": null
     }
-    )"
+    )", options
   );
+
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
   ASSERT_NE(nullptr, jobject);
@@ -47,6 +51,9 @@ TEST(TestValueGet, GetBoolean)
 
 TEST(TestValueGet, GetStrictBoolean)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -56,7 +63,7 @@ TEST(TestValueGet, GetStrictBoolean)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -69,18 +76,21 @@ TEST(TestValueGet, GetStrictBoolean)
   auto valuee = jobject->try_get_value("e");
   auto valuef = jobject->try_get_value("f");
 
-  ASSERT_TRUE(valuea->get_boolean(true));
-  ASSERT_ANY_THROW(valueb->get_boolean(true));
-  ASSERT_ANY_THROW(valuec->get_boolean(true));
-  ASSERT_ANY_THROW(valued->get_boolean(true));
-  ASSERT_ANY_THROW(valuee->get_boolean(true));
-  ASSERT_ANY_THROW(valuef->get_boolean(true));
+  ASSERT_TRUE(valuea->get_boolean());
+  ASSERT_ANY_THROW(valueb->get_boolean());
+  ASSERT_ANY_THROW(valuec->get_boolean());
+  ASSERT_ANY_THROW(valued->get_boolean());
+  ASSERT_ANY_THROW(valuee->get_boolean());
+  ASSERT_ANY_THROW(valuef->get_boolean());
 
   delete json;
 }
 
 TEST(TestValueGet, GetNumber)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -90,7 +100,7 @@ TEST(TestValueGet, GetNumber)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -115,6 +125,9 @@ TEST(TestValueGet, GetNumber)
 
 TEST(TestValueGet, GetStrictNumber)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -124,7 +137,7 @@ TEST(TestValueGet, GetStrictNumber)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -137,18 +150,21 @@ TEST(TestValueGet, GetStrictNumber)
   auto valuee = jobject->try_get_value("e");
   auto valuef = jobject->try_get_value("f");
 
-  ASSERT_ANY_THROW(valuea->get_number(true));
-  ASSERT_EQ(123, valueb->get_number(true));
-  ASSERT_EQ(0, valuec->get_number(true));
-  ASSERT_EQ(42, valued->get_number(true));
-  ASSERT_ANY_THROW(valuee->get_number(true));
-  ASSERT_ANY_THROW(valuef->get_number(true));
+  ASSERT_ANY_THROW(valuea->get_number());
+  ASSERT_EQ(123, valueb->get_number());
+  ASSERT_EQ(0, valuec->get_number());
+  ASSERT_EQ(42, valued->get_number());
+  ASSERT_ANY_THROW(valuee->get_number());
+  ASSERT_ANY_THROW(valuef->get_number());
 
   delete json;
 }
 
 TEST(TestValueGet, GetFloat)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -158,7 +174,7 @@ TEST(TestValueGet, GetFloat)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -183,6 +199,9 @@ TEST(TestValueGet, GetFloat)
 
 TEST(TestValueGet, GetStrictFloat)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -192,7 +211,7 @@ TEST(TestValueGet, GetStrictFloat)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -205,18 +224,21 @@ TEST(TestValueGet, GetStrictFloat)
   auto valuee = jobject->try_get_value("e");
   auto valuef = jobject->try_get_value("f");
 
-  ASSERT_ANY_THROW(valuea->get_float(true));
-  ASSERT_DOUBLE_EQ(123.0, valueb->get_float(true));
-  ASSERT_DOUBLE_EQ(0.0, valuec->get_float(true));
-  ASSERT_DOUBLE_EQ(42.2, valued->get_float(true));
-  ASSERT_ANY_THROW(valuee->get_float(true));
-  ASSERT_ANY_THROW(valuef->get_float(true));
+  ASSERT_ANY_THROW(valuea->get_float());
+  ASSERT_DOUBLE_EQ(123.0, valueb->get_float());
+  ASSERT_DOUBLE_EQ(0.0, valuec->get_float());
+  ASSERT_DOUBLE_EQ(42.2, valued->get_float());
+  ASSERT_ANY_THROW(valuee->get_float());
+  ASSERT_ANY_THROW(valuef->get_float());
 
   delete json;
 }
 
 TEST(TestValueGet, GetString)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -226,7 +248,7 @@ TEST(TestValueGet, GetString)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -251,6 +273,9 @@ TEST(TestValueGet, GetString)
 
 TEST(TestValueGet, GetStrictString)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -260,7 +285,7 @@ TEST(TestValueGet, GetStrictString)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
   auto jobject = dynamic_cast<TinyJSON::TJValueObject*>(json);
@@ -273,18 +298,21 @@ TEST(TestValueGet, GetStrictString)
   auto valuee = jobject->try_get_value("e");
   auto valuef = jobject->try_get_value("f");
 
-  ASSERT_ANY_THROW(valuea->get_string(true));
-  ASSERT_ANY_THROW(valueb->get_string(true));
-  ASSERT_ANY_THROW(valuec->get_string(true));
-  ASSERT_ANY_THROW(valued->get_string(true));
-  ASSERT_STRCASEEQ("This is a string", valuee->get_string(true));
-  ASSERT_ANY_THROW(valuef->get_string(true));
+  ASSERT_ANY_THROW(valuea->get_string());
+  ASSERT_ANY_THROW(valueb->get_string());
+  ASSERT_ANY_THROW(valuec->get_string());
+  ASSERT_ANY_THROW(valued->get_string());
+  ASSERT_STRCASEEQ("This is a string", valuee->get_string());
+  ASSERT_ANY_THROW(valuef->get_string());
 
   delete json;
 }
 
 TEST(TestValueGet, GetStrictStringFromObjectWillThrow)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
   auto json = TinyJSON::TJ::parse(R"(
     {
       "a": true,
@@ -294,7 +322,7 @@ TEST(TestValueGet, GetStrictStringFromObjectWillThrow)
       "e": "This is a string",
       "f": null 
     }
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
 
@@ -305,9 +333,12 @@ TEST(TestValueGet, GetStrictStringFromObjectWillThrow)
 
 TEST(TestValueGet, GetStrictStringFromArrayWillThrow)
 {
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
   auto json = TinyJSON::TJ::parse(R"(
     [1,2,3,4,5]
-    )"
+    )", options
   );
   ASSERT_NE(nullptr, json);
 

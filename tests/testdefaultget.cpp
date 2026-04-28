@@ -8,12 +8,15 @@
 using namespace TinyJSON;
 
 TEST(TJDefaultGet, BasicValues) {
+    parse_options options = {};
+    options.throw_exception = true;
+    options.strict = true;
     auto json = TJ::parse(R"({
         "int": 42,
         "float": 3.14,
         "bool": true,
         "string": "hello"
-    })");
+    })", options);
 
     ASSERT_NE(json, nullptr);
     auto obj = dynamic_cast<TJValueObject*>(json);
@@ -41,9 +44,12 @@ TEST(TJDefaultGet, BasicValues) {
 }
 
 TEST(TJDefaultGet, StdStringKey) {
+    parse_options options = {};
+    options.throw_exception = true;
+    options.strict = true;
     auto json = TJ::parse(R"({
         "int": 42
-    })");
+    })", options);
 
     ASSERT_NE(json, nullptr);
     auto obj = dynamic_cast<TJValueObject*>(json);
@@ -59,10 +65,13 @@ TEST(TJDefaultGet, StdStringKey) {
 }
 
 TEST(TJDefaultGet, TypeMismatch) {
+    parse_options options = {};
+    options.throw_exception = true;
+    options.strict = true;
     auto json = TJ::parse(R"({
         "int": 42,
         "string": "hello"
-    })");
+    })", options);
 
     ASSERT_NE(json, nullptr);
     auto obj = dynamic_cast<TJValueObject*>(json);
@@ -71,6 +80,9 @@ TEST(TJDefaultGet, TypeMismatch) {
     // With try-catch in get(), it returns default_value on mismatch
     EXPECT_THROW(obj->get<int>("string"), TinyJSON::TJParseException);
     
+    options.throw_exception = false;
+    options.strict = false;
+    obj->set_parse_options(options);
     EXPECT_STREQ(obj->get<const char*>("int"), "42");
 
     delete json;
