@@ -1641,8 +1641,9 @@ namespace TinyJSON
         }
         if(number > 0 )
         {
-          decimal = decimal + (number * fast_power_of_16(power++));
+          decimal = decimal + (number * fast_power_of_16(power));
         }
+        power++;
       }
       return decimal;
     }
@@ -1987,7 +1988,7 @@ namespace TinyJSON
 #else
           add_char_to_string(static_cast<TJCHAR>(decimal), result, result_pos, result_max_length);
 #endif
-          source += 6;  //  the full \uXXXX = 6 char
+          source += 5;  //  the full \uXXXX = 6 char (caller will add the 6th)
           return true;
         }
         return false;
