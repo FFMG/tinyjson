@@ -1217,3 +1217,16 @@ TEST(TestObjects, HasKey)
 
   delete json;
 }
+
+TEST(TestObjects, PopCaseMismatchedKeyRepro) {
+  auto object = new TinyJSON::TJValueObject();
+  object->set_string("Hello", "World");
+
+  // "hello" should not remove "Hello" if it's case-sensitive,
+  // but it should definitely not crash or trigger assertions.
+  // In the buggy version, this triggers TJASSERT(value_index_ci == -1).
+  ASSERT_NO_THROW(object->pop("hello"));
+
+  ASSERT_TRUE(object->has_key("Hello"));
+  delete object;
+}

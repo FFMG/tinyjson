@@ -12,6 +12,8 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+#include <cctype>
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
@@ -587,15 +589,16 @@ namespace TinyJSON
       // then we have to make sure that we get the correct one.
       auto binary_search_result_ci = binary_search(key, false);
       auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
-      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_cs[dictionary_index_ci]._value_index : -1;
+      int value_index_ci = binary_search_result_ci._was_found ? _values_dictionary_ci[dictionary_index_ci]._value_index : -1;
 
       // if we have no indexes then we have noting to pop.
       if (value_index_cs == -1)
       {
-        TJASSERT(value_index_ci == -1); // how can it be???
-                                        // surely if we do not have one we do not have the other 
         return false;
       }
+
+      // surely if we have one we must have the other.
+      TJASSERT(value_index_ci != -1);
 
       // if both indexes are the same, then we can just remove them.
       if (value_index_cs == value_index_ci)
@@ -1101,10 +1104,18 @@ namespace TinyJSON
     {
       if (true == case_sensitive)
       {
-        return strcmp(s1, s2);
+        while (*s1 == *s2)
+        {
+          if (*s1++ == TJ_NULL_TERMINATOR)
+          {
+            return 0;
+          }
+          ++s2;
+        }
+        return (*s1 < *s2) ? -1 : 1;
       }
 
-      while (tolower(*s1) == tolower(*s2))
+      while (tolower(static_cast<unsigned char>(*s1)) == tolower(static_cast<unsigned char>(*s2)))
       {
         if (*s1++ == TJ_NULL_TERMINATOR)
         {
@@ -1112,7 +1123,7 @@ namespace TinyJSON
         }
         ++s2;
       }
-      return tolower(*s1) - tolower(*s2);
+      return tolower(static_cast<unsigned char>(*s1)) - tolower(static_cast<unsigned char>(*s2));
     }
 
     /// <summary>
@@ -1646,8 +1657,9 @@ namespace TinyJSON
         }
         if(number > 0 )
         {
-          decimal = decimal + (number * fast_power_of_16(power++));
+          decimal = decimal + (number * fast_power_of_16(power));
         }
+        power++;
       }
       return decimal;
     }
@@ -1703,10 +1715,18 @@ namespace TinyJSON
     {
       if (true == case_sensitive)
       {
-        return strcmp(s1, s2);
+        while (*s1 == *s2)
+        {
+          if (*s1++ == TJ_NULL_TERMINATOR)
+          {
+            return 0;
+          }
+          ++s2;
+        }
+        return (*s1 < *s2) ? -1 : 1;
       }
 
-      while (tolower(*s1) == tolower(*s2))
+      while (tolower(static_cast<unsigned char>(*s1)) == tolower(static_cast<unsigned char>(*s2)))
       {
         if (*s1++ == TJ_NULL_TERMINATOR)
         {
@@ -1714,7 +1734,7 @@ namespace TinyJSON
         }
         ++s2;
       }
-      return tolower(*s1) - tolower(*s2);
+      return tolower(static_cast<unsigned char>(*s1)) - tolower(static_cast<unsigned char>(*s2));
     }
 
     /// <summary>
@@ -1813,7 +1833,7 @@ namespace TinyJSON
       {
         // we have reached the limit
         // we simply cannot go further and we do not want to risk further corruption.
-        _Exit(-1);
+        throw std::length_error("Maximum JSON string read size exceeded.");
       }
       unsigned int resize_length = 0;
       if (current_length >= TJ_DEFAULT_STRING_MAX_READ_GROW)
@@ -1859,7 +1879,7 @@ namespace TinyJSON
     /// <param name="buffer"></param>
     /// <param name="buffer_pos"></param>
     /// <param name="buffer_max_length"></param>
-    static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
+    static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length)
     {
       if (buffer_pos + 1 >= buffer_max_length)
       {
@@ -1877,7 +1897,7 @@ namespace TinyJSON
     /// <param name="buffer"></param>
     /// <param name="buffer_pos"></param>
     /// <param name="buffer_max_length"></param>
-    static void add_string_to_string(const TJCHAR* string_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
+    static void add_string_to_string(const TJCHAR* string_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length)
     {
       if (nullptr == string_to_add)
       {
@@ -1885,13 +1905,13 @@ namespace TinyJSON
       }
 
       // what we want to add
-      auto length = static_cast<int>(strlen(string_to_add));
-      int total_length = static_cast<int>(length + sizeof(TJCHAR));//  we need one extra for the null char
+      auto length = static_cast<int>(string_length(string_to_add));
+      int total_length = static_cast<int>(length + 1);//  we need one extra for the null char
       if (buffer_pos + total_length >= buffer_max_length)
       {
         buffer_max_length = resize_string(buffer, buffer_max_length, buffer_pos+total_length);
       }
-      memcpy(buffer + buffer_pos, string_to_add, length);
+      memcpy(buffer + buffer_pos, string_to_add, length * sizeof(TJCHAR));
       buffer[buffer_pos+length] = TJ_NULL_TERMINATOR;
       buffer_pos += length;
     }
@@ -1992,7 +2012,7 @@ namespace TinyJSON
 #else
           add_char_to_string(static_cast<TJCHAR>(decimal), result, result_pos, result_max_length);
 #endif
-          source += 6;  //  the full \uXXXX = 6 char
+          source += 5;  //  the full \uXXXX = 6 char (caller will add the 6th)
           return true;
         }
         return false;
@@ -3478,7 +3498,8 @@ namespace TinyJSON
       }
     }
 
-    outFile.write(json, strlen(json));
+    auto length = TJHelper::string_length(json);
+    outFile.write((const char*)json, length * sizeof(TJCHAR));
 
     if (!outFile) 
     {
