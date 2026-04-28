@@ -12,6 +12,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
@@ -1807,7 +1808,7 @@ namespace TinyJSON
       {
         // we have reached the limit
         // we simply cannot go further and we do not want to risk further corruption.
-        _Exit(-1);
+        throw std::length_error("Maximum JSON string read size exceeded.");
       }
       unsigned int resize_length = 0;
       if (current_length >= TJ_DEFAULT_STRING_MAX_READ_GROW)
@@ -1853,7 +1854,7 @@ namespace TinyJSON
     /// <param name="buffer"></param>
     /// <param name="buffer_pos"></param>
     /// <param name="buffer_max_length"></param>
-    static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
+    static void add_char_to_string(const TJCHAR char_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length)
     {
       if (buffer_pos + 1 >= buffer_max_length)
       {
@@ -1871,7 +1872,7 @@ namespace TinyJSON
     /// <param name="buffer"></param>
     /// <param name="buffer_pos"></param>
     /// <param name="buffer_max_length"></param>
-    static void add_string_to_string(const TJCHAR* string_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length) noexcept
+    static void add_string_to_string(const TJCHAR* string_to_add, TJCHAR*& buffer, int& buffer_pos, int& buffer_max_length)
     {
       if (nullptr == string_to_add)
       {
