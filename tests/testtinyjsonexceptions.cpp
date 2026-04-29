@@ -274,7 +274,7 @@ TEST(TestException, EscapedTabCharacterInStringWillLogAndNotThrow) {
     EXPECT_TRUE(nullptr != exception_message);
     called = true;
     };
-  EXPECT_NO_THROW(TinyJSON::TJ::parse("[\"Tab\tin string\"]", options), TinyJSON::TJParseException);
+  EXPECT_NO_THROW(TinyJSON::TJ::parse("[\"Tab\tin string\"]", options));
   EXPECT_TRUE(called);
 }
 
