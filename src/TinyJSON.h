@@ -331,7 +331,8 @@ class TJDictionary;
     {
       rfc4627,
       rfc7159,
-      rfc8259
+      rfc8259,
+      json5_1_0_0   //  https://spec.json5.org/ v1.0.0
     };
 
     enum message_type
@@ -533,6 +534,7 @@ class TJDictionary;
     virtual bool is_true() const;
     virtual bool is_false() const;
     virtual bool is_null() const;
+    virtual bool is_comment() const;
 
     const TJCHAR* dump(formating formating = formating::indented, const TJCHAR* indent = TJCHARPREFIX("  ")) const;
     const TJCHAR* dump_string() const;
@@ -1727,6 +1729,40 @@ class TJDictionary;
     unsigned long long _fraction;
     unsigned int _fraction_exponent;
     int _exponent;
+  };
+
+  // A comment JSon
+  class TJValueComment : public TJValue
+  {
+    friend TJHelper;
+  public:
+    TJValueComment(const TJCHAR* value, const parse_options& options = {});
+    TJValueComment(const TJValueComment& other);
+    TJValueComment(TJValueComment&& other) noexcept;
+    TJValueComment& operator=(const TJValueComment& other);
+    TJValueComment& operator=(TJValueComment&& other) noexcept;
+    virtual ~TJValueComment();
+
+    bool is_comment() const override;
+
+    const TJCHAR* raw_value() const;
+
+  protected:
+    /// <summary>
+    /// Clone a comment into an identical comment object
+    /// </summary>
+    TJValue* internal_clone() const override;
+
+    /// <summary>
+    /// Move the value ownership of the comment string.
+    /// </summary>
+    static TJValueComment* move(TJCHAR*& value, const parse_options& options = {});
+
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
+
+  private:
+    TJCHAR* _value;
+    void free_value();
   };
 
   // user_literals

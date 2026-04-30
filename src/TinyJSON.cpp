@@ -104,6 +104,8 @@ static constexpr TJCHAR TJ_ESCAPE_TAB = static_cast<TJCHAR>(0x009);             
 
 #define TJ_CASE_MAYBE_ESCAPE  case '\\':
 
+#define TJ_CASE_SOLIDUS       case '/':
+
 namespace TinyJSON
 {
   struct internal_dump_configuration
@@ -668,10 +670,20 @@ namespace TinyJSON
     /// </summary>
     void set(TJMember* value, const parse_options& options)
     {
-      const TJCHAR* key = value->name();
       if (nullptr == _values)
       {
         initilize();
+      }
+
+      const TJCHAR* key = value->name();
+      if (nullptr == key)
+      {
+        if (_number_of_items == _capacity)
+        {
+          grow();
+        }
+        _values[_number_of_items++] = value;
+        return;
       }
 
       // check if the key already exists, if it does simply update the value.
@@ -1289,6 +1301,7 @@ namespace TinyJSON
     friend TJValueNumberInt;
     friend TJValueObject;
     friend TJValueString;
+    friend TJValueComment;
   protected:
     // Function to multiply an unsigned integer by 10 using bit-shifting
     static unsigned long long fast_multiply_by_10(unsigned long long number) 
@@ -2048,6 +2061,89 @@ namespace TinyJSON
 
       //  this is not an escaped character, just a single reverse solidus
       return false;
+    }
+
+    static TJValue* try_continue_read_comment(const TJCHAR*& p, ParseResult& parse_result)
+    {
+      const TJCHAR* start = p;
+      int result_pos = 0;
+      int result_max_length = 0;
+      TJCHAR* result = nullptr;
+
+      // Add the first '/'
+      if (!add_char_to_string('/', result, result_pos, result_max_length))
+      {
+        return nullptr;
+      }
+
+      p++;
+      if (*p == '/')
+      {
+        // Single line comment
+        while (*p != TJ_NULL_TERMINATOR && *p != TJ_ESCAPE_LINE_FEED && *p != TJ_ESCAPE_CARRIAGE_RETURN)
+        {
+          if (!add_char_to_string(*p, result, result_pos, result_max_length))
+          {
+            delete[] result;
+            return nullptr;
+          }
+          p++;
+        }
+        // No need to skip the newline, the caller's skip_space will handle it if needed
+      }
+      else if (*p == '*')
+      {
+        // Multi-line comment
+        if (!add_char_to_string('*', result, result_pos, result_max_length))
+        {
+          delete[] result;
+          return nullptr;
+        }
+        p++;
+        bool closed = false;
+        while (*p != TJ_NULL_TERMINATOR)
+        {
+          if (*p == '*' && *(p + 1) == '/')
+          {
+            if (!add_char_to_string('*', result, result_pos, result_max_length) ||
+                !add_char_to_string('/', result, result_pos, result_max_length))
+            {
+              delete[] result;
+              return nullptr;
+            }
+            p += 2;
+            closed = true;
+            break;
+          }
+          if (!add_char_to_string(*p, result, result_pos, result_max_length))
+          {
+            delete[] result;
+            return nullptr;
+          }
+          p++;
+        }
+
+        if (!closed)
+        {
+          delete[] result;
+          parse_result.assign_exception_message("Multi-line comment was not closed.");
+          return nullptr;
+        }
+      }
+      else
+      {
+        delete[] result;
+        parse_result.assign_exception_message("Invalid comment start.");
+        return nullptr;
+      }
+
+      if (!add_char_to_string(TJ_NULL_TERMINATOR, result, result_pos, result_max_length))
+      {
+        delete[] result;
+        return nullptr;
+      }
+
+      return TJValueComment::move(result, parse_result.options());
     }
 
     static TJCHAR* try_continue_read_string(const TJCHAR*& p, ParseResult& parse_result)
@@ -2935,6 +3031,17 @@ namespace TinyJSON
       {
         members = new TJDICTIONARY();
       }
+
+      if (nullptr == member->name())
+      {
+#if TJ_INCLUDE_STDVECTOR == 1
+        members->push_back(member);
+#else
+        members->set(member, options);
+#endif
+        return;
+      }
+
 #if TJ_INCLUDE_STDVECTOR == 1
       else
       {
@@ -2983,6 +3090,22 @@ namespace TinyJSON
         TJ_CASE_SPACE
           p++;
           break;
+
+        TJ_CASE_SOLIDUS
+        {
+          auto comment = try_continue_read_comment(p, parse_result);
+          if (comment == nullptr)
+          {
+            free_members(members);
+            return nullptr;
+          }
+          TJCHAR* empty_key = nullptr;
+          auto member = TJMember::move(empty_key, comment, parse_result.options());
+          move_member_to_members(member, members, parse_result.options());
+          // we are NOT waiting for a string, and we are NOT after a string
+          // so that we can find the next actual member or comma or end.
+        }
+        break;
 
         TJ_CASE_END_OBJECT
           // but is it what we expected?
@@ -3092,6 +3215,28 @@ namespace TinyJSON
         TJ_CASE_SPACE
           p++;
           break;
+
+        TJ_CASE_SOLIDUS
+        {
+          auto comment = try_continue_read_comment(p, parse_result);
+          if (comment == nullptr)
+          {
+            free_values(values);
+            return nullptr;
+          }
+          if (nullptr == values)
+          {
+            values = new TJLIST();
+          }
+#if TJ_INCLUDE_STDVECTOR == 1
+          values->push_back(comment);
+#else
+          values->add(comment);
+#endif
+          // we are NOT waiting for a value, and we are NOT after a comma
+          // so that we can find the next actual element or comma or end.
+        }
+        break;
 
         TJ_CASE_END_ARRAY
           if (found_comma && waiting_for_a_value)
@@ -3218,6 +3363,16 @@ namespace TinyJSON
             return nullptr;
           }
           return null_value;
+        }
+
+        TJ_CASE_SOLIDUS
+        {
+          auto comment = try_continue_read_comment(p, parse_result);
+          if (comment == nullptr)
+          {
+            return nullptr;
+          }
+          return comment;
         }
 
         TJ_CASE_DIGIT
@@ -3464,15 +3619,59 @@ namespace TinyJSON
         source++;
         break;
 
+      TJ_CASE_SOLIDUS
+        {
+          auto comment = TJHelper::try_continue_read_comment(source, parse_result);
+          if (comment == nullptr)
+          {
+            TJASSERT(parse_result.has_exception_message());
+            parse_result.throw_if_exception();
+            return nullptr;
+          }
+          if (value_found == nullptr)
+          {
+            value_found = comment;
+          }
+          else
+          {
+            // If we already have a value, and we found a comment, we can just skip it
+            // or should we error? The user said "Standard Value" for root comments.
+            // If it's a comment and then a value, the comment becomes the root value?
+            // "Keep it as the root value if it's the only thing"
+            // If we have // comment \n { "a": 1 }, the root value should be the object.
+            // So if value_found is a comment, and we find a non-comment value, replace it.
+            if (value_found->is_comment())
+            {
+              delete value_found;
+              value_found = nullptr;
+              // we don't return here, the loop will continue and find the next value
+            }
+            else
+            {
+              // we already have a real value, just skip the trailing comment
+              delete comment;
+            }
+          }
+        }
+        break;
+
       default:
         if (nullptr != value_found)
         {
-          // Error: Unexpected multiple JSON values in root.
-          parse_result.assign_exception_message("Unexpected multiple JSON values in root.");
-          delete value_found;
-          TJASSERT(parse_result.has_exception_message());
-          parse_result.throw_if_exception();
-          return nullptr;
+          if (value_found->is_comment())
+          {
+            delete value_found;
+            value_found = nullptr;
+          }
+          else
+          {
+            // Error: Unexpected multiple JSON values in root.
+            parse_result.assign_exception_message("Unexpected multiple JSON values in root.");
+            delete value_found;
+            TJASSERT(parse_result.has_exception_message());
+            parse_result.throw_if_exception();
+            return nullptr;
+          }
         }
 
         // try and look for the value
@@ -3834,6 +4033,11 @@ namespace TinyJSON
   }
 
   bool TJValue::is_null() const
+  {
+    return false;
+  }
+
+  bool TJValue::is_comment() const
   {
     return false;
   }
@@ -4833,6 +5037,40 @@ namespace TinyJSON
       {
         const auto& member = _members->at(i);
 #endif
+        if (member->value()->is_comment())
+        {
+          if (configuration._formating == formating::minify)
+          {
+            // skip comments when minifying
+            continue;
+          }
+
+          if (!TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
+          {
+            delete[] inner_current_indent;
+            configuration._has_error = true;
+            return;
+          }
+
+          member->value()->internal_dump(configuration, inner_current_indent);
+          if (configuration._has_error)
+          {
+            delete[] inner_current_indent;
+            return;
+          }
+
+          if (configuration._formating == formating::indented)
+          {
+            if (!TJHelper::add_char_to_string(TJ_ESCAPE_LINE_FEED, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
+            {
+              delete[] inner_current_indent;
+              configuration._has_error = true;
+              return;
+            }
+          }
+          continue;
+        }
+
         if (!TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length) ||
             !TJHelper::add_string_to_string(configuration._key_quote, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length) ||
             !TJHelper::add_string_to_string(member->name(), configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length) ||
@@ -4852,7 +5090,35 @@ namespace TinyJSON
         }
 
         // don't add on the last item
-        if (--number_of_items > 0)
+        // we need to check if there are more NON-COMMENT items left if we are minifying
+        bool more_items = false;
+#if TJ_INCLUDE_STDVECTOR == 1
+        auto it = std::find(_members->begin(), _members->end(), member);
+        if (it != _members->end())
+        {
+          auto next_it = std::next(it);
+          while (next_it != _members->end())
+          {
+            if (configuration._formating != formating::minify || !(*next_it)->value()->is_comment())
+            {
+              more_items = true;
+              break;
+            }
+            ++next_it;
+          }
+        }
+#else
+        for (unsigned int next_i = i + 1; next_i < size; ++next_i)
+        {
+          if (configuration._formating != formating::minify || !_members->at(next_i)->value()->is_comment())
+          {
+            more_items = true;
+            break;
+          }
+        }
+#endif
+
+        if (more_items)
         {
           if (!TJHelper::add_string_to_string(configuration._item_separator, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
           {
@@ -5133,6 +5399,37 @@ namespace TinyJSON
       {
         const auto& value = _values->at(i);
 #endif
+        if (value->is_comment())
+        {
+          if (configuration._formating == formating::minify)
+          {
+            // skip comments when minifying
+            continue;
+          }
+
+          if (!TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
+          {
+            delete[] inner_current_indent;
+            configuration._has_error = true;
+            return;
+          }
+
+          value->internal_dump(configuration, inner_current_indent);
+          if (configuration._has_error)
+          {
+            delete[] inner_current_indent;
+            return;
+          }
+
+          if (!TJHelper::add_string_to_string(configuration._new_line, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
+          {
+            delete[] inner_current_indent;
+            configuration._has_error = true;
+            return;
+          }
+          continue;
+        }
+
         if (!TJHelper::add_string_to_string(inner_current_indent, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
         {
           delete[] inner_current_indent;
@@ -5147,7 +5444,35 @@ namespace TinyJSON
         }
 
         // don't add on the last item
-        if (--number_of_items > 0)
+        // we need to check if there are more NON-COMMENT items left if we are minifying
+        bool more_items = false;
+#if TJ_INCLUDE_STDVECTOR == 1
+        auto it = std::find(_values->begin(), _values->end(), value);
+        if (it != _values->end())
+        {
+          auto next_it = std::next(it);
+          while (next_it != _values->end())
+          {
+            if (configuration._formating != formating::minify || !(*next_it)->is_comment())
+            {
+              more_items = true;
+              break;
+            }
+            ++next_it;
+          }
+        }
+#else
+        for (unsigned int next_i = i + 1; next_i < size; ++next_i)
+        {
+          if (configuration._formating != formating::minify || !_values->at(next_i)->is_comment())
+          {
+            more_items = true;
+            break;
+          }
+        }
+#endif
+
+        if (more_items)
         {
           if (!TJHelper::add_string_to_string(configuration._item_separator, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
           {
@@ -5829,5 +6154,121 @@ namespace TinyJSON
       return;
     }
     _string = TJHelper::fast_number_fraction_and_exponent_to_string(_number, _fraction, _fraction_exponent, _exponent, _is_negative);
-  }
-} // TinyJSON
+    }
+
+    ///////////////////////////////////////
+    /// TJValueComment
+    TJValueComment::TJValueComment(const TJCHAR* value, const parse_options& options) :
+    TJValue(options),
+    _value(nullptr)
+    {
+    if (value != nullptr)
+    {
+      const auto& length = TJHelper::string_length(value);
+      _value = new TJCHAR[length + 1];
+      TJHelper::copy_string(value, _value, length);
+    }
+    }
+
+    TJValueComment::TJValueComment(const TJValueComment& other) :
+    TJValue(other),
+    _value(nullptr)
+    {
+    if (other._value != nullptr)
+    {
+      const auto& length = TJHelper::string_length(other._value);
+      _value = new TJCHAR[length + 1];
+      TJHelper::copy_string(other._value, _value, length);
+    }
+    }
+
+    TJValueComment::TJValueComment(TJValueComment&& other) noexcept :
+    TJValue(std::move(other)),
+    _value(other._value)
+    {
+    other._value = nullptr;
+    }
+
+    TJValueComment& TJValueComment::operator=(const TJValueComment& other)
+    {
+    if (this != &other)
+    {
+      TJValue::operator=(other);
+      free_value();
+      if (other._value != nullptr)
+      {
+        const auto& length = TJHelper::string_length(other._value);
+        _value = new TJCHAR[length + 1];
+        TJHelper::copy_string(other._value, _value, length);
+      }
+    }
+    return *this;
+    }
+
+    TJValueComment& TJValueComment::operator=(TJValueComment&& other) noexcept
+    {
+    if (this != &other)
+    {
+      TJValue::operator=(std::move(other));
+      free_value();
+      _value = other._value;
+      other._value = nullptr;
+    }
+    return *this;
+    }
+
+    TJValueComment::~TJValueComment()
+    {
+    free_value();
+    }
+
+    bool TJValueComment::is_comment() const
+    {
+    return true;
+    }
+
+    const TJCHAR* TJValueComment::raw_value() const
+    {
+    return _value == nullptr ? TJCHARPREFIX("") : _value;
+    }
+
+    TJValue* TJValueComment::internal_clone() const
+    {
+    return new TJValueComment(*this);
+    }
+
+    TJValueComment* TJValueComment::move(TJCHAR*& value, const parse_options& options)
+    {
+    auto comment = new TJValueComment(nullptr, options);
+    comment->_value = value;
+    value = nullptr;
+    return comment;
+    }
+
+    void TJValueComment::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
+    {
+    // If we are minifying, we don't want comments.
+    if (configuration._formating == formating::minify)
+    {
+      return;
+    }
+
+    (void)current_indent;
+    if (_value != nullptr)
+    {
+      if (!TJHelper::add_string_to_string(_value, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
+      {
+        configuration._has_error = true;
+      }
+    }
+    }
+
+    void TJValueComment::free_value()
+    {
+    if (nullptr != _value)
+    {
+      delete[] _value;
+    }
+    _value = nullptr;
+    }
+    } // TinyJSON
