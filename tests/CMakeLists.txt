@@ -38,6 +38,7 @@ set( Sources
   testtinyjsonoptional.cpp
   testduplicatekeys.cpp
   testjson5comments.cpp
+  testparse5.cpp
   )
 add_executable(
   ${Project}

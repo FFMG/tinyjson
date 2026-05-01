@@ -749,6 +749,14 @@ class TJDictionary;
     static TJValue* parse(const TJCHAR* source, const parse_options& parse_options = {});
 
     /// <summary>
+    /// Parse a json5 string
+    /// </summary>
+    /// <param name="source">The source we are trying to parse.</param>
+    /// <param name="parse_options">The option we want to use when parsing this.</param>
+    /// <returns></returns>
+    static TJValue* parse5(const TJCHAR* source, const parse_options& parse_options = {});
+
+    /// <summary>
     /// Parse a json file
     /// </summary>
     /// <param name="file_path">The source file we are trying to parse.</param>

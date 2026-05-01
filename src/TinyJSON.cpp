@@ -3571,6 +3571,13 @@ namespace TinyJSON
     return internal_parse(source, parse_options);
   }
 
+  TJValue* TJ::parse5(const TJCHAR* source, const parse_options& parse_options)
+  {
+    TinyJSON::parse_options options = parse_options;
+    options.specification = TinyJSON::parse_options::json5_1_0_0;
+    return internal_parse(source, options);
+  }
+
   /// <summary>
   /// Return if the given source is valid or not.
   /// </summary>
