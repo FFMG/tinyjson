@@ -724,17 +724,13 @@ namespace TinyJSON
         _number_of_items_dictionary_cs
       );
 
-      // at this point both values should be the same for the case sensitive.
-      // this is because exact matches always match
-      TJASSERT(_number_of_items == _number_of_items_dictionary_cs);
-
       // we will also need the ci data
       auto binary_search_result_ci = binary_search(key, false);
 
       //  shift everything to the left.
       auto dictionary_index_ci = binary_search_result_ci._dictionary_index;
 
-      // if this item exists already, we are insertng at the same spot
+      // if this item exists already, we are inserting at the same spot
       // but it does not matter as we will be shifting things around.
 
       // check that we will have space.
@@ -860,7 +856,6 @@ namespace TinyJSON
         return;
       }
 
-      TJASSERT(_number_of_items == _number_of_items_dictionary_cs);
       for (unsigned int i = 0; i < _number_of_items; ++i)
       {
         delete _values[i];
