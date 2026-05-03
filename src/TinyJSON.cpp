@@ -2065,6 +2065,12 @@ namespace TinyJSON
 
     static TJValue* try_continue_read_comment(const TJCHAR*& p, ParseResult& parse_result)
     {
+      if (parse_result.options().specification != parse_options::json5_1_0_0)
+      {
+        parse_result.assign_exception_message(TJCHARPREFIX("Comments are only allowed in json5_1_0_0 specification."));
+        return nullptr;
+      }
+
       const TJCHAR* start = p;
       int result_pos = 0;
       int result_max_length = 0;
@@ -3650,8 +3656,7 @@ namespace TinyJSON
             if (value_found->is_comment())
             {
               delete value_found;
-              value_found = nullptr;
-              // we don't return here, the loop will continue and find the next value
+              value_found = comment;
             }
             else
             {
@@ -3692,6 +3697,16 @@ namespace TinyJSON
         }
         break;
       }
+    }
+
+    if (value_found != nullptr && value_found->is_comment())
+    {
+      parse_result.assign_exception_message(TJCHARPREFIX("A JSON text cannot contain only a comment."));
+      delete value_found;
+      value_found = nullptr;
+
+      parse_result.throw_if_exception();
+      return nullptr;
     }
 
     if (parse_options.specification == parse_options::rfc4627 && !parse_result.has_exception_message())
@@ -5010,8 +5025,8 @@ namespace TinyJSON
       return;
     }
 
-    auto number_of_items = get_number_of_items();
-    if (number_of_items > 0)
+    auto number_of_elements = get_number_of_elements();
+    if (number_of_elements > 0)
     {
       // only return if we have data.
       if (configuration._formating == formating::indented)
@@ -5161,6 +5176,35 @@ namespace TinyJSON
 
   unsigned int TJValueObject::get_number_of_items() const
   {
+    if (_members == nullptr)
+    {
+      return 0;
+    }
+
+    unsigned int count = 0;
+#if TJ_INCLUDE_STDVECTOR == 1
+    for (const auto& member : *_members)
+    {
+      if (!member->value()->is_comment())
+      {
+        count++;
+      }
+    }
+#else
+    auto size = _members->size();
+    for (unsigned int i = 0; i < size; ++i)
+    {
+      if (!_members->at(i)->value()->is_comment())
+      {
+        count++;
+      }
+    }
+#endif
+    return count;
+  }
+
+  unsigned int TJValueObject::get_number_of_elements() const
+  {
     return _members == nullptr ? 0 : _members->size();
   }
 
@@ -5171,7 +5215,53 @@ namespace TinyJSON
 
   TJMember* TJValueObject::at(int idx) const
   {
-    if(idx < 0 || unsigned(idx) >= get_number_of_items())
+    if (idx < 0)
+    {
+      return nullptr;
+    }
+
+    int current_idx = 0;
+#if TJ_INCLUDE_STDVECTOR == 1
+    if (_members == nullptr)
+    {
+      return nullptr;
+    }
+    for (auto* member : *_members)
+    {
+      if (!member->value()->is_comment())
+      {
+        if (current_idx == idx)
+        {
+          return member;
+        }
+        current_idx++;
+      }
+    }
+#else
+    if (_members == nullptr)
+    {
+      return nullptr;
+    }
+    auto size = _members->size();
+    for (unsigned int i = 0; i < size; ++i)
+    {
+      auto* member = _members->at(i);
+      if (!member->value()->is_comment())
+      {
+        if (current_idx == idx)
+        {
+          return member;
+        }
+        current_idx++;
+      }
+    }
+#endif
+    return nullptr;
+  }
+
+  TJMember* TJValueObject::element_at(int idx) const
+  {
+    if (idx < 0 || unsigned(idx) >= get_number_of_elements())
     {
       return nullptr;
     }
@@ -5375,8 +5465,8 @@ namespace TinyJSON
       return;
     }
 
-    auto number_of_items = get_number_of_items();
-    if (number_of_items > 0)
+    auto number_of_elements = get_number_of_elements();
+    if (number_of_elements > 0)
     {
       // only return if we have data.
       if (!TJHelper::add_string_to_string(configuration._new_line, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
@@ -5539,6 +5629,35 @@ namespace TinyJSON
 
   unsigned int TJValueArray::get_number_of_items() const
   {
+    if (_values == nullptr)
+    {
+      return 0;
+    }
+
+    unsigned int count = 0;
+#if TJ_INCLUDE_STDVECTOR == 1
+    for (const auto& value : *_values)
+    {
+      if (!value->is_comment())
+      {
+        count++;
+      }
+    }
+#else
+    auto size = _values->size();
+    for (unsigned int i = 0; i < size; ++i)
+    {
+      if (!_values->at(i)->is_comment())
+      {
+        count++;
+      }
+    }
+#endif
+    return count;
+  }
+
+  unsigned int TJValueArray::get_number_of_elements() const
+  {
     return _values == nullptr ? 0 : _values->size();
   }
 
@@ -5549,7 +5668,53 @@ namespace TinyJSON
 
   TJValue* TJValueArray::at(int idx) const
   {
-    if (idx < 0 || unsigned(idx) >= get_number_of_items())
+    if (idx < 0)
+    {
+      return nullptr;
+    }
+
+    int current_idx = 0;
+#if TJ_INCLUDE_STDVECTOR == 1
+    if (_values == nullptr)
+    {
+      return nullptr;
+    }
+    for (auto* value : *_values)
+    {
+      if (!value->is_comment())
+      {
+        if (current_idx == idx)
+        {
+          return value;
+        }
+        current_idx++;
+      }
+    }
+#else
+    if (_values == nullptr)
+    {
+      return nullptr;
+    }
+    auto size = _values->size();
+    for (unsigned int i = 0; i < size; ++i)
+    {
+      auto* value = _values->at(i);
+      if (!value->is_comment())
+      {
+        if (current_idx == idx)
+        {
+          return value;
+        }
+        current_idx++;
+      }
+    }
+#endif
+    return nullptr;
+  }
+
+  TJValue* TJValueArray::element_at(int idx) const
+  {
+    if (idx < 0 || unsigned(idx) >= get_number_of_elements())
     {
       return nullptr;
     }

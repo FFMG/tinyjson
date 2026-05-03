@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 // Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
@@ -861,6 +861,12 @@ class TJDictionary;
     unsigned int get_number_of_items() const;
 
     /// <summary>
+    /// Get the number of elements in this object (including comments)
+    /// </summary>
+    /// <returns></returns>
+    unsigned int get_number_of_elements() const;
+
+    /// <summary>
     /// Try and get a string value, if it does not exist, then we return null.
     /// </summary>
     /// <param name="key"></param>
@@ -1176,6 +1182,7 @@ class TJDictionary;
 
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
+    TJMember* element_at(int idx) const;
 
     bool is_object() const override;
 
@@ -1418,13 +1425,20 @@ class TJDictionary;
     void set_parse_options(const parse_options& options) override;
 
     /// <summary>
-    /// Get the number of items in this array
+    /// Get the number of items in this array (excluding comments)
     /// </summary>
     /// <returns></returns>
     unsigned int get_number_of_items() const;
 
+    /// <summary>
+    /// Get the number of elements in this array (including comments)
+    /// </summary>
+    /// <returns></returns>
+    unsigned int get_number_of_elements() const;
+
     TJValue* operator [](int idx) const;
     TJValue* at(int idx) const;
+    TJValue* element_at(int idx) const;
 
     bool is_array() const override;
 
