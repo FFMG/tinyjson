@@ -679,7 +679,7 @@ namespace TinyJSON
       auto binary_search_result_cs = binary_search(key, true);
       if (true == binary_search_result_cs._was_found)
       {
-        options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
+        options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."));
         replace_dictionaries_data(value, binary_search_result_cs._dictionary_index);
         return;
       }
@@ -2944,7 +2944,7 @@ namespace TinyJSON
           });
         if (current != members->end())
         {
-          options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
+          options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."));
           delete* current;
           *current = member;
           return;
