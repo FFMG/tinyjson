@@ -691,7 +691,7 @@ namespace TinyJSON
       auto binary_search_result_cs = binary_search(key, true);
       if (true == binary_search_result_cs._was_found)
       {
-        options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
+        options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."));
         replace_dictionaries_data(value, binary_search_result_cs._dictionary_index);
         return;
       }
@@ -3052,7 +3052,7 @@ namespace TinyJSON
           });
         if (current != members->end())
         {
-          options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("Duplicate key found, overwriting."));
+          options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."));
           delete* current;
           *current = member;
           return;
@@ -3516,6 +3516,8 @@ namespace TinyJSON
     // sanity check
     if (nullptr == file_path)
     {
+      ParseResult parse_result(parse_options);
+      parse_result.assign_exception_message_and_throw("The given file path is null!");
       return nullptr;
     }
 
@@ -3523,6 +3525,7 @@ namespace TinyJSON
     if (!file.is_open())
     {
       // ERROR: Could not open the file
+      parse_options.callback_function(parse_options::message_type::error, TJCHARPREFIX("File could not be found!"));
       return nullptr;
     }
 
@@ -3533,11 +3536,13 @@ namespace TinyJSON
     if (!file.read(buffer, file_size))
     {
       delete[] buffer;
+      ParseResult parse_result(parse_options);
+      parse_result.assign_exception_message_and_throw("There was an error trying to read the file!");
       return nullptr;
     }
     buffer[file_size] = TJ_NULL_TERMINATOR;
 
-    // we can explicitely close the file to free the resources.
+    // we can explicitly close the file to free the resources.
     file.close();
 
     try
