@@ -3110,7 +3110,7 @@ namespace TinyJSON
 
         TJ_CASE_END_OBJECT
           // but is it what we expected?
-          if (waiting_for_a_string)
+          if (waiting_for_a_string && parse_result.options().specification != parse_options::json5_1_0_0)
           {
             // ERROR: unexpected end of object, there was a "," after
             //        the last string and we expected a string now, not a close "}"
@@ -3240,7 +3240,7 @@ namespace TinyJSON
         break;
 
         TJ_CASE_END_ARRAY
-          if (found_comma && waiting_for_a_value)
+          if (found_comma && waiting_for_a_value && parse_result.options().specification != parse_options::json5_1_0_0)
           {
             // ERROR: unexpected end of array, there was a "," after
             //        the last value and we expected a value now, not a close "]"
