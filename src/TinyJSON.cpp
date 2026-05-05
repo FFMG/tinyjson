@@ -1942,7 +1942,7 @@ namespace TinyJSON
       return true;
     }
 
-    static bool try_add_char_to_string_after_escape(const TJCHAR*& source, TJCHAR*& result, int& result_pos, int& result_max_length)
+    static bool try_add_char_to_string_after_escape(const TJCHAR*& source, TJCHAR*& result, int& result_pos, int& result_max_length, TJCHAR quote_char)
     {
       const auto& next_char = *(source + 1);
       if (next_char == TJ_NULL_TERMINATOR)
@@ -1959,6 +1959,15 @@ namespace TinyJSON
         // skip the escpape and keep the character
         source++;
         return add_char_to_string(next_char, result, result_pos, result_max_length);
+
+      case '\'':
+        // Only allow \' escaping if we started with a single quote
+        if (quote_char == '\'')
+        {
+          source++;
+          return add_char_to_string(next_char, result, result_pos, result_max_length);
+        }
+        return false; // Invalid escape in double-quoted string
 
       case'f':  // f    form feed       U+000C
         source++;
@@ -2147,13 +2156,28 @@ namespace TinyJSON
       return TJValueComment::move(result, parse_result.options());
     }
 
-    static TJCHAR* try_continue_read_string(const TJCHAR*& p, ParseResult& parse_result)
+    static TJCHAR* try_continue_read_string(const TJCHAR*& p, ParseResult& parse_result, TJCHAR quote_char)
     {
       int result_pos = 0;
       int result_max_length = 0;
       TJCHAR* result = nullptr;
       while (*p != TJ_NULL_TERMINATOR)
       {
+        if (*p == quote_char)
+        {
+          p++;
+
+          // Allocate memory for the result string
+          // Null-terminate the string
+          if (!add_char_to_string(TJ_NULL_TERMINATOR, result, result_pos, result_max_length))
+          {
+            delete[] result;
+            parse_result.assign_exception_message("Maximum JSON string read size exceeded.");
+            return nullptr;
+          }
+          return result;
+        }
+
         switch (*p)
         {
         TJ_CASE_SPACE
@@ -2173,7 +2197,7 @@ namespace TinyJSON
           break;
 
         TJ_CASE_MAYBE_ESCAPE
-          if (!try_add_char_to_string_after_escape(p, result, result_pos, result_max_length))
+          if (!try_add_char_to_string_after_escape(p, result, result_pos, result_max_length, quote_char))
           {
             delete[] result;
             if (result_max_length == 0)
@@ -2208,19 +2232,6 @@ namespace TinyJSON
           // ERROR: invalid character inside the string.
           parse_result.assign_exception_message("Invalid character inside the string..");
           return nullptr;
-
-        TJ_CASE_START_STRING
-          p++;
-
-          // Allocate memory for the result string
-          // Null-terminate the string
-          if (!add_char_to_string(TJ_NULL_TERMINATOR, result, result_pos, result_max_length))
-          {
-            delete[] result;
-            parse_result.assign_exception_message("Maximum JSON string read size exceeded.");
-            return nullptr;
-          }
-          return result;
 
         default:
           // we are still in the string, then we are good.
@@ -3124,8 +3135,18 @@ namespace TinyJSON
           // we give the ownership of the members over.
           return TJValueObject::move(members, parse_result.options());
 
+        case '\'':
+        {
+          if (parse_result.options().specification != parse_options::json5_1_0_0)
+          {
+            free_members(members);
+            parse_result.assign_exception_message("Single quotes are only allowed in json5_1_0_0 specification.");
+            return nullptr;
+          }
+        } // fallthrough
         TJ_CASE_START_STRING
         {
+          TJCHAR quote_char = c;
           // we got our string, no longer waiting for one.
           waiting_for_a_string = false;
 
@@ -3145,7 +3166,7 @@ namespace TinyJSON
 
           // read the actual string and value
           // that's the way it has to be.
-          auto member = try_read_string_and_value(p, parse_result);
+          auto member = try_read_string_and_value(p, parse_result, quote_char);
           if (member == nullptr)
           {
             // ERROR: There was an error reading the name and/or the value
@@ -3316,9 +3337,18 @@ namespace TinyJSON
           p++;
           break;
 
+        case '\'':
+        {
+          if (parse_result.options().specification != parse_options::json5_1_0_0)
+          {
+            parse_result.assign_exception_message("Single quotes are only allowed in json5_1_0_0 specification.");
+            return nullptr;
+          }
+        } // fallthrough
         TJ_CASE_START_STRING
         {
-          auto string_value = try_continue_read_string(++p, parse_result);
+          TJCHAR quote_char = c;
+          auto string_value = try_continue_read_string(++p, parse_result, quote_char);
           if (nullptr == string_value)
           {
             //  ERROR: could not read the string properly.
@@ -3427,10 +3457,10 @@ namespace TinyJSON
       return nullptr;
     }
 
-    static TJMember* try_read_string_and_value(const TJCHAR*& p, ParseResult& parse_result)
+    static TJMember* try_read_string_and_value(const TJCHAR*& p, ParseResult& parse_result, TJCHAR quote_char)
     {
       // first we look for the string, all the elements are supposed to have one.
-      auto string_value = try_continue_read_string(++p, parse_result);
+      auto string_value = try_continue_read_string(++p, parse_result, quote_char);
       if (string_value == nullptr)
       {
         //  ERROR: could not read the string
