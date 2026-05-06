@@ -40,6 +40,7 @@ set( Sources
   testjson5comments.cpp
   testjson5spec_comments.cpp
   testparse5.cpp
+  testjson5strings.cpp
   )
 add_executable(
   ${Project}

@@ -1942,12 +1942,31 @@ namespace TinyJSON
       return true;
     }
 
-    static bool try_add_char_to_string_after_escape(const TJCHAR*& source, TJCHAR*& result, int& result_pos, int& result_max_length, TJCHAR quote_char)
+    static bool try_add_char_to_string_after_escape(const TJCHAR*& source, TJCHAR*& result, int& result_pos, int& result_max_length, TJCHAR quote_char, const parse_options& options)
     {
       const auto& next_char = *(source + 1);
       if (next_char == TJ_NULL_TERMINATOR)
       {
         return false;
+      }
+
+      // JSON5: Line continuation
+      if (options.specification == parse_options::json5_1_0_0)
+      {
+        if (next_char == TJ_ESCAPE_LINE_FEED)
+        {
+          source++;
+          return true;
+        }
+        if (next_char == TJ_ESCAPE_CARRIAGE_RETURN)
+        {
+          source++;
+          if (*(source + 1) == TJ_ESCAPE_LINE_FEED)
+          {
+            source++;
+          }
+          return true;
+        }
       }
 
       // as per RFC8259
@@ -1961,8 +1980,8 @@ namespace TinyJSON
         return add_char_to_string(next_char, result, result_pos, result_max_length);
 
       case '\'':
-        // Only allow \' escaping if we started with a single quote
-        if (quote_char == '\'')
+        // Only allow \' escaping if we started with a single quote OR if we are in json5
+        if (quote_char == '\'' || options.specification == parse_options::json5_1_0_0)
         {
           source++;
           return add_char_to_string(next_char, result, result_pos, result_max_length);
@@ -1989,82 +2008,168 @@ namespace TinyJSON
         source++;
         return add_char_to_string(TJ_ESCAPE_TAB, result, result_pos, result_max_length);
 
+      case 'v': // v    vertical tab    U+000B
+        if (options.specification == parse_options::json5_1_0_0)
+        {
+          source++;
+          return add_char_to_string(static_cast<TJCHAR>(0x0B), result, result_pos, result_max_length);
+        }
+        break;
+
+      case '0': // \0   null            U+0000
+        if (options.specification == parse_options::json5_1_0_0)
+        {
+          const auto& after_null = *(source + 2);
+          if (after_null < '0' || after_null > '9')
+          {
+            source++;
+            return add_char_to_string(static_cast<TJCHAR>(0x00), result, result_pos, result_max_length);
+          }
+        }
+        break;
+
+      case 'x': // \xHH hex escape
+        if (options.specification == parse_options::json5_1_0_0)
+        {
+          TJCHAR hex[3] = { *(source + 2), *(source + 3), TJ_NULL_TERMINATOR };
+          if (hex[0] != TJ_NULL_TERMINATOR && hex[1] != TJ_NULL_TERMINATOR)
+          {
+            bool is_hex = true;
+            for (int i = 0; i < 2; ++i)
+            {
+              bool char_is_hex = (hex[i] >= '0' && hex[i] <= '9') || (hex[i] >= 'a' && hex[i] <= 'f') || (hex[i] >= 'A' && hex[i] <= 'F');
+              if (!char_is_hex)
+              {
+                is_hex = false;
+                break;
+              }
+            }
+            if (is_hex)
+            {
+              auto decimal = fast_hex_to_decimal(hex);
+              if (decimal >= 0)
+              {
+                source += 3;
+                return add_char_to_string(static_cast<TJCHAR>(decimal), result, result_pos, result_max_length);
+              }
+            }
+          }
+        }
+        break;
+
       case 'u': // /uxxxx escape
         {
-          // this is the worse case scenario .. we now have to try read the next 4 characters
-          // U+0000 through U+FFFF
-          TJCHAR* hex = nullptr;
-          int buffer_pos = 0;
-          int buffer_max_length = 0;
-          for (auto i = 0; i < 4; ++i)
+          source++; // skip 'u'
+          if (options.specification == parse_options::json5_1_0_0 && *(source + 1) == '{')
           {
-            const auto& possible_hex_char = *(source + i + 2);  //  we add two for '/u'
-            switch (possible_hex_char)
+            source++; // skip '{'
+            const TJCHAR* start = source + 1;
+            while (*(source + 1) != '}' && *(source + 1) != TJ_NULL_TERMINATOR)
             {
-            TJ_CASE_HEX
-              if (!add_char_to_string(possible_hex_char, hex, buffer_pos, buffer_max_length))
+              source++;
+            }
+            if (*(source + 1) == '}')
+            {
+              int len = static_cast<int>(source - start + 1);
+              TJCHAR* hex = new TJCHAR[len + 1];
+              memcpy(hex, start, len * sizeof(TJCHAR));
+              hex[len] = TJ_NULL_TERMINATOR;
+              auto decimal = fast_hex_to_decimal(hex);
+              delete[] hex;
+              source++; // skip '}'
+              if (decimal >= 0)
               {
-                delete[] hex;
-                return false;
+                return add_unicode_to_string(decimal, result, result_pos, result_max_length);
               }
-              break;
-
-            default:
-            case TJ_NULL_TERMINATOR:
-                //  not sure what this is, but it is not valid.
-                delete[] hex;
-                return false;
             }
-          }
-
-          auto decimal = fast_hex_to_decimal(hex);
-          delete[] hex;
-          if (decimal < 0)
-          {
-            return false; //  not sure what this is.
-          }
-#if TJ_USE_CHAR == 1
-          if (decimal <= 0x7F) 
-          {
-            // 1-byte UTF-8 (ASCII)
-            if (!add_char_to_string(static_cast<char>(decimal), result, result_pos, result_max_length))
-            {
-              return false;
-            }
-          }
-          else if (decimal <= 0x7FF) 
-          {
-            // 2-byte UTF-8
-            if (!add_char_to_string(static_cast<char>(0xC0 | (decimal >> 6)), result, result_pos, result_max_length) ||
-                !add_char_to_string(static_cast<char>(0x80 | (decimal & 0x3F)), result, result_pos, result_max_length))
-            {
-              return false;
-            }
-          }
-          else if (decimal <= 0xFFFF)
-          {
-            // 3-byte UTF-8
-            if (!add_char_to_string(static_cast<char>(0xE0 | (decimal >> 12)), result, result_pos, result_max_length) ||
-                !add_char_to_string(static_cast<char>(0x80 | ((decimal >> 6) & 0x3F)), result, result_pos, result_max_length) ||
-                !add_char_to_string(static_cast<char>(0x80 | (decimal & 0x3F)), result, result_pos, result_max_length))
-            {
-              return false;
-            }
-          }
-#else
-          if (!add_char_to_string(static_cast<TJCHAR>(decimal), result, result_pos, result_max_length))
-          {
             return false;
           }
-#endif
-          source += 5;  //  the full \uXXXX = 6 char (caller will add the 6th)
-          return true;
+
+          // standard \uHHHH
+          TJCHAR hex[5] = { *(source + 1), *(source + 2), *(source + 3), *(source + 4), TJ_NULL_TERMINATOR };
+          for (int i = 0; i < 4; ++i)
+          {
+            if (hex[i] == TJ_NULL_TERMINATOR) return false;
+            bool char_is_hex = (hex[i] >= '0' && hex[i] <= '9') || (hex[i] >= 'a' && hex[i] <= 'f') || (hex[i] >= 'A' && hex[i] <= 'F');
+            if (!char_is_hex) return false;
+          }
+          auto decimal = fast_hex_to_decimal(hex);
+          if (decimal >= 0)
+          {
+            source += 4;
+            return add_unicode_to_string(decimal, result, result_pos, result_max_length);
+          }
+          return false;
         }
-        return false;
+
+      default:
+        if (options.specification == parse_options::json5_1_0_0)
+        {
+          if (next_char >= '1' && next_char <= '9')
+          {
+            return false; // Escaped non-zero digits are not allowed (to avoid octal confusion)
+          }
+          source++;
+          return add_char_to_string(next_char, result, result_pos, result_max_length);
+        }
+        break;
       }
 
-      //  this is not an escaped character, just a single reverse solidus
       return false;
+    }
+
+    static bool add_unicode_to_string(int decimal, TJCHAR*& result, int& result_pos, int& result_max_length)
+    {
+#if TJ_USE_CHAR == 1
+      if (decimal <= 0x7F)
+      {
+        // 1-byte UTF-8 (ASCII)
+        if (!add_char_to_string(static_cast<char>(decimal), result, result_pos, result_max_length))
+        {
+          return false;
+        }
+      }
+      else if (decimal <= 0x7FF)
+      {
+        // 2-byte UTF-8
+        if (!add_char_to_string(static_cast<char>(0xC0 | (decimal >> 6)), result, result_pos, result_max_length) ||
+          !add_char_to_string(static_cast<char>(0x80 | (decimal & 0x3F)), result, result_pos, result_max_length))
+        {
+          return false;
+        }
+      }
+      else if (decimal <= 0xFFFF)
+      {
+        // 3-byte UTF-8
+        if (!add_char_to_string(static_cast<char>(0xE0 | (decimal >> 12)), result, result_pos, result_max_length) ||
+          !add_char_to_string(static_cast<char>(0x80 | ((decimal >> 6) & 0x3F)), result, result_pos, result_max_length) ||
+          !add_char_to_string(static_cast<char>(0x80 | (decimal & 0x3F)), result, result_pos, result_max_length))
+        {
+          return false;
+        }
+      }
+      else if (decimal <= 0x10FFFF)
+      {
+        // 4-byte UTF-8
+        if (!add_char_to_string(static_cast<char>(0xF0 | (decimal >> 18)), result, result_pos, result_max_length) ||
+          !add_char_to_string(static_cast<char>(0x80 | ((decimal >> 12) & 0x3F)), result, result_pos, result_max_length) ||
+          !add_char_to_string(static_cast<char>(0x80 | ((decimal >> 6) & 0x3F)), result, result_pos, result_max_length) ||
+          !add_char_to_string(static_cast<char>(0x80 | (decimal & 0x3F)), result, result_pos, result_max_length))
+        {
+          return false;
+        }
+      }
+      else
+      {
+        return false;
+      }
+#else
+      if (!add_char_to_string(static_cast<TJCHAR>(decimal), result, result_pos, result_max_length))
+      {
+        return false;
+      }
+#endif
+      return true;
     }
 
     static TJValue* try_continue_read_comment(const TJCHAR*& p, ParseResult& parse_result)
@@ -2186,6 +2291,14 @@ namespace TinyJSON
           {
           case TJ_ESCAPE_LINE_FEED:       // % x6E / ; n    line feed       U + 000A
           case TJ_ESCAPE_CARRIAGE_RETURN: // % x72 / ; r    carriage return U + 000D
+            if (parse_result.options().specification != parse_options::json5_1_0_0)
+            {
+              // ERROR: invalid character inside the string.
+              delete[] result;
+              parse_result.assign_exception_message("Invalid character inside the string.");
+              return nullptr;
+            }
+            break;
           case  TJ_ESCAPE_TAB:            // % x74 / ; t    tab             U + 0009
             // ERROR: invalid character inside the string.
             delete[] result;
@@ -2197,7 +2310,7 @@ namespace TinyJSON
           break;
 
         TJ_CASE_MAYBE_ESCAPE
-          if (!try_add_char_to_string_after_escape(p, result, result_pos, result_max_length, quote_char))
+          if (!try_add_char_to_string_after_escape(p, result, result_pos, result_max_length, quote_char, parse_result.options()))
           {
             delete[] result;
             if (result_max_length == 0)
