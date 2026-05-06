@@ -41,6 +41,11 @@ set( Sources
   testjson5spec_comments.cpp
   testparse5.cpp
   testjson5strings.cpp
+  testjson5arrays.cpp
+  testjson5numbers.cpp
+  testjson5objects.cpp
+  testjson5misc.cpp
+  testjson5newlines.cpp
   )
 add_executable(
   ${Project}

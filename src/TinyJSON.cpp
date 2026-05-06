@@ -1776,6 +1776,47 @@ namespace TinyJSON
       return case_compare(lhs, rhs, case_sensitive) == 0;
     }
 
+    static bool starts_with(const TJCHAR* source, const TJCHAR* prefix)
+    {
+      if (source == nullptr || prefix == nullptr) return false;
+      for (unsigned int i = 0; prefix[i] != TJ_NULL_TERMINATOR; ++i)
+      {
+        if (source[i] != prefix[i]) return false;
+      }
+      return true;
+    }
+
+    static bool is_hex(TJCHAR c)
+    {
+      return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    }
+
+    static bool is_id_start(TJCHAR c)
+    {
+      return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '$';
+    }
+
+    static bool is_id_part(TJCHAR c)
+    {
+      return is_id_start(c) || (c >= '0' && c <= '9');
+    }
+
+    static bool is_json5_whitespace(TJCHAR c)
+    {
+      switch (c)
+      {
+      case ' ': case '\t': case '\n': case '\r': case '\v': case '\f':
+        return true;
+      case static_cast<TJCHAR>(0x00A0): // Non-breaking space
+      case static_cast<TJCHAR>(0x2028): // Line separator
+      case static_cast<TJCHAR>(0x2029): // Paragraph separator
+      case static_cast<TJCHAR>(0xFEFF): // Byte order mark
+        return true;
+      default:
+        return false;
+      }
+    }
+
     static void free_members(TJDICTIONARY* members)
     {
       if (members == nullptr)
@@ -3046,6 +3087,45 @@ namespace TinyJSON
       return p[0] == '0' && p[1] != '.';
     }
 
+    static TJValue* try_read_hex_number(const TJCHAR*& p, bool is_negative, const parse_options& options)
+    {
+      p += 2; // skip 0x
+      const TJCHAR* start = p;
+      while (TJHelper::is_hex(*p))
+      {
+        p++;
+      }
+      if (p == start)
+      {
+        return nullptr;
+      }
+      unsigned int length = static_cast<unsigned int>(p - start);
+      TJCHAR* hex = new TJCHAR[length + 1];
+      TJHelper::copy_string(start, hex, length);
+      hex[length] = TJ_NULL_TERMINATOR;
+      long long decimal = TJHelper::fast_hex_to_decimal(hex);
+      delete[] hex;
+      if (decimal < 0) return nullptr;
+      return new TJValueNumberInt(is_negative ? -1 * decimal : decimal, options);
+    }
+
+    static TJValue* try_read_special_number(const TJCHAR*& p, bool is_negative, const parse_options& options)
+    {
+      if (options.specification != parse_options::json5_1_0_0) return nullptr;
+
+      if (TJHelper::starts_with(p, TJCHARPREFIX("NaN")))
+      {
+        p += 3;
+        return new TJValueNumberFloat(std::numeric_limits<long double>::quiet_NaN(), options);
+      }
+      if (TJHelper::starts_with(p, TJCHARPREFIX("Infinity")))
+      {
+        p += 8;
+        return new TJValueNumberFloat(is_negative ? -1.0L * std::numeric_limits<long double>::infinity() : std::numeric_limits<long double>::infinity(), options);
+      }
+      return nullptr;
+    }
+
     /// <summary>
     /// Try and read a number given a string.
     /// </summary>
@@ -3060,16 +3140,40 @@ namespace TinyJSON
         is_negative = true;
         p++;
       }
+      else if (*p == '+' && parse_result.options().specification == parse_options::json5_1_0_0)
+      {
+        p++;
+      }
+
+      // JSON5 Special values
+      auto special = try_read_special_number(p, is_negative, parse_result.options());
+      if (special) return special;
+
+      // JSON5 Hexadecimal
+      if (parse_result.options().specification == parse_options::json5_1_0_0 && *p == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X'))
+      {
+        return try_read_hex_number(p, is_negative, parse_result.options());
+      }
 
       // then try and read the digit(s).
       auto possible_number = try_read_whole_number(p, parse_result);
       if (nullptr == possible_number)
       {
-        // ERROR: Could not locate the number.
-        return nullptr;
+        if (*p == '.' && parse_result.options().specification == parse_options::json5_1_0_0)
+        {
+          // Leading decimal point
+          possible_number = new TJCHAR[2];
+          possible_number[0] = '0';
+          possible_number[1] = TJ_NULL_TERMINATOR;
+        }
+        else
+        {
+          // ERROR: Could not locate the number.
+          return nullptr;
+        }
       }
 
-      if (has_possible_double_zero(possible_number))
+      if (has_possible_double_zero(possible_number) && parse_result.options().specification != parse_options::json5_1_0_0)
       {
         // ERROR: Numbers cannot have leading zeros
         parse_result.assign_exception_message("Numbers cannot have leading zeros.");
@@ -3090,14 +3194,25 @@ namespace TinyJSON
         const auto& possible_fraction_number = try_read_whole_number_as_fraction(p, parse_result);
         if (nullptr == possible_fraction_number)
         {
-          // ERROR: we cannot have a number like '-12.' or '42.
-          return nullptr;
+          if (parse_result.options().specification == parse_options::json5_1_0_0)
+          {
+            // Trailing decimal point is OK
+            unsigned_fraction = 0;
+            fraction_exponent = 0;
+          }
+          else
+          {
+            // ERROR: we cannot have a number like '-12.' or '42.
+            return nullptr;
+          }
         }
-
-        // so 001 become exponent = 3
-        fraction_exponent = string_length(possible_fraction_number);
-        unsigned_fraction = fast_string_to_long_long(possible_fraction_number);
-        delete[] possible_fraction_number;
+        else
+        {
+          // so 001 become exponent = 3
+          fraction_exponent = string_length(possible_fraction_number);
+          unsigned_fraction = fast_string_to_long_long(possible_fraction_number);
+          delete[] possible_fraction_number;
+        }
       }
 
       // try read the exponent if there is one.
@@ -3112,9 +3227,8 @@ namespace TinyJSON
           is_negative_exponent = true;
           p++;
         }
-        if (*p == '+')
+        else if (*p == '+')
         {
-          is_negative_exponent = false;
           p++;
         }
         const auto& possible_exponent = try_read_whole_number(p, parse_result);
@@ -3188,6 +3302,34 @@ namespace TinyJSON
 #endif
     }
 
+    static TJMember* try_read_unquoted_string_and_value(const TJCHAR*& p, ParseResult& parse_result)
+    {
+      const TJCHAR* start = p;
+      while (TJHelper::is_id_part(*p))
+      {
+        p++;
+      }
+      unsigned int length = static_cast<unsigned int>(p - start);
+      TJCHAR* key = new TJCHAR[length + 1];
+      TJHelper::copy_string(start, key, length);
+      key[length] = TJ_NULL_TERMINATOR;
+
+      if (!try_skip_colon(p))
+      {
+        delete[] key;
+        parse_result.assign_exception_message("Could not locate the expected colon after the unquoted key.");
+        return nullptr;
+      }
+
+      auto value = try_read_Value(p, parse_result);
+      if (nullptr == value)
+      {
+        delete[] key;
+        return nullptr;
+      }
+      return TJMember::move(key, value, parse_result.options());
+    }
+
     /// <summary>
     /// Try and read an object after we have read the openning bracket
     /// This is to prevent having to read the same char more than once.
@@ -3215,6 +3357,20 @@ namespace TinyJSON
         TJ_CASE_SPACE
           p++;
           break;
+
+        case '\v':
+        case '\f':
+          if (parse_result.options().specification == parse_options::json5_1_0_0)
+          {
+            p++;
+            break;
+          }
+          else
+          {
+            free_members(members);
+            parse_result.assign_exception_message("Unknown character.");
+            return nullptr;
+          }
 
         TJ_CASE_SOLIDUS
         {
@@ -3310,6 +3466,42 @@ namespace TinyJSON
           break;
 
         default:
+          if (parse_result.options().specification == parse_options::json5_1_0_0)
+          {
+            if (TJHelper::is_json5_whitespace(c))
+            {
+              p++;
+              break;
+            }
+            if (TJHelper::is_id_start(c))
+            {
+               // we got our string, no longer waiting for one.
+               waiting_for_a_string = false;
+
+               // we are no longer after the string
+               after_string = false;
+
+               if (members != nullptr && !found_comma)
+               {
+                 free_members(members);
+                 parse_result.assign_exception_message("Expected a comma after the last element.");
+                 return nullptr;
+               }
+
+               auto member = try_read_unquoted_string_and_value(p, parse_result);
+               if (member == nullptr)
+               {
+                 free_members(members);
+                 return nullptr;
+               }
+
+               found_comma = false;
+               move_member_to_members(member, members, parse_result.options());
+               after_string = true;
+               break;
+            }
+          }
+
           // ERROR: unknown character
           free_members(members);
           parse_result.assign_exception_message("Unknown character.");
@@ -3350,6 +3542,20 @@ namespace TinyJSON
         TJ_CASE_SPACE
           p++;
           break;
+
+        case '\v':
+        case '\f':
+          if (parse_result.options().specification == parse_options::json5_1_0_0)
+          {
+            p++;
+            break;
+          }
+          else
+          {
+            free_values(values);
+            parse_result.assign_exception_message("Unknown character.");
+            return nullptr;
+          }
 
         TJ_CASE_SOLIDUS
         {
@@ -3403,6 +3609,11 @@ namespace TinyJSON
           break;
 
         default:
+          if (parse_result.options().specification == parse_options::json5_1_0_0 && TJHelper::is_json5_whitespace(c))
+          {
+            p++;
+            break;
+          }
           const auto& value = try_read_Value(p, parse_result);
           if (value == nullptr)
           {
@@ -3449,6 +3660,19 @@ namespace TinyJSON
         TJ_CASE_SPACE
           p++;
           break;
+
+        case '\v':
+        case '\f':
+          if (parse_result.options().specification == parse_options::json5_1_0_0)
+          {
+            p++;
+            break;
+          }
+          else
+          {
+            parse_result.assign_exception_message("Unexpected Token while trying to read value.");
+            return nullptr;
+          }
 
         case '\'':
         {
@@ -3519,6 +3743,21 @@ namespace TinyJSON
           return comment;
         }
 
+        case 'N':
+        case 'I':
+          if (parse_result.options().specification != parse_options::json5_1_0_0)
+          {
+            parse_result.assign_exception_message("Unexpected Token while trying to read value.");
+            return nullptr;
+          }
+          // fallthrough
+        case '.':
+          if (c == '.' && parse_result.options().specification != parse_options::json5_1_0_0)
+          {
+             parse_result.assign_exception_message("Unexpected Token while trying to read value.");
+             return nullptr;
+          }
+          // fallthrough
         TJ_CASE_DIGIT
         TJ_CASE_SIGN
         {
@@ -3560,6 +3799,11 @@ namespace TinyJSON
         }
 
         default:
+          if (parse_result.options().specification == parse_options::json5_1_0_0 && TJHelper::is_json5_whitespace(c))
+          {
+            p++;
+            break;
+          }
           // ERROR: Unexpected Token while trying to read value.
           parse_result.assign_exception_message("Unexpected Token while trying to read value.");
           return nullptr;
@@ -3769,12 +4013,21 @@ namespace TinyJSON
     TJValue* value_found = nullptr;
     while (*source != TJ_NULL_TERMINATOR)
     {
-      switch (*source)
+      TJCHAR c = *source;
+      switch (c)
       {
       TJ_CASE_SPACE
         source++;
         break;
 
+      case '\v':
+      case '\f':
+        if (parse_options.specification == parse_options::json5_1_0_0)
+        {
+          source++;
+          break;
+        }
+        // fallthrough
       TJ_CASE_SOLIDUS
         {
           auto comment = TJHelper::try_continue_read_comment(source, parse_result);
@@ -3790,12 +4043,6 @@ namespace TinyJSON
           }
           else
           {
-            // If we already have a value, and we found a comment, we can just skip it
-            // or should we error? The user said "Standard Value" for root comments.
-            // If it's a comment and then a value, the comment becomes the root value?
-            // "Keep it as the root value if it's the only thing"
-            // If we have // comment \n { "a": 1 }, the root value should be the object.
-            // So if value_found is a comment, and we find a non-comment value, replace it.
             if (value_found->is_comment())
             {
               delete value_found;
@@ -3803,7 +4050,6 @@ namespace TinyJSON
             }
             else
             {
-              // we already have a real value, just skip the trailing comment
               delete comment;
             }
           }
@@ -3811,6 +4057,12 @@ namespace TinyJSON
         break;
 
       default:
+        if (parse_options.specification == parse_options::json5_1_0_0 && TJHelper::is_json5_whitespace(c))
+        {
+          source++;
+          break;
+        }
+
         if (nullptr != value_found)
         {
           if (value_found->is_comment())
@@ -3852,6 +4104,12 @@ namespace TinyJSON
       return nullptr;
     }
 
+    if (value_found == nullptr && parse_options.specification == parse_options::json5_1_0_0)
+    {
+       // JSON5 requires a value
+       return nullptr;
+    }
+
     if (parse_options.specification == parse_options::rfc4627 && !parse_result.has_exception_message())
     {
       if (value_found == nullptr || (!value_found->is_array() && !value_found->is_object()))
@@ -3869,6 +4127,10 @@ namespace TinyJSON
     // return if we found anything.
     // if we found nothing ... then it is not an error, just an empty string
     parse_result.throw_if_exception();
+    if (value_found == nullptr && parse_result.options().specification == parse_options::json5_1_0_0)
+    {
+       return nullptr;
+    }
     return value_found != nullptr ? value_found : new TJValueString(TJCHARPREFIX(""));
   }
 
@@ -6181,10 +6443,28 @@ namespace TinyJSON
   TJValueNumberFloat::TJValueNumberFloat(long double number, const parse_options& options) :
     TJValueNumber(number < 0.0L, options),
     _string(nullptr),
-    _number(TJHelper::get_whole_number_from_float(number)),
-    _fraction(TJHelper::get_fraction_from_float(number)),
-    _fraction_exponent(TJHelper::get_unsigned_exponent_from_float(number))
+    _number(0),
+    _fraction(0),
+    _fraction_exponent(0)
   {
+    if (std::isnan(number) || std::isinf(number))
+    {
+      _fraction_exponent = 0xFFFFFFFF;
+      if (std::isnan(number))
+      {
+        _number = 1;
+      }
+      else
+      {
+        _number = 2;
+      }
+    }
+    else
+    {
+      _number = TJHelper::get_whole_number_from_float(number);
+      _fraction = TJHelper::get_fraction_from_float(number);
+      _fraction_exponent = TJHelper::get_unsigned_exponent_from_float(number);
+    }
   }
 
   TJValueNumberFloat::TJValueNumberFloat(const TJValueNumberFloat& other) :
@@ -6268,6 +6548,29 @@ namespace TinyJSON
       return;
     }
 
+    if (_fraction_exponent == 0xFFFFFFFF)
+    {
+      if (_number == 1)
+      {
+        _string = new TJCHAR[4];
+        TJHelper::copy_string(TJCHARPREFIX("NaN"), _string, 3);
+      }
+      else
+      {
+        if (_is_negative)
+        {
+          _string = new TJCHAR[10];
+          TJHelper::copy_string(TJCHARPREFIX("-Infinity"), _string, 9);
+        }
+        else
+        {
+          _string = new TJCHAR[9];
+          TJHelper::copy_string(TJCHARPREFIX("Infinity"), _string, 8);
+        }
+      }
+      return;
+    }
+
     _string = TJHelper::fast_number_and_fraction_to_string(_number, _fraction, _fraction_exponent, _is_negative);
   }
 
@@ -6302,6 +6605,15 @@ namespace TinyJSON
 
   long double TJValueNumberFloat::get_number() const
   {
+    if (_fraction_exponent == 0xFFFFFFFF)
+    {
+      if (_number == 1)
+      {
+        return std::numeric_limits<long double>::quiet_NaN();
+      }
+      return (_is_negative ? -1.0L : 1.0L) * std::numeric_limits<long double>::infinity();
+    }
+
     if (_fraction == 0) {
       return static_cast<long double>(_number);
     }
