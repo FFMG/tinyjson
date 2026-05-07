@@ -9,5 +9,5 @@ inline bool areDoublesEqual(double a, double b, double epsilon = 1e-9) {
 }
 
 inline bool areFloatsEqual(float a, float b, float epsilon = 1e-9) {
-  return std::fabsf(a - b) < epsilon;
+  return std::fabs(a - b) < epsilon;
 }
