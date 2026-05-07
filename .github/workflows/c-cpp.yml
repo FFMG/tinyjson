@@ -7,6 +7,23 @@ on:
     branches: [ "main" ]
 
 jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build and test
+      run: |
+        set +e
+        g++ -std=c++20 -O3 -Iexternal/googletest/googletest/include -Iexternal/googletest/googletest src/TinyJSON.cpp tests/*.cpp external/googletest/googletest/src/gtest-all.cc -pthread -o testtinyjson
+
+    - name: run tests
+      run: |
+        set +e
+        ./testtinyjson
+
   warnings:
     name: Build Warnings as Errors
     runs-on: ubuntu-latest

@@ -78,7 +78,7 @@ TEST(TestOptional, ArrowOperator) {
 
 TEST(TestOptional, ExceptionOnNoValue) {
   Optional<int> opt;
-  ASSERT_THROW(opt.value(), std::logic_error);
+  ASSERT_THROW((void)opt.value(), std::logic_error);
 }
 
 // Special class to track construction/destruction
