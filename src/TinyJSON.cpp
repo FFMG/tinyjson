@@ -25,14 +25,15 @@ static constexpr TJCHAR TJ_UTF8_BOM0 = static_cast<TJCHAR>(0x0EF);
 static constexpr TJCHAR TJ_UTF8_BOM1 = static_cast<TJCHAR>(0x0BB);
 static constexpr TJCHAR TJ_UTF8_BOM2 = static_cast<TJCHAR>(0x0BF);
 
-static constexpr TJCHAR TJ_ESCAPE_QUOTATION = static_cast<TJCHAR>(0x022);       // % x22 / ; "    quotation mark  U+0022
-static constexpr TJCHAR TJ_ESCAPE_REVERSE_SOLIDUS = static_cast<TJCHAR>(0x05C); // % x5C / ; \    reverse solidus U+005C
-static constexpr TJCHAR TJ_ESCAPE_SOLIDUS = static_cast<TJCHAR>(0x02F);         // % x2F / ; /    solidus         U+002F
-static constexpr TJCHAR TJ_ESCAPE_BACKSPACE = static_cast<TJCHAR>(0x008);       // % x62 / ; b    backspace       U+0008
-static constexpr TJCHAR TJ_ESCAPE_FORM_FEED = static_cast<TJCHAR>(0x00C);       // % x66 / ; f    form feed       U+000C
-static constexpr TJCHAR TJ_ESCAPE_LINE_FEED = static_cast<TJCHAR>(0x00A);       // % x6E / ; n    line feed       U+000A
-static constexpr TJCHAR TJ_ESCAPE_CARRIAGE_RETURN = static_cast<TJCHAR>(0x00D); // % x72 / ; r    carriage return U+000D
-static constexpr TJCHAR TJ_ESCAPE_TAB = static_cast<TJCHAR>(0x009);             // % x74 / ; t    tab             U+0009
+static constexpr TJCHAR TJ_ESCAPE_SINGLE_QUOTATION = static_cast<TJCHAR>(0x027);  // % x27 / ; "    quotation mark  U+0027
+static constexpr TJCHAR TJ_ESCAPE_QUOTATION = static_cast<TJCHAR>(0x022);         // % x22 / ; "    quotation mark  U+0022
+static constexpr TJCHAR TJ_ESCAPE_REVERSE_SOLIDUS = static_cast<TJCHAR>(0x05C);   // % x5C / ; \    reverse solidus U+005C
+static constexpr TJCHAR TJ_ESCAPE_SOLIDUS = static_cast<TJCHAR>(0x02F);           // % x2F / ; /    solidus         U+002F
+static constexpr TJCHAR TJ_ESCAPE_BACKSPACE = static_cast<TJCHAR>(0x008);         // % x62 / ; b    backspace       U+0008
+static constexpr TJCHAR TJ_ESCAPE_FORM_FEED = static_cast<TJCHAR>(0x00C);         // % x66 / ; f    form feed       U+000C
+static constexpr TJCHAR TJ_ESCAPE_LINE_FEED = static_cast<TJCHAR>(0x00A);         // % x6E / ; n    line feed       U+000A
+static constexpr TJCHAR TJ_ESCAPE_CARRIAGE_RETURN = static_cast<TJCHAR>(0x00D);   // % x72 / ; r    carriage return U+000D
+static constexpr TJCHAR TJ_ESCAPE_TAB = static_cast<TJCHAR>(0x009);               // % x74 / ; t    tab             U+0009
 // static constexpr TJCHAR TJ_ESCAPE_HEXDIG = '\u1234';// % x75 4HEXDIG; uXXXX                U + XXXX
 
 #ifdef _DEBUG
@@ -2020,9 +2021,9 @@ namespace TinyJSON
         source++;
         return add_char_to_string(next_char, result, result_pos, result_max_length);
 
-      case '\'':
+      case TJ_ESCAPE_SINGLE_QUOTATION:// "    single quotation mark  U+0027
         // Only allow \' escaping if we started with a single quote OR if we are in json5
-        if (quote_char == '\'' || options.specification == parse_options::json5_1_0_0)
+        if (quote_char == TJ_ESCAPE_SINGLE_QUOTATION || options.specification == parse_options::json5_1_0_0)
         {
           source++;
           return add_char_to_string(next_char, result, result_pos, result_max_length);
@@ -2221,7 +2222,6 @@ namespace TinyJSON
         return nullptr;
       }
 
-      const TJCHAR* start = p;
       int result_pos = 0;
       int result_max_length = 0;
       TJCHAR* result = nullptr;
@@ -3404,7 +3404,7 @@ namespace TinyJSON
           // we give the ownership of the members over.
           return TJValueObject::move(members, parse_result.options());
 
-        case '\'':
+        case TJ_ESCAPE_SINGLE_QUOTATION:
         {
           if (parse_result.options().specification != parse_options::json5_1_0_0)
           {
@@ -3412,7 +3412,8 @@ namespace TinyJSON
             parse_result.assign_exception_message("Single quotes are only allowed in json5_1_0_0 specification.");
             return nullptr;
           }
-        } // fallthrough
+        } 
+        [[fallthrough]];/* fallthrough */
         TJ_CASE_START_STRING
         {
           TJCHAR quote_char = c;
@@ -3674,14 +3675,15 @@ namespace TinyJSON
             return nullptr;
           }
 
-        case '\'':
+        case TJ_ESCAPE_SINGLE_QUOTATION:
         {
           if (parse_result.options().specification != parse_options::json5_1_0_0)
           {
             parse_result.assign_exception_message("Single quotes are only allowed in json5_1_0_0 specification.");
             return nullptr;
           }
-        } // fallthrough
+        }
+        [[fallthrough]];/* fallthrough */
         TJ_CASE_START_STRING
         {
           TJCHAR quote_char = c;
@@ -3750,14 +3752,14 @@ namespace TinyJSON
             parse_result.assign_exception_message("Unexpected Token while trying to read value.");
             return nullptr;
           }
-          // fallthrough
+          [[fallthrough]];/* fallthrough */
         case '.':
           if (c == '.' && parse_result.options().specification != parse_options::json5_1_0_0)
           {
              parse_result.assign_exception_message("Unexpected Token while trying to read value.");
              return nullptr;
           }
-          // fallthrough
+          [[fallthrough]];/* fallthrough */
         TJ_CASE_DIGIT
         TJ_CASE_SIGN
         {
@@ -4027,7 +4029,7 @@ namespace TinyJSON
           source++;
           break;
         }
-        // fallthrough
+        [[fallthrough]];/* fallthrough */
       TJ_CASE_SOLIDUS
         {
           auto comment = TJHelper::try_continue_read_comment(source, parse_result);
