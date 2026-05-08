@@ -332,7 +332,7 @@ TEST(TestExponents, NumberJustShiftsEnoughToBecomeANumberAgain) {
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_EQ(10000000000000.01, valuea->get_number());
+  ASSERT_DOUBLE_EQ(10000000000000.01, valuea->get_number());
 
   delete json;
 }
