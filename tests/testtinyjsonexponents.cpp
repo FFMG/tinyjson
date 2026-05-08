@@ -24,19 +24,19 @@ TEST(TestExponents, FractionsWithLeadingZeros) {
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_EQ(62.001, valuea->get_number());
+  ASSERT_DOUBLE_EQ(62.001, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("b"));
   ASSERT_NE(nullptr, valueb);
-  ASSERT_EQ(12.0012, valueb->get_number());
+  ASSERT_DOUBLE_EQ(12.0012, valueb->get_number());
 
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("c"));
   ASSERT_NE(nullptr, valuec);
-  ASSERT_EQ(1234.0012, valuec->get_number());
+  ASSERT_DOUBLE_EQ(1234.0012, valuec->get_number());
 
   auto valued = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("d"));
   ASSERT_NE(nullptr, valued);
-  ASSERT_EQ(0.0001, valued->get_number());
+  ASSERT_DOUBLE_EQ(0.0001, valued->get_number());
 
   delete json;
 }
@@ -185,19 +185,19 @@ TEST(TestExponents, FractionNUmbersWithExponentRemoveUnusedExponent) {
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_EQ(12345.6, valuea->get_number());
+  ASSERT_DOUBLE_EQ(12345.6, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("b"));
   ASSERT_NE(nullptr, valueb);
-  ASSERT_EQ(-12345.6, valueb->get_number());
+  ASSERT_DOUBLE_EQ(-12345.6, valueb->get_number());
 
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("c"));
   ASSERT_NE(nullptr, valuec);
-  ASSERT_EQ(12345.6, valuec->get_number());
+  ASSERT_DOUBLE_EQ(12345.6, valuec->get_number());
 
   auto valued = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("d"));
   ASSERT_NE(nullptr, valued);
-  ASSERT_EQ(-12345.6, valued->get_number());
+  ASSERT_DOUBLE_EQ(-12345.6, valued->get_number());
 
   delete json;
 }
@@ -481,7 +481,7 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractions) {
 
   auto value = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, value);
-  ASSERT_EQ(12.3, value->get_number());
+  ASSERT_DOUBLE_EQ(12.3, value->get_number());
 
   delete json;
 }
@@ -499,7 +499,7 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractionsButHasNoLe
 
   auto value = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, value);
-  ASSERT_EQ(12.3, value->get_number());
+  ASSERT_DOUBLE_EQ(12.3, value->get_number());
 
   delete json;
 }
@@ -519,15 +519,15 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheTotalNumberOfFractionsButHa
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_EQ(0.12, valuea->get_number());
+  ASSERT_DOUBLE_EQ(0.12, valuea->get_number());
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("b"));
   ASSERT_NE(nullptr, valueb);
-  ASSERT_EQ(0.12, valueb->get_number());
+  ASSERT_DOUBLE_EQ(0.12, valueb->get_number());
 
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("c"));
   ASSERT_NE(nullptr, valuec);
-  ASSERT_EQ(0.012, valuec->get_number());
+  ASSERT_DOUBLE_EQ(0.012, valuec->get_number());
 
   delete json;
 }
@@ -545,7 +545,7 @@ TEST(TestExponents, FractionShiftToTheLeftLessThanTheNumberOfFractionsButHasLead
 
   auto value = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, value);
-  ASSERT_EQ(12.3, value->get_number());
+  ASSERT_DOUBLE_EQ(12.3, value->get_number());
 
   delete json;
 }
