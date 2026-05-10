@@ -7,6 +7,21 @@
 #include <algorithm>
 #endif
 
+#ifndef TJ_FALLTHROUGH
+  #if defined(__cplusplus) && __cplusplus >= 201703L
+    #define TJ_FALLTHROUGH [[fallthrough]]
+  #elif defined(__clang__)
+    #define TJ_FALLTHROUGH [[clang::fallthrough]]
+  #elif defined(__GNUC__) && __GNUC__ >= 7
+    #define TJ_FALLTHROUGH [[gnu::fallthrough]]
+  #elif defined(_MSC_VER) && _MSC_VER >= 1900
+    #include <sal.h>
+    #define TJ_FALLTHROUGH __fallthrough
+  #else
+    #define TJ_FALLTHROUGH ((void)0)
+  #endif
+#endif
+
 #include <limits>
 #include <cmath>
 #include <cstring>
@@ -3412,7 +3427,7 @@ namespace TinyJSON
             return nullptr;
           }
         } 
-        [[fallthrough]];/* fallthrough */
+        TJ_FALLTHROUGH;
         TJ_CASE_START_STRING
         {
           TJCHAR quote_char = c;
@@ -3682,7 +3697,7 @@ namespace TinyJSON
             return nullptr;
           }
         }
-        [[fallthrough]];/* fallthrough */
+        TJ_FALLTHROUGH;
         TJ_CASE_START_STRING
         {
           TJCHAR quote_char = c;
@@ -3751,14 +3766,14 @@ namespace TinyJSON
             parse_result.assign_exception_message("Unexpected Token while trying to read value.");
             return nullptr;
           }
-          [[fallthrough]];/* fallthrough */
+          TJ_FALLTHROUGH;
         case '.':
           if (c == '.' && parse_result.options().specification != parse_options::json5_1_0_0)
           {
              parse_result.assign_exception_message("Unexpected Token while trying to read value.");
              return nullptr;
           }
-          [[fallthrough]];/* fallthrough */
+          TJ_FALLTHROUGH;
         TJ_CASE_DIGIT
         TJ_CASE_SIGN
         {
@@ -4028,7 +4043,7 @@ namespace TinyJSON
           source++;
           break;
         }
-        [[fallthrough]];/* fallthrough */
+        TJ_FALLTHROUGH;
       TJ_CASE_SOLIDUS
         {
           auto comment = TJHelper::try_continue_read_comment(source, parse_result);
