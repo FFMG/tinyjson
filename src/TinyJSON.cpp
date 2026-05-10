@@ -1052,7 +1052,7 @@ namespace TinyJSON
       TJASSERT(true == binary_search_result_ci._was_found);
       if (true == binary_search_result_ci._was_found)
       {
-        TJASSERT(dictionary_index_ci == dictionary_index_cs);
+        TJASSERT(dictionary_index_ci == static_cast<int>(dictionary_index_cs));
         replace_dictionary_data(value->name(), dictionary_index_ci, _values_dictionary_ci);
       }
     }
@@ -1360,7 +1360,6 @@ namespace TinyJSON
           return i;
         }
       }
-      return 0;
     }
 
     /// <summary>
