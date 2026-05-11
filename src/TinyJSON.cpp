@@ -2038,10 +2038,9 @@ namespace TinyJSON
           return false;
         }
 #endif
-        source += 5;  //  the full \uXXXX = 6 char (caller will add the 6th)
-        return true;
-      }
-      return false;
+          source += 5;  //  the full \uXXXX = 6 char (caller will add the 6th)
+          return true;
+        }
       }
 
       //  this is not an escaped character, just a single reverse solidus
