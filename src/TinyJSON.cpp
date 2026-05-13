@@ -3431,22 +3431,23 @@ namespace TinyJSON
         TJ_CASE_START_STRING
         {
           TJCHAR quote_char = c;
-          // we got our string, no longer waiting for one.
-          waiting_for_a_string = false;
-
-          // we are no longer after the string
-          after_string = false;
 
           // if we have members then it means we must have a comma
           // as we are expecting the elements to be separated by a comma
           // if we have no elements then it is the first one and it does not matter.
-          if (members != nullptr && !found_comma)
+          if (after_string && !found_comma)
           {
             // ERROR: expected a comma after the last element
             free_members(members);
             parse_result.assign_exception_message("Expected a comma after the last element.");
             return nullptr;
           }
+
+          // we got our string, no longer waiting for one.
+          waiting_for_a_string = false;
+
+          // we are no longer after the string
+          after_string = false;
 
           // read the actual string and value
           // that's the way it has to be.
@@ -3490,18 +3491,18 @@ namespace TinyJSON
             }
             if (TJHelper::is_id_start(c))
             {
-               // we got our string, no longer waiting for one.
-               waiting_for_a_string = false;
-
-               // we are no longer after the string
-               after_string = false;
-
-               if (members != nullptr && !found_comma)
+               if (after_string && !found_comma)
                {
                  free_members(members);
                  parse_result.assign_exception_message("Expected a comma after the last element.");
                  return nullptr;
                }
+
+               // we got our string, no longer waiting for one.
+               waiting_for_a_string = false;
+
+               // we are no longer after the string
+               after_string = false;
 
                auto member = try_read_unquoted_string_and_value(p, parse_result);
                if (member == nullptr)
@@ -3640,7 +3641,7 @@ namespace TinyJSON
           {
             values = new TJLIST();
           }
-          else if (found_comma == false && values->size() > 0)
+          else if (found_comma == false && !waiting_for_a_value)
           {
             // ERROR: We found a value but we expected a comma.
             delete value;
