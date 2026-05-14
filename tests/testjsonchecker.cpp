@@ -63,7 +63,22 @@ TEST(JSONchecker, AllFiles)
   {
     path = "../../tests/data/JSON_checker/";
   }
+  if (!std::filesystem::exists(path))
+  {
+    path = "tests/data/JSON_checker/";
+  }
+  if (!std::filesystem::exists(path))
+  {
+    path = "data/JSON_checker/";
+  }
   
+  if (!std::filesystem::exists(path))
+  {
+     // If we still can't find it, we might be in the build directory or project root.
+     // Let's try to be a bit more robust or at least report a better error.
+     throw std::runtime_error("Could not find JSON_checker data directory.");
+  }
+
   for (const auto& file : std::filesystem::directory_iterator{ path })
   {
     if (file.is_directory())
