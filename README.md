@@ -471,6 +471,24 @@ You can dynamically create a new array and then add string, numbers and so on.
   delete json;
 ```
 
+#### Removing values from an array
+
+You can remove an item at a certain position using `remove_at(index)`.
+
+```cpp
+  auto json = new TinyJSON::TJValueArray();
+  json->add_string("Hello");
+  json->add_string("Tiny");
+  json->add_string("World");
+
+  // Remove "Tiny" at index 1
+  json->remove_at(1);
+
+  ...
+
+  delete json;
+```
+
 ### Data type
 
 Each `TJValue*` item can be of different type
