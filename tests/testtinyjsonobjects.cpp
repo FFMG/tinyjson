@@ -1230,3 +1230,28 @@ TEST(TestObjects, PopCaseMismatchedKeyRepro) {
   ASSERT_TRUE(object->has_key("Hello"));
   delete object;
 }
+
+TEST(TestObjects, NumberOfItemsUpdatesOnMutation) {
+  auto json = new TinyJSON::TJValueObject();
+  ASSERT_EQ(0, json->get_number_of_items());
+
+  // Add
+  json->set_string("key1", "val1");
+  ASSERT_EQ(1, json->get_number_of_items());
+
+  json->set_string("key2", "val2");
+  ASSERT_EQ(2, json->get_number_of_items());
+
+  // Replace
+  json->set_string("key1", "val3");
+  ASSERT_EQ(2, json->get_number_of_items());
+
+  // Remove
+  json->pop("key2");
+  ASSERT_EQ(1, json->get_number_of_items());
+
+  json->pop("key1");
+  ASSERT_EQ(0, json->get_number_of_items());
+
+  delete json;
+}

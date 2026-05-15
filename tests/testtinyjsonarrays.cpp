@@ -439,4 +439,17 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
   // but it could change, if this fails we need to change the way we verify the output
   ASSERT_STREQ(R"([42,43,44,45,46,47])", text);
   delete json;
-}
+  }
+
+  TEST(TJValueArray, NumberOfItemsUpdatesOnMutation) {
+  auto json = new TinyJSON::TJValueArray();
+  ASSERT_EQ(0, json->get_number_of_items());
+
+  json->add_number(1);
+  ASSERT_EQ(1, json->get_number_of_items());
+
+  json->add_string("test");
+  ASSERT_EQ(2, json->get_number_of_items());
+
+  delete json;
+  }
