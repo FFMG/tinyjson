@@ -840,8 +840,52 @@ class TJDictionary;
     void free_value();
   };
 
+  class TJNumberedValues
+  {
+  protected:
+    TJNumberedValues() noexcept : _number_of_items(-1)
+    {
+    }
+    TJNumberedValues(const TJNumberedValues& other) noexcept : _number_of_items(other._number_of_items)
+    {
+    }
+    TJNumberedValues(TJNumberedValues&& other) noexcept : _number_of_items(other._number_of_items)
+    {
+      other._number_of_items = 0;
+    }
+    TJNumberedValues& operator=(const TJNumberedValues& other) noexcept
+    {
+      if (this != &other)
+      {
+        _number_of_items = other._number_of_items;
+      }
+      return *this;
+    }
+    TJNumberedValues& operator=(TJNumberedValues&& other) noexcept
+    {
+      if (this != &other)
+      {
+        _number_of_items = other._number_of_items;
+        other._number_of_items = 0;
+      }
+      return *this;
+    }
+    int get_number_of_items() const noexcept {
+      return _number_of_items;
+    };
+    void reset_number_of_items() noexcept {
+      _number_of_items = -1;
+    }
+    void set_number_of_items(int number_of_items) const noexcept {
+      _number_of_items = number_of_items;
+    }
+  private:
+    mutable int _number_of_items;
+  };
+
+
   // A Json object that contain an array of key/value pairs.
-  class TJValueObject : public TJValue
+  class TJValueObject : public TJValue, protected TJNumberedValues
   {
     friend TJHelper;
   public:
@@ -1407,11 +1451,12 @@ class TJDictionary;
     // All the key value pairs in this object.
     TJDICTIONARY* _members;
 
+    void move_member_to_members(TJMember* member, const parse_options& options);
     void free_members();
   };
 
   // A Json object that contain an array of key/value pairs.
-  class TJValueArray : public TJValue
+  class TJValueArray : public TJValue, protected TJNumberedValues
   {
     friend TJHelper;
   public:
