@@ -6323,11 +6323,27 @@ namespace TinyJSON
       return;
     }
 
+    unsigned int element_index = 0;
+    unsigned int current_item_index = 0;
+    auto size = _values->size();
+    for (unsigned int i = 0; i < size; ++i)
+    {
+      if (!_values->at(i)->is_comment())
+      {
+        if (current_item_index == index)
+        {
+          element_index = i;
+          break;
+        }
+        current_item_index++;
+      }
+    }
+
 #if TJ_INCLUDE_STDVECTOR == 1
-    delete (*_values)[index];
-    _values->erase(_values->begin() + index);
+    delete (*_values)[element_index];
+    _values->erase(_values->begin() + element_index);
 #else
-    _values->remove_at(index);
+    _values->remove_at(element_index);
 #endif
     TJNumberedValues::reset_number_of_items();
   }
