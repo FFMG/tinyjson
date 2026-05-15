@@ -1,6 +1,10 @@
 # TinyJSON
 
-A modern C++ JSON library engineered for performance-critical applications. TinyJSON provides a robust and efficient solution for parsing JSON data, focusing on speed, memory efficiency, and ease of integration. Whether you're building a high-throughput server or a resource-constrained embedded application, TinyJSON delivers a no-compromise approach to JSON parsing.
+[![CI](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.2.2-blue.svg)](src/TinyJSON.h)
+
+A lightweight and lightning-fast C++ JSON & JSON5 parser designed for high performance and minimal footprint.
 
 * Zero-dependency: Easy to integrate into any C++ project.
 * Minimal memory overhead: Ideal for resource-constrained environments.
@@ -9,10 +13,31 @@ A modern C++ JSON library engineered for performance-critical applications. Tiny
 
 ## Contents
 
-* [Supported JSON](#supported-json)
-* [Simple examples](#simple-examples)
-* [Supported C++](#supported-cpp)
-* [TODOs](#todo)
+- [Supported JSON](#supported-json)
+  - [JSON5 Support](#json5-support)
+- [Data types](#data-types)
+- [Simple examples](#simple-examples)
+  - [Version Control](#version-control)
+  - [Options](#options)
+  - [Exceptions](#exceptions)
+  - [Check if JSON is valid](#check-if-json-is-valid)
+  - [Read a JSON file](#read-a-json-file)
+  - [Read a JSON string](#read-a-json-string)
+  - [Search an object by key](#search-an-object-by-key)
+  - [Check if key exists](#check-if-key-exists)
+  - [How to create a JSON value?](#how-to-create-a-json-value)
+  - [Write a JSON string](#write-a-json-string)
+  - [UTF-8 DOM](#utf-8-dom)
+  - [Objects](#objects)
+  - [Arrays](#arrays)
+  - [Iterate values](#iterate-values)
+  - [Get values](#get-values)
+  - [Set values](#set-values)
+- [Getting Started](#getting-started)
+- [Building and testing the project](#building-and-testing-the-project)
+- [Data Range](#data-range)
+- [TODO](#todo)
+- [Supported CPP](#supported-cpp)
   
 ## Supported JSON
 
