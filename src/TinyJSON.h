@@ -1735,7 +1735,7 @@ class TJDictionary;
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
-    long long _number;
+    unsigned long long _number;
   };
 
   // A number JSon, float or int

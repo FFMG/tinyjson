@@ -350,7 +350,7 @@ TEST(TestExponents, ShortNumberWithLongPositiveExponentShiftsEnoughToBecomeANumb
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_EQ(10000000000000000000, valuea->get_number());
+  ASSERT_EQ(10000000000000000000ULL, (unsigned long long)valuea->get_number());
 
   delete json;
 }
