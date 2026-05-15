@@ -41,7 +41,7 @@ jobs:
         update: true
 
     - name: build and test
-      shell: bash
+      shell: msys2 {0}
       run: |
         g++ -std=c++20 -O3 \
           -Iexternal/googletest/googletest/include \
@@ -52,9 +52,8 @@ jobs:
           -o testtinyjson.exe
 
     - name: run tests
-      shell: bash
+      shell: msys2 {0}
       run: |
-        set +e
         ./testtinyjson.exe
 
   warnings:
