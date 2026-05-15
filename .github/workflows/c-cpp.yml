@@ -49,7 +49,7 @@ jobs:
           src/TinyJSON.cpp tests/*.cpp \
           external/googletest/googletest/src/gtest-all.cc \
           -pthread \
-          -o testtinyjson
+          -o testtinyjson.exe
 
     - name: run tests
       shell: bash
