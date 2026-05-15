@@ -732,9 +732,55 @@ obj.set_null("d");
 
 ## Getting Started
 
-All you need is to include the .h and .cpp file to your project and you are ready to go.
+TinyJSON is designed to be as simple to integrate as possible.
 
-### Example code
+### 1. Simple Drop-in
+You can simply copy `src/TinyJSON.h` and `src/TinyJSON.cpp` directly into your project.
+
+### 2. CMake `add_subdirectory`
+Clone the repository into your project (e.g., in a `third_party/` directory) and add it to your `CMakeLists.txt`:
+```cmake
+add_subdirectory(third_party/TinyJSON)
+target_link_libraries(your_target PUBLIC TinyJSON)
+```
+
+### 3. CMake `FetchContent`
+You can automatically download and build TinyJSON using CMake's `FetchContent`:
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+  TinyJSON
+  GIT_REPOSITORY https://github.com/FFMG/TinyJSON.git
+  GIT_TAG        v0.2.2 # or main
+)
+FetchContent_MakeAvailable(TinyJSON)
+target_link_libraries(your_target PUBLIC TinyJSON)
+```
+
+### Quick Start Example
+
+Here is the absolute minimum code needed to parse a JSON string and read a value:
+
+```cpp
+#include "TinyJSON.h"
+#include <iostream>
+
+int main() {
+    // 1. Parse a string
+    auto json = TinyJSON::TJ::parse(R"({"name": "TinyJSON", "fast": true})");
+    
+    // 2. Read values
+    auto obj = dynamic_cast<TinyJSON::TJValueObject*>(json);
+    if (obj) {
+        std::cout << "Library: " << obj->get_string("name") << std::endl;
+        std::cout << "Fast? " << (obj->get_boolean("fast") ? "Yes" : "No") << std::endl;
+    }
+    
+    // 3. Clean up
+    delete json;
+    return 0;
+}
+```
 
 ## Building and testing the project
 

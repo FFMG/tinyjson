@@ -94,3 +94,7 @@ JSON5 is a superset of JSON that aims to alleviate some of the limitations of th
 ### White Space
 
 - Additional white space characters are allowed.
+
+### Writing JSON5 Behavior
+
+While TinyJSON is a fully compliant JSON5 parser, its write operations (`dump()`, `write_file()`) output standard RFC 8259 JSON by default (with the exception of preserving loaded comments). This makes it highly suitable for converting JSON5 documents into standard JSON.
