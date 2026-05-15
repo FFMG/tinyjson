@@ -1434,7 +1434,7 @@ class TJDictionary;
     // All the key value pairs in this object.
     TJDICTIONARY* _members;
 
-    void move_member_to_members(TJMember* member, const parse_options& options);
+    void move_member_to_members(TJMember* member);
     void free_members();
   };
 

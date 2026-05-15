@@ -4523,7 +4523,7 @@ namespace TinyJSON
     auto member = new TJMember(key, nullptr, _parse_options);
     TJValue* value_string = new TJValueString(value, _parse_options);
     member->move_value(value_string);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
   /// <summary>
@@ -4541,7 +4541,7 @@ namespace TinyJSON
     auto member = new TJMember(key, nullptr, _parse_options);
     TJValue* value_null = new TJValueNull(_parse_options);
     member->move_value(value_null);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
   /// <summary>
@@ -4560,7 +4560,7 @@ namespace TinyJSON
     auto member = new TJMember(key, nullptr, _parse_options);
     auto clone = value->clone();
     member->move_value(clone);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
   /// <summary>
@@ -4579,7 +4579,7 @@ namespace TinyJSON
     auto member = new TJMember(key, nullptr, _parse_options);
     TJValue* value_int = new TJValueNumberInt(value, _parse_options);
     member->move_value(value_int);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
   /// <summary>
@@ -4598,7 +4598,7 @@ namespace TinyJSON
     auto member = new TJMember(key, nullptr, _parse_options);
     TJValue* value_number = TJHelper::try_create_number_from_float(value, _parse_options);
     member->move_value(value_number);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
   /// <summary>
@@ -4617,7 +4617,7 @@ namespace TinyJSON
     auto member = new TJMember(key, nullptr, _parse_options);
     TJValue* value_boolean = new TJValueBoolean(value, _parse_options);
     member->move_value(value_boolean);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
   TJValueObject* TJValueObject::move(TJDICTIONARY*& members, const parse_options& options)
@@ -4733,7 +4733,7 @@ namespace TinyJSON
       array->add_float(value);
     }
     member->move_value(value_array);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
   void TJValueObject::set_raw_numbers(const TJCHAR* key, const std::vector<long long>& values)
@@ -4751,7 +4751,7 @@ namespace TinyJSON
       array->add_number(value);
     }
     member->move_value(value_array);
-    move_member_to_members(member, _parse_options);
+    move_member_to_members(member);
   }
 
 
@@ -4923,7 +4923,7 @@ namespace TinyJSON
 #endif
   }
 
-  void TJValueObject::move_member_to_members(TJMember* member, const parse_options& options)
+  void TJValueObject::move_member_to_members(TJMember* member)
   {
     TJHelper::move_member_to_members(member, _members, _parse_options);
     TJNumberedValues::reset_number_of_items();
