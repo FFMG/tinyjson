@@ -491,6 +491,24 @@ namespace TinyJSON
     {
       return index < _number_of_items ? _values[index] : nullptr;
     }
+
+    /// <summary>
+    /// Remove an item at a certain position.
+    /// </summary>
+    /// <param name="index"></param>
+    void remove_at(unsigned int index)
+    {
+      if (index >= _number_of_items)
+      {
+        return;
+      }
+      delete _values[index];
+      if (index < _number_of_items - 1)
+      {
+        memmove(&_values[index], &_values[index + 1], (_number_of_items - index - 1) * sizeof(TJValue*));
+      }
+      --_number_of_items;
+    }
   private:
     /// <summary>
     /// The pointers we will take ownership of.
@@ -6296,6 +6314,22 @@ namespace TinyJSON
   {
     auto* objectString = new TJValueString(value, _parse_options);
     add_move(objectString);
+  }
+
+  void TJValueArray::remove_at(unsigned int index)
+  {
+    if (index >= get_number_of_items())
+    {
+      return;
+    }
+
+#if TJ_INCLUDE_STDVECTOR == 1
+    delete (*_values)[index];
+    _values->erase(_values->begin() + index);
+#else
+    _values->remove_at(index);
+#endif
+    TJNumberedValues::reset_number_of_items();
   }
 
   ///////////////////////////////////////

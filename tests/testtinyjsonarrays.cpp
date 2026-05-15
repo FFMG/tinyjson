@@ -471,3 +471,91 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
 
   delete json;
   }
+
+  TEST(TJValueArray, RemoveAtMiddle) {
+    auto json = new TinyJSON::TJValueArray();
+    json->add_number(1);
+    json->add_number(2);
+    json->add_number(3);
+
+    ASSERT_EQ(3, json->get_number_of_items());
+
+    json->remove_at(1); // remove '2'
+
+    ASSERT_EQ(2, json->get_number_of_items());
+    ASSERT_STREQ(R"([1,3])", json->dump(TinyJSON::formating::minify));
+
+    delete json;
+  }
+
+  TEST(TJValueArray, RemoveAtStart) {
+    auto json = new TinyJSON::TJValueArray();
+    json->add_number(1);
+    json->add_number(2);
+    json->add_number(3);
+
+    json->remove_at(0); // remove '1'
+
+    ASSERT_EQ(2, json->get_number_of_items());
+    ASSERT_STREQ(R"([2,3])", json->dump(TinyJSON::formating::minify));
+
+    delete json;
+  }
+
+  TEST(TJValueArray, RemoveAtEnd) {
+    auto json = new TinyJSON::TJValueArray();
+    json->add_number(1);
+    json->add_number(2);
+    json->add_number(3);
+
+    json->remove_at(2); // remove '3'
+
+    ASSERT_EQ(2, json->get_number_of_items());
+    ASSERT_STREQ(R"([1,2])", json->dump(TinyJSON::formating::minify));
+
+    delete json;
+  }
+
+  TEST(TJValueArray, RemoveAtOutOfBounds) {
+    auto json = new TinyJSON::TJValueArray();
+    json->add_number(1);
+
+    json->remove_at(1); // out of bounds
+    ASSERT_EQ(1, json->get_number_of_items());
+
+    json->remove_at(100); // out of bounds
+    ASSERT_EQ(1, json->get_number_of_items());
+
+    delete json;
+  }
+
+  TEST(TJValueArray, RemoveAtUpdateCachedCount) {
+    auto json = new TinyJSON::TJValueArray();
+    json->add_number(1);
+    json->add_number(2);
+
+    ASSERT_EQ(2, json->get_number_of_items()); // triggers caching
+
+    json->remove_at(0);
+    ASSERT_EQ(1, json->get_number_of_items()); // should be updated
+
+    delete json;
+  }
+
+  TEST(TJValueArray, RemoveAtIteratorStillWorks) {
+    auto json = new TinyJSON::TJValueArray();
+    json->add_number(1);
+    json->add_number(2);
+    json->add_number(3);
+
+    json->remove_at(1); // remove '2'
+
+    int sum = 0;
+    for (auto& item : *json) {
+      sum += static_cast<int>(item.get_number<long long>());
+    }
+
+    ASSERT_EQ(4, sum); // 1 + 3
+
+    delete json;
+  }

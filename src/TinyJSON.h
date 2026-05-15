@@ -42,10 +42,11 @@
 // v0.1.3 - added iterator.
 // v0.1.4 - added copy/move constructors and operators.
 // v0.2.0 - Breaking change: get_* methods no longer take throw parameters, use parse_options::strict instead.
+// v0.2.1 - added remove_at to TJValueArray.
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 0;
-static const char TJ_VERSION_STRING[] = "0.2.0";
+static const short TJ_VERSION_PATCH = 1;
+static const char TJ_VERSION_STRING[] = "0.2.1";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
@@ -1490,6 +1491,12 @@ class TJDictionary;
     void add(const TJValue* value);
     void add_boolean(bool value);
     void add_string(const char* value);
+
+    /// <summary>
+    /// Remove an item from the array at a certain location.
+    /// </summary>
+    /// <param name="index"></param>
+    void remove_at(unsigned int index);
 
     // Non-template overload for ambiguous case - default to long long
     inline void add_number(long long value)
