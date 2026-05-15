@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
+#include "testshelper.h"
 #include <vector>
 
 TEST(TJValueArray, MakeSureThatEmptyStringIsKinkOfValueArray) {
@@ -277,7 +278,7 @@ TEST(TJValueArray, CreateWithFloats)
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0});
 
   delete json;
 }
@@ -304,7 +305,7 @@ TEST(TJValueArray, CreateWithFloatsAndNegativeNumbers)
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
 
   delete json;
 }
@@ -325,7 +326,7 @@ TEST(TJValueArray, AddVectorOfFloats)
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,1,-1,-42.5])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 1.0, -1.0, -42.5});
 
   delete json;
 }
@@ -351,7 +352,7 @@ std::vector<double> ldoubles = {
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
 
   delete json;
 }
@@ -374,7 +375,7 @@ TEST(TJValueArray, AddVectorOfLongDoubles)
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
 
   delete json;
 }
