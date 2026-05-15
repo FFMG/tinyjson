@@ -4,7 +4,32 @@ Please remember that the number 1 goal of TinyJSON is performance, while pretty 
 
 ## Testing
 
-You code changes must include full set of tests.
+Your code changes must include a full set of tests. TinyJSON uses [GoogleTest](https://github.com/google/googletest) for its test suite.
+
+### How to build and run tests
+
+To run the tests, you will need CMake installed.
+
+1. **Initialize Submodules**:
+   TinyJSON uses GoogleTest as a submodule.
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+2. **Configure and Build**:
+   ```bash
+   mkdir build
+   cd build
+   cmake ..
+   cmake --build .
+   ```
+
+3. **Run Tests**:
+   ```bash
+   ctest
+   ```
+
+On Windows with Visual Studio, you can also open the project folder directly in VS and use the Test Explorer.
 
 ## C++ coding style
 
