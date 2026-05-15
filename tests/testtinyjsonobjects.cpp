@@ -968,7 +968,7 @@ TEST(TestObjects, GetFloatsFromObjectCaseIsCorrect)
   ASSERT_TRUE(fs.size() == 2);
 
   for( auto f : fs ) {
-   ASSERT_TRUE(f == 123.4 || f == 42.7);
+   ASSERT_TRUE(areDoublesEqual(f, 123.4) || areDoublesEqual(f, 42.7));
   }
   delete object;
 }
