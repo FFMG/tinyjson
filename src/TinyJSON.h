@@ -43,10 +43,11 @@
 // v0.1.4 - added copy/move constructors and operators.
 // v0.2.0 - Breaking change: get_* methods no longer take throw parameters, use parse_options::strict instead.
 // v0.2.1 - added remove_at to TJValueArray.
+// v0.2.2 - added support for Json5 https://github.com/json5/
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 1;
-static const char TJ_VERSION_STRING[] = "0.2.1";
+static const short TJ_VERSION_PATCH = 2;
+static const char TJ_VERSION_STRING[] = "0.2.2";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
