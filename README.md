@@ -16,30 +16,65 @@ A modern C++ JSON library engineered for performance-critical applications. Tiny
   
 ## Supported JSON
 
-[RFC 8259](https://www.wikidata.org/wiki/Q47322594) (replaces [RFC 7159](https://www.wikidata.org/wiki/Q47470410))
+- [RFC 8259](https://www.wikidata.org/wiki/Q47322594) (replaces [RFC 7159](https://www.wikidata.org/wiki/Q47470410))
+- [JSON5](https://spec.json5.org/) (Full 1.0.0 compliance)
 
 See more in the [specifications document](./specifications.md).
 
-One of the important change is that prior to RFC 8259 only `objects` and `arrays` could be at the root.
+### JSON5 Support
 
-```json
+TinyJSON is a fully compliant JSON5 parser. JSON5 is a superset of JSON that makes it easier for humans to write and maintain.
+
+#### Key differences between JSON5 and standard JSON
+
+* **Objects**: Keys can be unquoted identifiers (e.g., `{name: "value"}`) or single-quoted. Trailing commas are allowed.
+* **Arrays**: Trailing commas are allowed.
+* **Strings**: Can be single-quoted (`'hello'`). Can span multiple lines by escaping newlines. Support for additional escapes like `\v`, `\0`, `\xHH`, and `\u{HHHHH}`.
+* **Numbers**: Can be hexadecimal (`0x123`). Can have leading or trailing decimal points (`.5`, `5.`). Support for `NaN` and `Infinity`. Can start with an explicit plus sign (`+42`).
+* **Comments**: Support for single-line (`//`) and multi-line (`/* ... */`) comments.
+* **Whitespace**: Support for additional Unicode whitespace characters.
+
+#### Parsing JSON5 Example
+
+To parse JSON5, you must set the `specification` flag in `parse_options`.
+
+```cpp
+#include "TinyJSON.h"
+#include <iostream>
+
+using namespace TinyJSON;
+
+int main() 
 {
-  "meaning" : 42
+  const char* json5_text = R"(
+    {
+      // A comment
+      unquoted: 'single quoted string',
+      hex: 0xFF,
+      array: [1, 2, 3,], // trailing comma
+      nested: {
+        val: .5 // leading decimal
+      }
+    }
+  )";
+
+  parse_options options;
+  options.specification = parse_options::json5_1_0_0;
+  options.throw_exception = true;
+
+  try {
+    auto* tj = TJ::parse(json5_text, options);
+    if (tj) {
+      auto* obj = dynamic_cast<TJValueObject*>(tj);
+      std::cout << "Hex value: " << obj->get_number<int>("hex") << std::endl;
+      delete tj;
+    }
+  } catch (const TJParseException& e) {
+    std::cerr << "Parse error: " << e.what() << std::endl;
+  }
+
+  return 0;
 }
-```
-
-or
-
-```json
-[
-  42, 12, 3.14
-]
-```
-
-But since [RFC 8259](https://www.wikidata.org/wiki/Q47322594) any of the other elements are valid, (`string`, `true`, `false`, `null`, `number`)
-
-```json
-true
 ```
 
 ## Data types
@@ -710,7 +745,7 @@ The whole number ranges are +9223372036854775807 and -9223372036854775806
      `g++ -std=c++11 -Wall -Wextra -Werror -O3 src/tinyJSON.cpp -o a.exe`
 * [x] We need to add copy and move constructors to `TJValue` and the derived classes.
 * [] Add Macro(s) explanation like `TJ_INCLUDE_STD_STRING` for example.
-* [] Add support for JSON5
+* [x] Add support for JSON5
      <https://json5.org>
   📄 <https://github.com/json5/json5>
 

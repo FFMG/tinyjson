@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 // Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
@@ -43,10 +43,11 @@
 // v0.1.4 - added copy/move constructors and operators.
 // v0.2.0 - Breaking change: get_* methods no longer take throw parameters, use parse_options::strict instead.
 // v0.2.1 - added remove_at to TJValueArray.
+// v0.2.2 - added support for Json5 https://github.com/json5/
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 1;
-static const char TJ_VERSION_STRING[] = "0.2.1";
+static const short TJ_VERSION_PATCH = 2;
+static const char TJ_VERSION_STRING[] = "0.2.2";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
@@ -332,7 +333,8 @@ class TJDictionary;
     {
       rfc4627,
       rfc7159,
-      rfc8259
+      rfc8259,
+      json5_1_0_0   //  https://spec.json5.org/ v1.0.0
     };
 
     enum message_type
@@ -534,6 +536,7 @@ class TJDictionary;
     virtual bool is_true() const;
     virtual bool is_false() const;
     virtual bool is_null() const;
+    virtual bool is_comment() const;
 
     const TJCHAR* dump(formating formating = formating::indented, const TJCHAR* indent = TJCHARPREFIX("  ")) const;
     const TJCHAR* dump_string() const;
@@ -748,6 +751,14 @@ class TJDictionary;
     static TJValue* parse(const TJCHAR* source, const parse_options& parse_options = {});
 
     /// <summary>
+    /// Parse a json5 string
+    /// </summary>
+    /// <param name="source">The source we are trying to parse.</param>
+    /// <param name="parse_options">The option we want to use when parsing this.</param>
+    /// <returns></returns>
+    static TJValue* parse5(const TJCHAR* source, const parse_options& parse_options = {});
+
+    /// <summary>
     /// Parse a json file
     /// </summary>
     /// <param name="file_path">The source file we are trying to parse.</param>
@@ -894,6 +905,12 @@ class TJDictionary;
     /// </summary>
     /// <returns></returns>
     unsigned int get_number_of_items() const;
+
+    /// <summary>
+    /// Get the number of elements in this object (including comments)
+    /// </summary>
+    /// <returns></returns>
+    unsigned int get_number_of_elements() const;
 
     /// <summary>
     /// Try and get a string value, if it does not exist, then we return null.
@@ -1211,6 +1228,7 @@ class TJDictionary;
 
     TJMember* operator [](int idx) const;
     TJMember* at(int idx) const;
+    TJMember* element_at(int idx) const;
 
     bool is_object() const override;
 
@@ -1454,13 +1472,20 @@ class TJDictionary;
     void set_parse_options(const parse_options& options) override;
 
     /// <summary>
-    /// Get the number of items in this array
+    /// Get the number of items in this array (excluding comments)
     /// </summary>
     /// <returns></returns>
     unsigned int get_number_of_items() const;
 
+    /// <summary>
+    /// Get the number of elements in this array (including comments)
+    /// </summary>
+    /// <returns></returns>
+    unsigned int get_number_of_elements() const;
+
     TJValue* operator [](int idx) const;
     TJValue* at(int idx) const;
+    TJValue* element_at(int idx) const;
 
     bool is_array() const override;
 
@@ -1718,7 +1743,7 @@ class TJDictionary;
     void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
 
   private:
-    long long _number;
+    unsigned long long _number;
   };
 
   // A number JSon, float or int
@@ -1779,6 +1804,40 @@ class TJDictionary;
     unsigned long long _fraction;
     unsigned int _fraction_exponent;
     int _exponent;
+  };
+
+  // A comment JSon
+  class TJValueComment : public TJValue
+  {
+    friend TJHelper;
+  public:
+    TJValueComment(const TJCHAR* value, const parse_options& options = {});
+    TJValueComment(const TJValueComment& other);
+    TJValueComment(TJValueComment&& other) noexcept;
+    TJValueComment& operator=(const TJValueComment& other);
+    TJValueComment& operator=(TJValueComment&& other) noexcept;
+    virtual ~TJValueComment();
+
+    bool is_comment() const override;
+
+    const TJCHAR* raw_value() const;
+
+  protected:
+    /// <summary>
+    /// Clone a comment into an identical comment object
+    /// </summary>
+    TJValue* internal_clone() const override;
+
+    /// <summary>
+    /// Move the value ownership of the comment string.
+    /// </summary>
+    static TJValueComment* move(TJCHAR*& value, const parse_options& options = {});
+
+    void internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const override;
+
+  private:
+    TJCHAR* _value;
+    void free_value();
   };
 
   // user_literals

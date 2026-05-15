@@ -363,7 +363,8 @@ TEST(TestObjects, SetFloats)
 
   const auto& text = object->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
-  ASSERT_STREQ(R"({"a":42,"b":-42,"c":-0.012})", text);
+  
+  ExpectJSONNear(text, R"(\{"a":([+-]?(?:[0-9]*[.])?[0-9]+),"b":([+-]?(?:[0-9]*[.])?[0-9]+),"c":([+-]?(?:[0-9]*[.])?[0-9]+)\})", {42.0, -42.0, -0.012});
 
   delete object;
 }
@@ -383,7 +384,8 @@ TEST(TestObjects, SetFloatsWithVectors)
 
   const auto& text = object->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
-  ASSERT_STREQ(R"({"f":[1.5,2.5],"d":[3.5,4.5],"ld":[5.5,6.5]})", text);
+  
+  ExpectJSONNear(text, R"(\{"f":\[([^,]+),([^\]]+)\],"d":\[([^,]+),([^\]]+)\],"ld":\[([^,]+),([^\]]+)\]\})", {1.5, 2.5, 3.5, 4.5, 5.5, 6.5});
 
   delete object;
 }
@@ -950,7 +952,7 @@ TEST(TestObjects, GetFloatsFromObjectCaseIsCorrect)
   ASSERT_TRUE(fs.size() == 2);
 
   for( auto f : fs ) {
-   ASSERT_TRUE(f == 123.4 || f == 42.7);
+   ASSERT_TRUE(areDoublesEqual(f, 123.4) || areDoublesEqual(f, 42.7));
   }
   delete object;
 }

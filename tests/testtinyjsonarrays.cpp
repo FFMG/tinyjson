@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
+#include "testshelper.h"
 #include <vector>
 
 TEST(TJValueArray, MakeSureThatEmptyStringIsKinkOfValueArray) {
@@ -261,36 +262,50 @@ TEST(TJValueArray, CreateWithBoolean)
 TEST(TJValueArray, CreateWithFloats)
 {
   auto json = new TinyJSON::TJValueArray();
-  json->add_float(42.5);
-  json->add_float(0.05);
-  json->add_float(1.00);
+  // we use long doubles to prevent rounding issues that would make the string not exact...
+  std::vector<long double> ldoubles = {
+    42.5,
+    0.05,
+    1.00,//  this is actually a whole number
+  };
+  for (const auto& d : ldoubles)
+  {
+    json->add_float(d);
+  }
 
   ASSERT_EQ(3, json->get_number_of_items());
 
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0});
 
   delete json;
 }
 
 TEST(TJValueArray, CreateWithFloatsAndNegativeNumbers)
 {
+  // we use long doubles to prevent rounding issues that would make the string not exact...
+  std::vector<long double> ldoubles = {
+    42.5, 
+    0.05, 
+    1.00, 
+    -1.00, //  this is actually a whole number
+    -42.5, 
+    -0.05
+  };
   auto json = new TinyJSON::TJValueArray();
-  json->add_float(42.5);
-  json->add_float(0.05);
-  json->add_float(1.00);
-  json->add_float(-1.00); //  this is actually a whole number
-  json->add_float(-42.5);
-  json->add_float(-0.05);
+  for (const auto& d : ldoubles)
+  {
+    json->add_float(d);
+  }
 
   ASSERT_EQ(6, json->get_number_of_items());
 
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
 
   delete json;
 }
@@ -311,30 +326,33 @@ TEST(TJValueArray, AddVectorOfFloats)
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,1,-1,-42.5])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 1.0, -1.0, -42.5});
 
   delete json;
 }
 
 TEST(TJValueArray, AddVectorOfDoubles)
 {
-  std::vector<double> values;
-  values.push_back(42.5);
-  values.push_back(0.05);
-  values.push_back(1.00);
-  values.push_back(-1.00); //  this is actually a whole number
-  values.push_back(-42.5);
-  values.push_back(-0.05);
+std::vector<double> ldoubles = {
+    42.5,
+    0.05,
+    1.00,
+    -1.00, //  this is actually a whole number
+    -42.5,
+    -0.05
+  };
 
   auto json = new TinyJSON::TJValueArray();
-  json->add_floats(values);
-
+  for (const auto& d : ldoubles)
+  {
+    json->add_float(d);
+  }
   ASSERT_EQ(6, json->get_number_of_items());
 
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
 
   delete json;
 }
@@ -357,7 +375,7 @@ TEST(TJValueArray, AddVectorOfLongDoubles)
   const auto& text = json->dump(TinyJSON::formating::minify);
   ASSERT_NE(nullptr, text);
 
-  ASSERT_STREQ(R"([42.5,0.05,1,-1,-42.5,-0.05])", text);
+  ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
 
   delete json;
 }

@@ -708,3 +708,71 @@ TEST(TestStrings, GetValueAsStringEscapedString)
 
   delete json;
 }
+
+TEST(TestStrings, Json5AllowsSingleQuotes) {
+  TinyJSON::parse_options options;
+  options.specification = TinyJSON::parse_options::json5_1_0_0;
+
+  auto json = TinyJSON::TJ::parse(R"('I can use quotes"')", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_STREQ(json->get_string(), "I can use quotes\"");
+  delete json;
+}
+
+TEST(TestStrings, Json5AllowsEscapedSingleQuotes) {
+  TinyJSON::parse_options options;
+  options.specification = TinyJSON::parse_options::json5_1_0_0;
+
+  auto json = TinyJSON::TJ::parse(R"('I can\'t wait')", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_STREQ(json->get_string(), "I can't wait");
+  delete json;
+}
+
+TEST(TestStrings, StandardJsonRejectsSingleQuotes) {
+  TinyJSON::parse_options options;
+  options.specification = TinyJSON::parse_options::rfc8259;
+
+  auto json = TinyJSON::TJ::parse(R"('I can use quotes"')", options);
+  ASSERT_EQ(nullptr, json);
+}
+
+TEST(TestStrings, StandardJsonAllowsDoubleQuotes) {
+  TinyJSON::parse_options options;
+  options.specification = TinyJSON::parse_options::rfc8259;
+
+  auto json = TinyJSON::TJ::parse(R"("I can't wait")", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_STREQ(json->get_string(), "I can't wait");
+  delete json;
+}
+
+TEST(TestStrings, StandardJsonAllowsEscapedDoubleQuotes) {
+  TinyJSON::parse_options options;
+  options.specification = TinyJSON::parse_options::rfc8259;
+
+  auto json = TinyJSON::TJ::parse(R"("I can use quotes\"")", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_STREQ(json->get_string(), "I can use quotes\"");
+  delete json;
+}
+
+TEST(TestStrings, Json5AllowsDoubleQuotes) {
+  TinyJSON::parse_options options;
+  options.specification = TinyJSON::parse_options::json5_1_0_0;
+
+  auto json = TinyJSON::TJ::parse(R"("I can't wait")", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_STREQ(json->get_string(), "I can't wait");
+  delete json;
+}
+
+TEST(TestStrings, Json5AllowsEscapedDoubleQuotes) {
+  TinyJSON::parse_options options;
+  options.specification = TinyJSON::parse_options::json5_1_0_0;
+
+  auto json = TinyJSON::TJ::parse(R"("I can use quotes\"")", options);
+  ASSERT_NE(nullptr, json);
+  ASSERT_STREQ(json->get_string(), "I can use quotes\"");
+  delete json;
+}
