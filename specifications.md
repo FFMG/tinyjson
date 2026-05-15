@@ -60,3 +60,37 @@
 - Incorporated editorial improvements from RFC 7159.
 - Ensured consistent terminology and definitions.
 - No major technical changes from RFC 7159.
+
+## JSON5 (v1.0.0)
+
+JSON5 is a superset of JSON that aims to alleviate some of the limitations of the original JSON specification by expanding its syntax to include some features from ECMAScript 5.1.
+
+### Objects
+
+- Object keys can be ECMAScript 5.1 IdentifierNames.
+- Objects can have a single trailing comma.
+
+### Arrays
+
+- Arrays can have a single trailing comma.
+
+### Strings
+
+- Strings can be single-quoted.
+- Strings can span multiple lines by escaping new line characters.
+- Strings can include character escapes.
+
+### Numbers
+
+- Numbers can be hexadecimal.
+- Numbers can have a leading or trailing decimal point.
+- Numbers can be IEEE 754 positive infinity, negative infinity, and NaN.
+- Numbers can begin with an explicit plus sign.
+
+### Comments
+
+- Single and multi-line comments are allowed.
+
+### White Space
+
+- Additional white space characters are allowed.
