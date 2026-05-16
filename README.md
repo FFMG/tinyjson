@@ -144,6 +144,7 @@ static const char TJ_VERSION_STRING[] = "0.2.0";
   * rfc4627
   * rfc7159
   * rfc8259
+  * json5_1_0_0
 * Callback: (`callback_function:std::function<void(message_type, const TJCHAR*)>`)  Callback function called where there is an error, warning etc.
   NB: The Callback function is called even if Throw is false.
   * trace
