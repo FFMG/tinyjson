@@ -67,7 +67,7 @@ TEST(TJ5Comment, MinifyExcludesComments)
   auto* tj = TJ::parse5(json);
   ASSERT_NE(nullptr, tj);
   
-  const TJCHAR* minified = tj->dump(formating::minify);
+  const TJCHAR* minified = tj->dump(formatting::minify);
   ASSERT_STREQ(TJCHARPREFIX("{\"a\":1,\"b\":[2,3]}"), minified);
   
   delete tj;
@@ -79,7 +79,7 @@ TEST(TJ5Comment, IndentedIncludesComments)
   auto* tj = TJ::parse5(json);
   ASSERT_NE(nullptr, tj);
   
-  const TJCHAR* indented = tj->dump(formating::indented);
+  const TJCHAR* indented = tj->dump(formatting::indented);
   // The exact indentation might vary, but it should contain the comment
   ASSERT_NE(nullptr, strstr(indented, "// comment"));
   

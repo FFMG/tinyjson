@@ -178,7 +178,7 @@ catch(TinyJSON::TJParseException ex)
 ### Write Options
 
 * Throw: (`throw_exception:false`) If you want to throw exceptions or simply return false.
-* write_formating: (`write_formating::indented`) The formatting we want to write the file with.
+* write_formatting: (`write_formatting::indented`) The formatting we want to write the file with.
   * none
   * indented
 * Byte order mark: (`byte_order_mark:none`)
@@ -190,7 +190,7 @@ For example ...
 ```cpp
 TinyJSON::write_options options = {};
 options.throw_exception = true;
-options.write_formating = TinyJSON::formating::minify;
+options.write_formatting = TinyJSON::formatting::minify;
 
 try
 {
@@ -236,7 +236,7 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
 ```cpp
   TinyJSON::write_options options = {};
   options.throw_exception = true;
-  options.write_formating = TinyJSON::formating::minify;
+  options.write_formatting = TinyJSON::formatting::minify;
 
   try
   {
@@ -458,8 +458,8 @@ While you can `dump` a string to (re)write a json string you might want to use i
 The formatting types are
 
 ```cpp
-  TinyJSON::formating::indented
-  TinyJSON::formating::minify
+  TinyJSON::formatting::indented
+  TinyJSON::formatting::minify
 ```
 
 ### Objects

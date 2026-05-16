@@ -9,7 +9,7 @@ TEST(TestDump, EmptyArray) {
   auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("[]", text);
@@ -21,7 +21,7 @@ TEST(TestDump, EmptyObject) {
   auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("{}", text);
@@ -33,7 +33,7 @@ TEST(TestDump, EmptyArrayNoIndent) {
   auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("[]", text);
@@ -45,7 +45,7 @@ TEST(TestDump, EmptyObjectNoIndent) {
   auto json = TinyJSON::TJ::parse("{}");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("{}", text);
@@ -57,7 +57,7 @@ TEST(TestDump, EmptyArrayOfNumbersNoIndent) {
   auto json = TinyJSON::TJ::parse("[12,13,14]");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("[12,13,14]", text);
@@ -68,7 +68,7 @@ TEST(TestDump, EmptyArrayOfFloatNumbersNoIndent) {
   auto json = TinyJSON::TJ::parse("[  1.2,  1.03 , 0.14 ]");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("[1.2,1.03,0.14]", text);
@@ -79,7 +79,7 @@ TEST(TestDump, EmptyArrayOfFloatNumbers) {
   auto json = TinyJSON::TJ::parse("[  1.2,  1.03 , 0.14 ]");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([
@@ -94,7 +94,7 @@ TEST(TestDump, EmptyArrayOfNumbers) {
   auto json = TinyJSON::TJ::parse("[12,13,14]");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([
@@ -118,7 +118,7 @@ TEST(TestDump, AnIntNumberByItSelf) {
     auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
 
-    const auto& text = json->dump(TinyJSON::formating::indented);
+    const auto& text = json->dump(TinyJSON::formatting::indented);
     ASSERT_NE(nullptr, text);
 
     ASSERT_STREQ(value.c_str(), text);
@@ -136,7 +136,7 @@ TEST(TestDump, AnIntNumberByItSelf2) {
   for (auto& value : values)
   {
     auto json = new TinyJSON::TJValueNumberInt(std::atoll(value.c_str()));
-    const auto& text = json->dump(TinyJSON::formating::indented);
+    const auto& text = json->dump(TinyJSON::formatting::indented);
     ASSERT_NE(nullptr, text);
 
     ASSERT_STREQ(value.c_str(), text);
@@ -148,7 +148,7 @@ TEST(TestDump, EmptyArrayOfVariousValues) {
   auto json = TinyJSON::TJ::parse("[ 12,true,null, false ]");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([
@@ -170,7 +170,7 @@ TEST(TestDump, EmptyArrayOfVariousNotIndented) {
 ])");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ("[12,true,null,false]", text);
@@ -187,7 +187,7 @@ TEST(TestDump, BooleanByItSelf) {
     auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
 
-    const auto& text = json->dump(TinyJSON::formating::indented);
+    const auto& text = json->dump(TinyJSON::formatting::indented);
     ASSERT_NE(nullptr, text);
 
     ASSERT_STREQ(value.c_str(), text);
@@ -202,7 +202,7 @@ TEST(TestDump, SimpleObjectWithNumbersNoIntent) {
 })");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"({"a":12,"b":14})", text);
@@ -216,7 +216,7 @@ TEST(TestDump, SimpleObjectWithNumbers) {
 })");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"({
@@ -236,7 +236,7 @@ TEST(TestDump, ObjectInObjectWithNumbers) {
 })");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"({
@@ -256,7 +256,7 @@ TEST(TestDump, ArrayInArrayWithNumbers) {
 ])");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([
@@ -279,7 +279,7 @@ TEST(TestDump, ThreeDeepArrayWithNumbersAndString) {
 ])");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([
@@ -308,7 +308,7 @@ TEST(TestDump, ThreeDeepArrayWithNumbersAndStringNotIndented) {
 ])");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([12,[13,[14,15,"Hello"]],"World",3.1416])", text);
@@ -324,7 +324,7 @@ TEST(TestDump, ThreeDeepObjectWithNumbersAndString) {
 })");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"({
@@ -352,7 +352,7 @@ TEST(TestDump, StringByItSelf) {
     auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
 
-    const auto& text = json->dump(TinyJSON::formating::indented);
+    const auto& text = json->dump(TinyJSON::formatting::indented);
     ASSERT_NE(nullptr, text);
 
     ASSERT_STREQ(value.c_str(), text);
@@ -374,7 +374,7 @@ TEST(TestDump, AFloatNumberByItSelf) {
   {
     auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
-    const auto& text = json->dump(TinyJSON::formating::indented);
+    const auto& text = json->dump(TinyJSON::formatting::indented);
     ASSERT_NE(nullptr, text);
 
     ASSERT_STREQ(value.c_str(), text);
@@ -394,7 +394,7 @@ TEST(TestDump, AnExponentNumberByItSelf) {
   {
     auto json = TinyJSON::TJ::parse(value.c_str());
     ASSERT_NE(nullptr, json);
-    const auto& text = json->dump(TinyJSON::formating::indented);
+    const auto& text = json->dump(TinyJSON::formatting::indented);
     ASSERT_NE(nullptr, text);
 
     ASSERT_STREQ(value.c_str(), text);
@@ -406,7 +406,7 @@ TEST(TestDump, DumpOfAStringWillExcapeTheNewLine) {
   auto json = TinyJSON::TJ::parse(R"("This is a string.\nAnd this is a new line")");
   ASSERT_NE(nullptr, json);
 
-  const auto& text = json->dump(TinyJSON::formating::indented);
+  const auto& text = json->dump(TinyJSON::formatting::indented);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\nAnd this is a new line")", text);

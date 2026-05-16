@@ -347,7 +347,7 @@ TEST(TestObjects, SetNumber)
   object->set_number("a", 42);
   object->set_number("b", -42);
   
-  const auto& text = object->dump(TinyJSON::formating::minify);
+  const auto& text = object->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
   ASSERT_STREQ(R"({"a":42,"b":-42})", text);
 
@@ -361,7 +361,7 @@ TEST(TestObjects, SetFloats)
   object->set_float("b", -42.0);
   object->set_float("c", -00.012);
 
-  const auto& text = object->dump(TinyJSON::formating::minify);
+  const auto& text = object->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
   
   ExpectJSONNear(text, R"(\{"a":([+-]?(?:[0-9]*[.])?[0-9]+),"b":([+-]?(?:[0-9]*[.])?[0-9]+),"c":([+-]?(?:[0-9]*[.])?[0-9]+)\})", {42.0, -42.0, -0.012});
@@ -382,7 +382,7 @@ TEST(TestObjects, SetFloatsWithVectors)
   std::vector<long double> ld_values = { 5.5, 6.5 };
   object->set_floats("ld", ld_values);
 
-  const auto& text = object->dump(TinyJSON::formating::minify);
+  const auto& text = object->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
   
   ExpectJSONNear(text, R"(\{"f":\[([^,]+),([^\]]+)\],"d":\[([^,]+),([^\]]+)\],"ld":\[([^,]+),([^\]]+)\]\})", {1.5, 2.5, 3.5, 4.5, 5.5, 6.5});
@@ -412,7 +412,7 @@ TEST(TestObjects, SetNumbersWithVectors)
   std::vector<short> s_values = { 11, 12 };
   object->set_numbers("s", s_values);
 
-  const auto& text = object->dump(TinyJSON::formating::minify);
+  const auto& text = object->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
   ASSERT_STREQ(R"({"i":[1,2],"l":[3,4],"ll":[5,6],"ui":[7,8],"ull":[9,10],"s":[11,12]})", text);
 
@@ -589,7 +589,7 @@ TEST(TestObjects, AddAnArrayToObject)
   object->set("a", array);
   delete array;
 
-  const auto& text = object->dump(TinyJSON::formating::minify);
+  const auto& text = object->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
   ASSERT_STREQ(R"({"a":[1,2,3]})", text);
 
@@ -616,7 +616,7 @@ TEST(TestObjects, AddMultipleArraysToObject)
   delete array2;
   delete array_out;
 
-  const auto& text = object->dump(TinyJSON::formating::minify);
+  const auto& text = object->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
   ASSERT_STREQ(R"({"a":[[1,2,3],[4,5,6]]})", text);
 

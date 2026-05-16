@@ -254,19 +254,19 @@ TEST(TestExponents, LargeExponentIsConvertedToSingleWholeNumber) {
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  EXPECT_STREQ("1.23045e+27", valuea->dump(TinyJSON::formating::minify));
+  EXPECT_STREQ("1.23045e+27", valuea->dump(TinyJSON::formatting::minify));
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("b"));
   ASSERT_NE(nullptr, valueb);
-  EXPECT_STREQ("6.7809e+27", valueb->dump(TinyJSON::formating::minify));
+  EXPECT_STREQ("6.7809e+27", valueb->dump(TinyJSON::formatting::minify));
 
   auto valuec = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("c"));
   ASSERT_NE(nullptr, valuec);
-  EXPECT_STREQ("1.0009e+27", valuec->dump(TinyJSON::formating::minify));
+  EXPECT_STREQ("1.0009e+27", valuec->dump(TinyJSON::formatting::minify));
 
   auto valued = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("d"));
   ASSERT_NE(nullptr, valued);
-  EXPECT_STREQ("1.2345e+27", valued->dump(TinyJSON::formating::minify));
+  EXPECT_STREQ("1.2345e+27", valued->dump(TinyJSON::formatting::minify));
 
   delete json;
 }
@@ -278,7 +278,7 @@ TEST(TestExponents, LargeExponentIsConvertedToSingleWholeNumberInAStandAloneStri
 
   auto a = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(json);
   ASSERT_NE(nullptr, a);
-  ASSERT_STREQ("1.0009e+27", a->dump(TinyJSON::formating::minify));
+  ASSERT_STREQ("1.0009e+27", a->dump(TinyJSON::formatting::minify));
   
   delete json;
 }
@@ -368,7 +368,7 @@ TEST(TestExponents, PositiveExponentNumberCannotBeConvertedToWholeNumber) {
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_STREQ("2.00001e+24", valuea->dump(TinyJSON::formating::minify));
+  ASSERT_STREQ("2.00001e+24", valuea->dump(TinyJSON::formatting::minify));
 
   delete json;
 }
@@ -386,7 +386,7 @@ TEST(TestExponents, PositiveExponentOfNegativeNumberNumberCannotBeConvertedToWho
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_STREQ("-2.00001e+24", valuea->dump(TinyJSON::formating::minify));
+  ASSERT_STREQ("-2.00001e+24", valuea->dump(TinyJSON::formatting::minify));
 
   delete json;
 }
@@ -405,11 +405,11 @@ TEST(TestExponents, NegativeExponentNumberCannotBeConvertedToWholeNumber) {
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_STREQ("1.200001e-23", valuea->dump(TinyJSON::formating::minify));
+  ASSERT_STREQ("1.200001e-23", valuea->dump(TinyJSON::formatting::minify));
 
   auto valueb = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("b"));
   ASSERT_NE(nullptr, valueb);
-  ASSERT_STREQ("1.000001000000000000001e-17", valueb->dump(TinyJSON::formating::minify));
+  ASSERT_STREQ("1.000001000000000000001e-17", valueb->dump(TinyJSON::formatting::minify));
 
   delete json;
 }
@@ -427,7 +427,7 @@ TEST(TestExponents, NegativeExponentNumberShiftsEnoughToBecomeANumberAgain) {
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_STREQ("1.00001e-24", valuea->dump(TinyJSON::formating::minify));
+  ASSERT_STREQ("1.00001e-24", valuea->dump(TinyJSON::formatting::minify));
 
   delete json;
 }
@@ -445,7 +445,7 @@ TEST(TestExponents, NegativeExponentNumberWithZeroWholeNumberShiftsEnoughToBecom
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_STREQ("3.000000000000002e-23", valuea->dump(TinyJSON::formating::minify));
+  ASSERT_STREQ("3.000000000000002e-23", valuea->dump(TinyJSON::formatting::minify));
 
   delete json;
 }
@@ -697,13 +697,13 @@ TEST(TestExponents, Underflow)
 TEST(TestExponents, NegativeExponentToString)
 {
   auto json = TinyJSON::TJ::parse("2.5e-2");
-  EXPECT_STREQ("0.025", json->dump(TinyJSON::formating::minify));
+  EXPECT_STREQ("0.025", json->dump(TinyJSON::formatting::minify));
   delete json;
 }
 
 TEST(TestExponents, PositiveExponentToString)
 {
   auto json = TinyJSON::TJ::parse("2.5e+2");
-  EXPECT_STREQ("250", json->dump(TinyJSON::formating::minify));
+  EXPECT_STREQ("250", json->dump(TinyJSON::formatting::minify));
   delete json;
 }

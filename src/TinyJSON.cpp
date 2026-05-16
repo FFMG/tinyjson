@@ -126,7 +126,7 @@ namespace TinyJSON
   struct internal_dump_configuration
   {
     TJCHAR* _buffer;
-    const formating _formating;
+    const formatting _formatting;
     const TJCHAR* _indent;
     int _buffer_pos;
     int _buffer_max_length;
@@ -140,7 +140,7 @@ namespace TinyJSON
     bool _has_error;
 
     internal_dump_configuration(
-      formating formating,
+      formatting formatting,
       const TJCHAR* indent,
       const TJCHAR* item_separator,
       const TJCHAR* key_separator,
@@ -149,7 +149,7 @@ namespace TinyJSON
       const TJCHAR* new_line,
       bool escape_special_characters
     ) :
-      _formating(formating),
+      _formatting(formatting),
       _indent(indent),
       _item_separator(item_separator),
       _key_separator(key_separator),
@@ -3918,7 +3918,7 @@ namespace TinyJSON
   /// Write a value to a file.
   /// </summary>
   /// <param name="file_path">The path of the file.</param>
-  /// <param name="root">the value we are writting</param>
+  /// <param name="root">the value we are writing</param>
   /// <param name="write_options">The options we will be using to write</param>
   /// <returns></returns>
   bool TJ::write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
@@ -4172,7 +4172,7 @@ namespace TinyJSON
   /// Write a value to a file.
   /// </summary>
   /// <param name="file_path">The path of the file.</param>
-  /// <param name="root">the value we are writting</param>
+  /// <param name="root">the value we are writing</param>
   /// <param name="write_options">The options we will be using to write</param>
   /// <returns></returns>
   bool TJ::internal_write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options)
@@ -4180,7 +4180,7 @@ namespace TinyJSON
     WriteResult write_result(write_options);
 
     //  create the json first before we open anything.
-    auto json = root.dump(write_result.options().write_formating);
+    auto json = root.dump(write_result.options().write_formatting);
     if (nullptr == json)
     {
       write_result.assign_exception_message("Unable to dump the json.");
@@ -4192,7 +4192,7 @@ namespace TinyJSON
     std::ofstream outFile(file_path, std::ios::out | std::ios::binary);
     if (!outFile)
     {
-      write_result.assign_exception_message("Unable to open file for writting.");
+      write_result.assign_exception_message("Unable to open file for writing.");
       write_result.throw_if_exception();
       return false;
     }
@@ -4503,14 +4503,14 @@ namespace TinyJSON
     return false;
   }
 
-  const TJCHAR* TJValue::dump(formating formating, const TJCHAR* indent) const
+  const TJCHAR* TJValue::dump(formatting formatting, const TJCHAR* indent) const
   {
     free_last_dump();
-    switch (formating)
+    switch (formatting)
     {
-    case formating::minify:
+    case formatting::minify:
     {
-      internal_dump_configuration configuration(formating, nullptr,
+      internal_dump_configuration configuration(formatting, nullptr,
         TJCHARPREFIX(","),
         TJCHARPREFIX(":"),
         TJCHARPREFIX("\""),
@@ -4524,9 +4524,9 @@ namespace TinyJSON
       _last_dump = configuration._buffer;
     }
     break;
-    case formating::indented:
+    case formatting::indented:
     {
-      internal_dump_configuration configuration(formating, indent,
+      internal_dump_configuration configuration(formatting, indent,
         TJCHARPREFIX(","),
         TJCHARPREFIX(": "),
         TJCHARPREFIX("\""),
@@ -4548,7 +4548,7 @@ namespace TinyJSON
   const TJCHAR* TJValue::dump_string() const
   {
     free_last_dump();
-    internal_dump_configuration configuration(formating::minify, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
+    internal_dump_configuration configuration(formatting::minify, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
     internal_dump(configuration, nullptr);
     if (configuration._has_error)
     {
@@ -5474,7 +5474,7 @@ namespace TinyJSON
     if (number_of_elements > 0)
     {
       // only return if we have data.
-      if (configuration._formating == formating::indented)
+      if (configuration._formatting == formatting::indented)
       {
         if (!TJHelper::add_char_to_string(TJ_ESCAPE_LINE_FEED, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
         {
@@ -5506,7 +5506,7 @@ namespace TinyJSON
 #endif
         if (member->value()->is_comment())
         {
-          if (configuration._formating == formating::minify)
+          if (configuration._formatting == formatting::minify)
           {
             // skip comments when minifying
             continue;
@@ -5526,7 +5526,7 @@ namespace TinyJSON
             return;
           }
 
-          if (configuration._formating == formating::indented)
+          if (configuration._formatting == formatting::indented)
           {
             if (!TJHelper::add_char_to_string(TJ_ESCAPE_LINE_FEED, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
             {
@@ -5566,7 +5566,7 @@ namespace TinyJSON
           auto next_it = std::next(it);
           while (next_it != _members->end())
           {
-            if (configuration._formating != formating::minify || !(*next_it)->value()->is_comment())
+            if (configuration._formatting != formatting::minify || !(*next_it)->value()->is_comment())
             {
               more_items = true;
               break;
@@ -5577,7 +5577,7 @@ namespace TinyJSON
 #else
         for (unsigned int next_i = i + 1; next_i < size; ++next_i)
         {
-          if (configuration._formating != formating::minify || !_members->at(next_i)->value()->is_comment())
+          if (configuration._formatting != formatting::minify || !_members->at(next_i)->value()->is_comment())
           {
             more_items = true;
             break;
@@ -5594,7 +5594,7 @@ namespace TinyJSON
             return;
           }
         }
-        if (configuration._formating == formating::indented)
+        if (configuration._formatting == formatting::indented)
         {
           if (!TJHelper::add_char_to_string(TJ_ESCAPE_LINE_FEED, configuration._buffer, configuration._buffer_pos, configuration._buffer_max_length))
           {
@@ -5796,7 +5796,7 @@ namespace TinyJSON
     }
 
     delete[] value->_last_dump;
-    internal_dump_configuration configuration(formating::minify, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
+    internal_dump_configuration configuration(formatting::minify, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, false);
     value->internal_dump(configuration, nullptr);
     if (configuration._has_error)
     {
@@ -5959,7 +5959,7 @@ namespace TinyJSON
 #endif
         if (value->is_comment())
         {
-          if (configuration._formating == formating::minify)
+          if (configuration._formatting == formatting::minify)
           {
             // skip comments when minifying
             continue;
@@ -6011,7 +6011,7 @@ namespace TinyJSON
           auto next_it = std::next(it);
           while (next_it != _values->end())
           {
-            if (configuration._formating != formating::minify || !(*next_it)->is_comment())
+            if (configuration._formatting != formatting::minify || !(*next_it)->is_comment())
             {
               more_items = true;
               break;
@@ -6022,7 +6022,7 @@ namespace TinyJSON
 #else
         for (unsigned int next_i = i + 1; next_i < size; ++next_i)
         {
-          if (configuration._formating != formating::minify || !_values->at(next_i)->is_comment())
+          if (configuration._formatting != formatting::minify || !_values->at(next_i)->is_comment())
           {
             more_items = true;
             break;
@@ -6983,7 +6983,7 @@ namespace TinyJSON
   void TJValueComment::internal_dump(internal_dump_configuration& configuration, const TJCHAR* current_indent) const
   {
     // If we are minifying, we don't want comments.
-    if (configuration._formating == formating::minify)
+    if (configuration._formatting == formatting::minify)
     {
       return;
     }

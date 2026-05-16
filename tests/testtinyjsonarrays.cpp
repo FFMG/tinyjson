@@ -217,7 +217,7 @@ TEST(TJValueArray, CreateWithNumbersAndStrings)
 
   ASSERT_EQ(3, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([42,"Hello","World"])", text);
@@ -234,7 +234,7 @@ TEST(TJValueArray, CreateWithNegativeNumbers)
 
   ASSERT_EQ(3, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([42,0,-42])", text);
@@ -251,7 +251,7 @@ TEST(TJValueArray, CreateWithBoolean)
 
   ASSERT_EQ(3, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([true,false,false])", text);
@@ -275,7 +275,7 @@ TEST(TJValueArray, CreateWithFloats)
 
   ASSERT_EQ(3, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0});
@@ -302,7 +302,7 @@ TEST(TJValueArray, CreateWithFloatsAndNegativeNumbers)
 
   ASSERT_EQ(6, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
@@ -323,7 +323,7 @@ TEST(TJValueArray, AddVectorOfFloats)
 
   ASSERT_EQ(4, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 1.0, -1.0, -42.5});
@@ -349,7 +349,7 @@ std::vector<double> ldoubles = {
   }
   ASSERT_EQ(6, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
@@ -372,7 +372,7 @@ TEST(TJValueArray, AddVectorOfLongDoubles)
 
   ASSERT_EQ(6, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ExpectJSONNear(text, R"(\[([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\])", {42.5, 0.05, 1.0, -1.0, -42.5, -0.05});
@@ -392,7 +392,7 @@ TEST(TJValueArray, AddVectorOfInt)
 
   ASSERT_EQ(3, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([42,0,-42])", text);
@@ -412,7 +412,7 @@ TEST(TJValueArray, AddVectorOfLong)
 
   ASSERT_EQ(3, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([42,0,-42])", text);
@@ -432,7 +432,7 @@ TEST(TJValueArray, AddVectorOfLongLong)
 
   ASSERT_EQ(3, json->get_number_of_items());
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"([42,0,-42])", text);
@@ -450,7 +450,7 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
   json->add_number((signed)46);
   json->add_number((long)47);
 
-  const auto& text = json->dump(TinyJSON::formating::minify);
+  const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
   // the order should remain the same as the order of insertion
@@ -483,7 +483,7 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
     json->remove_at(1); // remove '2'
 
     ASSERT_EQ(2, json->get_number_of_items());
-    ASSERT_STREQ(R"([1,3])", json->dump(TinyJSON::formating::minify));
+    ASSERT_STREQ(R"([1,3])", json->dump(TinyJSON::formatting::minify));
 
     delete json;
   }
@@ -497,7 +497,7 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
     json->remove_at(0); // remove '1'
 
     ASSERT_EQ(2, json->get_number_of_items());
-    ASSERT_STREQ(R"([2,3])", json->dump(TinyJSON::formating::minify));
+    ASSERT_STREQ(R"([2,3])", json->dump(TinyJSON::formatting::minify));
 
     delete json;
   }
@@ -511,7 +511,7 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
     json->remove_at(2); // remove '3'
 
     ASSERT_EQ(2, json->get_number_of_items());
-    ASSERT_STREQ(R"([1,2])", json->dump(TinyJSON::formating::minify));
+    ASSERT_STREQ(R"([1,2])", json->dump(TinyJSON::formatting::minify));
 
     delete json;
   }

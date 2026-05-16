@@ -314,8 +314,8 @@ class TJDictionary;
     return rhs != lhs;
   }
 
-  // the various types of formating.
-  enum class formating
+  // the various types of formatting.
+  enum class formatting
   {
     minify,
     indented
@@ -398,9 +398,9 @@ class TJDictionary;
     bool throw_exception = false;
 
     /// <summary>
-    /// The formating type we want to use.
+    /// The formatting type we want to use.
     /// </summary>
-    formating write_formating = formating::indented;
+    formatting write_formatting = formatting::indented;
 
     /// <summary>
     /// The byte order mark we will be using.
@@ -538,7 +538,7 @@ class TJDictionary;
     virtual bool is_null() const;
     virtual bool is_comment() const;
 
-    const TJCHAR* dump(formating formating = formating::indented, const TJCHAR* indent = TJCHARPREFIX("  ")) const;
+    const TJCHAR* dump(formatting formatting = formatting::indented, const TJCHAR* indent = TJCHARPREFIX("  ")) const;
     const TJCHAR* dump_string() const;
 
     /// <summary>
@@ -770,7 +770,7 @@ class TJDictionary;
     /// Write a value to a file.
     /// </summary>
     /// <param name="file_path">The path of the file.</param>
-    /// <param name="root">the value we are writting</param>
+    /// <param name="root">the value we are writing</param>
     /// <param name="write_options">The options we will be using to write</param>
     /// <returns></returns>
     static bool write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options = {});
@@ -789,7 +789,7 @@ class TJDictionary;
     /// Write a value to a file.
     /// </summary>
     /// <param name="file_path">The path of the file.</param>
-    /// <param name="root">the value we are writting</param>
+    /// <param name="root">the value we are writing</param>
     /// <param name="write_options">The options we will be using to write</param>
     /// <returns></returns>
     static bool internal_write_file(const TJCHAR* file_path, const TJValue& root, const write_options& write_options);
@@ -1859,7 +1859,7 @@ class TJDictionary;
       //  exception will throw.
       return TJCHARPREFIX("");
     }
-    std::string json(tj->dump(formating::indented));
+    std::string json(tj->dump(formatting::indented));
     delete tj;
     return json;
   }  
@@ -1874,7 +1874,7 @@ class TJDictionary;
       //  exception will throw.
       return TJCHARPREFIX("");
     }
-    std::string json(tj->dump(formating::minify));
+    std::string json(tj->dump(formatting::minify));
     delete tj;
     return json;
   }
