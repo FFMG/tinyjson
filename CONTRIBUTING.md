@@ -66,7 +66,7 @@ class Blah
 Enums are lower case
 
 ```cpp
-enum class formating
+enum class formatting
 {
   none,
   indented

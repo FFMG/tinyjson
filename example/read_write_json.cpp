@@ -41,8 +41,8 @@ int main()
   }
 
   // Compare the dumped output to verify data matches
-  std::string original_dump = root.dump(formating::minify);
-  std::string parsed_dump = parsed->dump(formating::minify);
+  std::string original_dump = root.dump(formatting::minify);
+  std::string parsed_dump = parsed->dump(formatting::minify);
 
   if (original_dump != parsed_dump) {
     std::cerr << "Data mismatch between original and read JSON!" << std::endl;
