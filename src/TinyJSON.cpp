@@ -6210,10 +6210,17 @@ namespace TinyJSON
 
   std::vector<long double> TJValueArray::get_floats() const
   {
+    const unsigned int count = get_number_of_items();
     std::vector<long double> values = {};
-    for (unsigned int i = 0; i < get_number_of_items(); ++i)
+    values.reserve(count);
+    const unsigned int elements_count = get_number_of_elements();
+    for (unsigned int i = 0; i < elements_count; ++i)
     {
-      auto value = at(i);
+      auto* value = element_at(i);
+      if (value->is_comment())
+      {
+        continue;
+      }
       if (!value->is_number())
       {
         ParseResult _parse_result(_parse_options);
@@ -6228,10 +6235,17 @@ namespace TinyJSON
 
   std::vector<long long> TJValueArray::get_numbers() const
   {
+    const unsigned int count = get_number_of_items();
     std::vector<long long> values = {};
-    for (unsigned int i = 0; i < get_number_of_items(); ++i)
+    values.reserve(count);
+    const unsigned int elements_count = get_number_of_elements();
+    for (unsigned int i = 0; i < elements_count; ++i)
     {
-      auto value = at(i);
+      auto* value = element_at(i);
+      if (value->is_comment())
+      {
+        continue;
+      }
       if (!value->is_number())
       {
         ParseResult _parse_result(_parse_options);
