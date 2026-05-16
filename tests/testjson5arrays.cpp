@@ -106,3 +106,39 @@ TEST(TJJSON5Arrays, RemoveAllItemsKeepComment)
 
   delete tj;
 }
+
+TEST(TJJSON5Arrays, GetNumbersWithComments)
+{
+  const TJCHAR* json = TJCHARPREFIX("[\n  1, \n  // comment\n  2\n]");
+  parse_options options;
+  options.specification = parse_options::json5_1_0_0;
+  auto* tj = TJ::parse(json, options);
+  ASSERT_NE(nullptr, tj);
+  auto* jarr = dynamic_cast<TJValueArray*>(tj);
+  ASSERT_NE(nullptr, jarr);
+  
+  std::vector<long long> numbers = jarr->get_numbers();
+  ASSERT_EQ(2u, numbers.size());
+  EXPECT_EQ(1, numbers[0]);
+  EXPECT_EQ(2, numbers[1]);
+
+  delete tj;
+}
+
+TEST(TJJSON5Arrays, GetFloatsWithComments)
+{
+  const TJCHAR* json = TJCHARPREFIX("[\n  1.1, \n  // comment\n  2.2\n]");
+  parse_options options;
+  options.specification = parse_options::json5_1_0_0;
+  auto* tj = TJ::parse(json, options);
+  ASSERT_NE(nullptr, tj);
+  auto* jarr = dynamic_cast<TJValueArray*>(tj);
+  ASSERT_NE(nullptr, jarr);
+
+  std::vector<long double> floats = jarr->get_floats();
+  ASSERT_EQ(2u, floats.size());
+  EXPECT_DOUBLE_EQ(1.1, (double)floats[0]);
+  EXPECT_DOUBLE_EQ(2.2, (double)floats[1]);
+
+  delete tj;
+}
