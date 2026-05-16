@@ -27,7 +27,7 @@ int main()
 
   // Write to a file
   std::string filename = "test_io_json.json";
-  bool success = root.write_file(filename.c_str());
+  bool success = TinyJSON::TJ::write_file(filename.c_str(), root);
   if (!success) {
     std::cerr << "Failed to write JSON file." << std::endl;
     return 1;

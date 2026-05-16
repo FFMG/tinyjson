@@ -40,7 +40,7 @@ int main()
   std::string filename = "test_io_json5.json";
   write_options w_options;
   w_options.write_formatting = formatting::indented;
-  bool success = root->write_file(filename.c_str(), w_options);
+  bool success = TinyJSON::TJ::write_file(filename.c_str(), *root, w_options);
   if (!success) {
     std::cerr << "Failed to write JSON5 file." << std::endl;
     delete root;
