@@ -1,4 +1,7 @@
-﻿cmake_minimum_required (VERSION 3.28)
+﻿# Licensed to Florent Guelfucci under one or more agreements.
+# Florent Guelfucci licenses this file to you under the MIT license.
+# See the LICENSE file in the project root for more information.
+cmake_minimum_required (VERSION 3.28)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(Project TinyJSON)
 
