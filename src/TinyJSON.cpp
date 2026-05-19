@@ -28,6 +28,7 @@
 #include <fstream>
 #include <iostream>
 #include <cctype>
+#include <cstdio>
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
@@ -4188,11 +4189,21 @@ namespace TinyJSON
       return false;
     }
 
-    //  try and optn the file...
-    std::ofstream outFile(file_path, std::ios::out | std::ios::binary);
+    // Allocate temporary file path
+    auto file_path_length = TJHelper::string_length(file_path);
+    auto journal_suffix = TJCHARPREFIX("-journal");
+    auto journal_length = TJHelper::string_length(journal_suffix);
+    TJCHAR* tmp_file_path = new TJCHAR[file_path_length + journal_length + 1];
+    TJHelper::copy_string(file_path, tmp_file_path, file_path_length);
+    TJHelper::copy_string(journal_suffix, tmp_file_path + file_path_length, journal_length);
+    tmp_file_path[file_path_length + journal_length] = TJ_NULL_TERMINATOR;
+
+    //  try and open the temporary file...
+    std::ofstream outFile((const char*)tmp_file_path, std::ios::out | std::ios::binary);
     if (!outFile)
     {
       write_result.assign_exception_message("Unable to open file for writing.");
+      delete[] tmp_file_path;
       write_result.throw_if_exception();
       return false;
     }
@@ -4204,6 +4215,7 @@ namespace TinyJSON
       if (!outFile)
       {
         write_result.assign_exception_message("Unable to write UTF-8 BOM.");
+        delete[] tmp_file_path;
         write_result.throw_if_exception();
         return false;
       }
@@ -4215,6 +4227,16 @@ namespace TinyJSON
     if (!outFile)
     {
       write_result.assign_exception_message("Unable to write to file.");
+      delete[] tmp_file_path;
+      write_result.throw_if_exception();
+      return false;
+    }
+
+    outFile.flush();
+    if (!outFile)
+    {
+      write_result.assign_exception_message("Unable to flush the file to disk.");
+      delete[] tmp_file_path;
       write_result.throw_if_exception();
       return false;
     }
@@ -4224,9 +4246,22 @@ namespace TinyJSON
     if (!outFile)
     {
       write_result.assign_exception_message("Unable to close the file.");
+      delete[] tmp_file_path;
       write_result.throw_if_exception();
       return false;
     }
+
+    // Atomic replace
+    std::remove((const char*)file_path);
+    if (std::rename((const char*)tmp_file_path, (const char*)file_path) != 0)
+    {
+      write_result.assign_exception_message("Unable to atomically rename the temporary file to the target file path.");
+      delete[] tmp_file_path;
+      write_result.throw_if_exception();
+      return false;
+    }
+
+    delete[] tmp_file_path;
     return true;
   }
 
