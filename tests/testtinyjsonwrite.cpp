@@ -152,3 +152,46 @@ TEST_F(TestWrite, ObjectWithValuesNotIndentedWithUtf8Bom)
   delete json;
   delete parse;
 }
+
+TEST_F(TestWrite, LargeFileIsSavedCorrectly)
+{
+  const char* filename = "large_test.json";
+  std::remove(filename);
+
+  TinyJSON::TJValueArray root;
+
+  // Create a large payload
+  for (int i = 0; i < 5000; ++i)
+  {
+    TinyJSON::TJValueObject obj;
+    obj.set_number("id", i);
+    obj.set_string("name", "John Doe");
+    obj.set_boolean("active", i % 2 == 0);
+    obj.set_float("score", 1234.5678);
+    root.add(&obj);
+  }
+
+  TinyJSON::write_options options = {};
+  options.throw_exception = true;
+  options.write_formatting = TinyJSON::formatting::indented;
+
+  ASSERT_TRUE(TinyJSON::TJ::write_file(filename, root, options));
+
+  // Verify the file exists
+  std::ifstream inFile(filename, std::ios::binary);
+  ASSERT_TRUE(inFile.is_open());
+  inFile.close();
+
+  // Parse it back and verify
+  TinyJSON::parse_options options_parse = {};
+  options_parse.throw_exception = true;
+  auto parse = TinyJSON::TJ::parse_file(filename, options_parse);
+  ASSERT_NE(nullptr, parse);
+  ASSERT_TRUE(parse->is_array());
+  
+  auto arr = static_cast<TinyJSON::TJValueArray*>(parse);
+  ASSERT_EQ(5000u, arr->get_number_of_items());
+
+  delete parse;
+  std::remove(filename);
+}

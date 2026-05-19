@@ -41,6 +41,37 @@ jobs:
     - name: run JSON5 C++20
       run: ./rw_json5_20
 
+  test_io_macos:
+    name: Build and Test I/O Examples (macOS)
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: build JSON C++11
+      run: g++ -std=c++11 -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/read_write_json.cpp -o rw_json_11
+
+    - name: run JSON C++11
+      run: ./rw_json_11
+
+    - name: build JSON5 C++11
+      run: g++ -std=c++11 -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/read_write_json5.cpp -o rw_json5_11
+
+    - name: run JSON5 C++11
+      run: ./rw_json5_11
+
+    - name: build JSON C++20
+      run: g++ -std=c++20 -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/read_write_json.cpp -o rw_json_20
+
+    - name: run JSON C++20
+      run: ./rw_json_20
+
+    - name: build JSON5 C++20
+      run: g++ -std=c++20 -Wall -Wextra -Werror -O3 src/TinyJSON.cpp example/read_write_json5.cpp -o rw_json5_20
+
+    - name: run JSON5 C++20
+      run: ./rw_json5_20
+
   test_io_windows:
     name: Build and Test I/O Examples (Windows)
     runs-on: windows-latest
