@@ -2,11 +2,12 @@
 
 [![CI](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.2-blue.svg)](src/TinyJSON.h)
+[![Version](https://img.shields.io/badge/version-0.2.3-blue.svg)](src/TinyJSON.h)
 
 A lightweight and lightning-fast C++ JSON & JSON5 parser designed for high performance and minimal footprint.
 
 * Zero-dependency: Easy to integrate into any C++ project.
+* Atomic file saving: Guarantees data integrity by using a temporary file before overwriting.
 * Minimal memory overhead: Ideal for resource-constrained environments.
 * High-performance parsing: Benchmarked for speed against other leading parsers.
 * Simple API: Intuitive and easy to use.
@@ -129,8 +130,8 @@ The version is set in the `TinyJSON.h` file.
 ```cpp
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 0;
-static const char TJ_VERSION_STRING[] = "0.2.0";
+static const short TJ_VERSION_PATCH = 3;
+static const char TJ_VERSION_STRING[] = "0.2.3";
 ```
 
 ## Options

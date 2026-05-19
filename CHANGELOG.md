@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-05-19
+
+### Added
+- Atomic file saving: Implemented a safe save mechanism using temporary `-journal` files to prevent data loss or corruption during writes.
+- Explicit `flush()` and `close()` checks for improved reliability during file operations.
+
+### Changed
+- Incremented version to 0.2.3.
+
 ## [0.2.2] - 2026-05-15
 
 ### Added
