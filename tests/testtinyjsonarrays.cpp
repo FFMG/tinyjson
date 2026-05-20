@@ -110,7 +110,7 @@ TEST(TJValueArray, EmptyArrayInSideArrayHasNoItemsInIt) {
   ASSERT_NE(nullptr, jarray);
   ASSERT_EQ(1, jarray->get_number_of_items());
 
-  const auto jarraya = dynamic_cast<const TinyJSON::TJValueArray*>((*jarray)[0]);
+  const auto jarraya = dynamic_cast<const TinyJSON::TJValueArray*>(jarray->at(0));
   ASSERT_NE(nullptr, jarraya);
   ASSERT_EQ(0, jarraya->get_number_of_items());
 
@@ -559,3 +559,14 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
 
     delete json;
   }
+
+TEST(TJValueArray, OperatorBracketAccess)
+{
+  auto json = TinyJSON::TJ::parse(R"([1, 2, 3])");
+  ASSERT_NE(nullptr, json);
+
+  // operator[] on array should return null (it is for object keys)
+  ASSERT_TRUE((*json)["any_key"].is_null());
+
+  delete json;
+}

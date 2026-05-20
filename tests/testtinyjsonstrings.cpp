@@ -776,3 +776,14 @@ TEST(TestStrings, Json5AllowsEscapedDoubleQuotes) {
   ASSERT_STREQ(json->get_string(), "I can use quotes\"");
   delete json;
 }
+
+TEST(TestStrings, OperatorBracketAccess)
+{
+  auto json = TinyJSON::TJ::parse(R"("hello")");
+  ASSERT_NE(nullptr, json);
+  
+  // operator[] on string should return null
+  ASSERT_TRUE((*json)["any_key"].is_null());
+  
+  delete json;
+}
