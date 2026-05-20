@@ -29,7 +29,6 @@
 #include <fstream>
 #include <limits>
 
-
 #if defined(_WIN32)
   #include <io.h>
 #else
