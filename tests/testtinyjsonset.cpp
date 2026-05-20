@@ -79,3 +79,12 @@ TEST(TestSet, GenericSetVectorFloat) {
   ASSERT_NEAR(1.1, result[0], 0.001);
   ASSERT_NEAR(2.2, result[1], 0.001);
 }
+
+TEST(TestSet, OperatorBracketAccess)
+{
+  TinyJSON::TJValueObject obj;
+  obj.set("a", 42);
+  
+  ASSERT_EQ(42, obj["a"].as<int>());
+  ASSERT_TRUE(obj["b"].is_null());
+}

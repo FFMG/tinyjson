@@ -559,3 +559,14 @@ TEST(TJValueArray, AddVectorOfNumberAndGetItAsAVector)
 
     delete json;
   }
+
+TEST(TJValueArray, OperatorBracketAccess)
+{
+  auto json = TinyJSON::TJ::parse(R"([1, 2, 3])");
+  ASSERT_NE(nullptr, json);
+
+  // operator[] on array should return null (it is for object keys)
+  ASSERT_TRUE((*json)["any_key"].is_null());
+
+  delete json;
+}

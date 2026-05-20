@@ -171,3 +171,14 @@ TEST(TestNulls, CloneNull) {
   delete null1;
   delete null2;
 }
+
+TEST(TestNulls, OperatorBracketAccess)
+{
+  auto json = TinyJSON::TJ::parse("null");
+  ASSERT_NE(nullptr, json);
+
+  // operator[] on null should return null
+  ASSERT_TRUE((*json)["any_key"].is_null());
+
+  delete json;
+}
