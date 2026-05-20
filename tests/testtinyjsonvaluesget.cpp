@@ -346,3 +346,56 @@ TEST(TestValueGet, GetStrictStringFromArrayWillThrow)
 
   delete json;
 }
+
+TEST(TestValueGet, OperatorBracketSimpleAccess)
+{
+  auto json = TinyJSON::TJ::parse(R"({"a": {"b": 10}, "c": [1, 2, 3]})");
+  ASSERT_NE(nullptr, json);
+
+  // Simple access
+  ASSERT_EQ(10, (*json)["a"]["b"].as<int>());
+
+  delete json;
+}
+
+TEST(TestValueGet, OperatorBracketMissingKeyNoThrow)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  auto json = TinyJSON::TJ::parse(R"({"a": {"b": 10}})", options);
+  ASSERT_NE(nullptr, json);
+
+  // Missing key (no throw) returns null value
+  ASSERT_TRUE((*json)["a"]["x"].is_null());
+  ASSERT_TRUE((*json)["x"]["y"].is_null()); // Non-existent subkey on null fallback
+
+  // as<T> default on null (TJValueNull::get_int() returns 0)
+  ASSERT_EQ(0, (*json)["a"]["x"].as<int>());
+
+  delete json;
+}
+
+TEST(TestValueGet, OperatorBracketThrowOnMissingKey)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  auto json = TinyJSON::TJ::parse(R"({"a": {"b": 10}})", options);
+  ASSERT_NE(nullptr, json);
+
+  ASSERT_EQ(10, (*json)["a"]["b"].as<int>());
+  ASSERT_ANY_THROW((*json)["a"]["x"]);
+  ASSERT_ANY_THROW((*json)["x"]);
+
+  delete json;
+}
+
+TEST(TestValueGet, OperatorBracketOnNonObject)
+{
+  auto json = TinyJSON::TJ::parse(R"([1, 2, 3])"); // It is an array, not an object
+  ASSERT_NE(nullptr, json);
+
+  // Accessing by key on a non-object should return null (or throw if configured)
+  ASSERT_TRUE((*json)["key"].is_null());
+
+  delete json;
+}
