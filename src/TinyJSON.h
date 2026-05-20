@@ -445,6 +445,7 @@ class TJDictionary;
   class TJHelper;
   class TJValueArray;
   class TJValueObject;
+  class TJValueAccessor;
 
   // A simple JSON value, the base of all items in a json
   class TJValue
@@ -671,6 +672,12 @@ class TJDictionary;
       return get_vector_internal<V>(std::is_integral<V>());
     }
 
+    template<typename T>
+    T as() const
+    {
+      return get<T>();
+    }
+
   private:
     template<typename V>
     std::vector<V> get_vector_internal(std::true_type) const
@@ -704,6 +711,19 @@ class TJDictionary;
     {
       return const_iterator::make_end(*this);
     }
+
+    TJValueAccessor operator[](const TJCHAR* key) const;
+
+    /// <summary>
+    /// Index access for arrays and objects.
+    /// For objects, the index follows the non-comment item order (same as TJValueObject::at).
+    /// Out-of-range access returns an empty accessor; calling as<T>() yields default values.
+    /// </summary>
+    TJValueAccessor operator[](int index) const;
+
+#if TJ_INCLUDE_STD_STRING == 1
+    TJValueAccessor operator[](const std::string& key) const;
+#endif
 
   protected:
     parse_options _parse_options;
@@ -1614,6 +1634,168 @@ class TJDictionary;
 
     void free_values();
   };
+
+  class TJValueAccessor
+  {
+  public:
+    TJValueAccessor(const TJValue* owner, const TJCHAR* key, bool case_sensitive = true) :
+      _owner(owner),
+      _key(key),
+      _index(0),
+      _by_index(false),
+      _case_sensitive(case_sensitive)
+    {
+    }
+
+#if TJ_INCLUDE_STD_STRING == 1
+    TJValueAccessor(const TJValue* owner, const std::string& key, bool case_sensitive = true) :
+      _owner(owner),
+      _key(nullptr),
+      _index(0),
+      _by_index(false),
+      _case_sensitive(case_sensitive),
+      _key_storage(key)
+    {
+      _key = _key_storage.c_str();
+    }
+
+    TJValueAccessor(const TJValue* owner, std::string&& key, bool case_sensitive = true) :
+      _owner(owner),
+      _key(nullptr),
+      _index(0),
+      _by_index(false),
+      _case_sensitive(case_sensitive),
+      _key_storage(std::move(key))
+    {
+      _key = _key_storage.c_str();
+    }
+#endif
+
+    TJValueAccessor(const TJValue* owner, int index) :
+      _owner(owner),
+      _key(nullptr),
+      _index(index),
+      _by_index(true),
+      _case_sensitive(true)
+    {
+    }
+
+    template<typename T>
+    T as() const
+    {
+      if (_by_index)
+      {
+        auto value = get_value_ptr();
+        if (value == nullptr)
+        {
+          return default_value<T>();
+        }
+        return value->get<T>();
+      }
+
+      const auto* object = dynamic_cast<const TJValueObject*>(_owner);
+      if (object == nullptr)
+      {
+        return default_value<T>();
+      }
+      return object->get<T>(_key, _case_sensitive);
+    }
+
+    TJValueAccessor operator[](const TJCHAR* key) const
+    {
+      // Chained access uses non-throwing lookup for intermediate nodes.
+      // Missing intermediates yield empty accessors (as<T>() returns defaults).
+      return TJValueAccessor(get_value_ptr(), key, true);
+    }
+
+    TJValueAccessor operator[](int index) const
+    {
+      // For objects, index follows non-comment item order (same as TJValueObject::at).
+      // Out-of-range yields empty accessor (as<T>() returns defaults).
+      return TJValueAccessor(get_value_ptr(), index);
+    }
+
+#if TJ_INCLUDE_STD_STRING == 1
+    TJValueAccessor operator[](const std::string& key) const
+    {
+      return TJValueAccessor(get_value_ptr(), key, true);
+    }
+#endif
+
+  private:
+    const TJValue* _owner;
+    const TJCHAR* _key;
+    int _index;
+    bool _by_index;
+    bool _case_sensitive;
+#if TJ_INCLUDE_STD_STRING == 1
+    std::string _key_storage;
+#endif
+
+    template<typename T>
+    typename std::enable_if<!std::is_same<T, const TJCHAR*>::value, T>::type
+    default_value() const
+    {
+      return T();
+    }
+
+    template<typename T>
+    typename std::enable_if<std::is_same<T, const TJCHAR*>::value, const TJCHAR*>::type
+    default_value() const
+    {
+      return TJCHARPREFIX("");
+    }
+
+    const TJValue* get_value_ptr() const
+    {
+      if (_owner == nullptr)
+      {
+        return nullptr;
+      }
+
+      if (_by_index)
+      {
+        const auto* array = dynamic_cast<const TJValueArray*>(_owner);
+        if (array != nullptr)
+        {
+          return array->at(_index);
+        }
+
+        const auto* object = dynamic_cast<const TJValueObject*>(_owner);
+        if (object != nullptr)
+        {
+          auto member = object->at(_index);
+          return member != nullptr ? member->value() : nullptr;
+        }
+        return nullptr;
+      }
+
+      const auto* object = dynamic_cast<const TJValueObject*>(_owner);
+      if (object == nullptr)
+      {
+        return nullptr;
+      }
+      return object->try_get_value(_key, _case_sensitive);
+    }
+
+  };
+
+  inline TJValueAccessor TJValue::operator[](const TJCHAR* key) const
+  {
+    return TJValueAccessor(this, key);
+  }
+
+  inline TJValueAccessor TJValue::operator[](int index) const
+  {
+    return TJValueAccessor(this, index);
+  }
+
+#if TJ_INCLUDE_STD_STRING == 1
+  inline TJValueAccessor TJValue::operator[](const std::string& key) const
+  {
+    return TJValueAccessor(this, key);
+  }
+#endif
 
   // A string JSon
   class TJValueString : public TJValue
