@@ -74,3 +74,21 @@ TEST(TJJSON5Objects, IllegalUnquotedKeyStartRejected)
   auto* tj = TJ::parse(json, options);
   ASSERT_EQ(nullptr, tj);
 }
+
+TEST(TJJSON5Objects, OperatorBracketJSON5Features)
+{
+  const TJCHAR* json = TJCHARPREFIX("{unquoted: 1, 'single': 2, while: true, $: 3, _: 4}");
+  parse_options options;
+  options.specification = parse_options::json5_1_0_0;
+  auto* tj = TJ::parse(json, options);
+  ASSERT_NE(nullptr, tj);
+  
+  // Test operator[] with JSON5 specific key styles
+  ASSERT_EQ(1, (*tj)["unquoted"].as<int>());
+  ASSERT_EQ(2, (*tj)["single"].as<int>());
+  ASSERT_TRUE((*tj)["while"].as<bool>());
+  ASSERT_EQ(3, (*tj)["$"].as<int>());
+  ASSERT_EQ(4, (*tj)["_"].as<int>());
+  
+  delete tj;
+}

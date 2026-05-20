@@ -1259,6 +1259,7 @@ class TJDictionary;
 #endif
 
     TJMember* operator [](int idx) const;
+    using TJValue::operator[];
     TJMember* at(int idx) const;
     TJMember* element_at(int idx) const;
 
@@ -1516,6 +1517,7 @@ class TJDictionary;
     unsigned int get_number_of_elements() const;
 
     TJValue* operator [](int idx) const;
+    using TJValue::operator[];
     TJValue* at(int idx) const;
     TJValue* element_at(int idx) const;
 
