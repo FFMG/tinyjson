@@ -4416,9 +4416,18 @@ namespace TinyJSON
     _string = nullptr;
   }
 
+  const TJMember& TJMember::null_member()
+  {
+    static const TJMember member(nullptr, &TJValue::null_value());
+    return member;
+  }
+
   void TJMember::free_value()
   {
-    delete _value;
+    if (nullptr != _value && _value != &TJValue::null_value())
+    {
+      delete _value;
+    }
     _value = nullptr;
   }
 
@@ -5754,9 +5763,10 @@ namespace TinyJSON
     return _members == nullptr ? 0 : _members->size();
   }
 
-  TJMember* TJValueObject::operator [](int idx) const
+  const TJMember& TJValueObject::operator [](int idx) const
   {
-    return at(idx);
+    const TJMember* member = at(idx);
+    return member != nullptr ? *member : TJMember::null_member();
   }
 
   TJMember* TJValueObject::at(int idx) const
@@ -6223,9 +6233,10 @@ namespace TinyJSON
     return _values == nullptr ? 0 : _values->size();
   }
 
-  TJValue* TJValueArray::operator [](int idx) const
+  const TJValue& TJValueArray::operator [](int idx) const
   {
-    return at(idx);
+    const TJValue* val = at(idx);
+    return val != nullptr ? *val : TJValue::null_value();
   }
 
   TJValue* TJValueArray::at(int idx) const

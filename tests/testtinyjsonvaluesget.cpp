@@ -11,6 +11,57 @@
 
 #include <gtest/gtest.h>
 
+TEST(TestValueGet, ArrayIndexAsInt)
+{
+  auto json = TinyJSON::TJ::parse("[10, 20, 30]");
+  ASSERT_NE(nullptr, json);
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_EQ(10, (*jarray)[0].as<int>());
+  ASSERT_EQ(20, (*jarray)[1].as<int>());
+  ASSERT_EQ(30, (*jarray)[2].as<int>());
+  delete json;
+}
+
+TEST(TestValueGet, ArrayIndexOutOfBoundsNoThrow)
+{
+  auto json = TinyJSON::TJ::parse("[10, 20, 30]");
+  ASSERT_NE(nullptr, json);
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_TRUE((*jarray)[99].is_null());
+  delete json;
+}
+
+TEST(TestValueGet, ObjectIndexAsInt)
+{
+  auto json = TinyJSON::TJ::parse(R"({"a": 1, "b": 2})");
+  ASSERT_NE(nullptr, json);
+  auto jobj = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  // Objects are numbered values too
+  ASSERT_EQ(1, (*jobj)[0].as<int>());
+  ASSERT_EQ(2, (*jobj)[1].as<int>());
+  delete json;
+}
+
+TEST(TestValueGet, ObjectIndexOutOfBoundsNoThrow)
+{
+  auto json = TinyJSON::TJ::parse(R"({"a": 1, "b": 2})");
+  ASSERT_NE(nullptr, json);
+  auto jobj = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_TRUE((*jobj)[99].value()->is_null());
+  delete json;
+}
+
+TEST(TestValueGet, MemberAsInt)
+{
+  auto json = TinyJSON::TJ::parse(R"({"a": 100})");
+  ASSERT_NE(nullptr, json);
+  auto obj = dynamic_cast<TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, obj);
+  // Directly test TJMember::as<T>()
+  ASSERT_EQ(100, (*obj)[0].as<int>());
+  delete json;
+}
+
 TEST(TestValueGet, GetBoolean)
 {
   TinyJSON::parse_options options = {};

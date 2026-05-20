@@ -699,7 +699,7 @@ class TJDictionary;
     const TJValue& operator[](const std::string& key) const;
 #endif
 
-  private:
+  public:
     static const TJValue& null_value();
 
   private:
@@ -850,6 +850,19 @@ class TJDictionary;
     const TJCHAR* name() const;
     const TJValue* value() const;
     TJValue* value();
+
+    /// <summary>
+    /// Casting the value to a specific type.
+    /// it behaves exactly as the get() methods.
+    /// </summary>
+    /// <returns></returns>
+    template<typename T>
+    auto as() const -> decltype(this->value()->template as<T>())
+    {
+      return value()->template as<T>();
+    }
+
+    static const TJMember& null_member();
 
   protected:
     /// <summary>
@@ -1258,7 +1271,7 @@ class TJDictionary;
     }
 #endif
 
-    TJMember* operator [](int idx) const;
+    const TJMember& operator [](int idx) const;
     using TJValue::operator[];
     TJMember* at(int idx) const;
     TJMember* element_at(int idx) const;
@@ -1516,7 +1529,7 @@ class TJDictionary;
     /// <returns></returns>
     unsigned int get_number_of_elements() const;
 
-    TJValue* operator [](int idx) const;
+    const TJValue& operator [](int idx) const;
     using TJValue::operator[];
     TJValue* at(int idx) const;
     TJValue* element_at(int idx) const;

@@ -67,7 +67,7 @@ TEST(TestObjects, GetItemByIndex) {
   ASSERT_NE(nullptr, jobject);
   ASSERT_EQ(1, jobject->get_number_of_items());
 
-  const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>((*jobject)[0]->value());
+  const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>(jobject->at(0)->value());
   ASSERT_NE(nullptr, jobjecta);
   ASSERT_EQ(1, jobjecta->get_number_of_items());
 
