@@ -346,3 +346,62 @@ TEST(TestValueGet, GetStrictStringFromArrayWillThrow)
 
   delete json;
 }
+
+TEST(TestOperatorAccess, AccessByKeyAndIndex)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "a": 1,
+      "b": "text",
+      "c": [10, 20, 30],
+      "d": { "e": 5 }
+    }
+    )", options
+  );
+
+  ASSERT_NE(nullptr, json);
+
+  ASSERT_EQ(1, (*json)["a"].as<int>());
+  ASSERT_EQ(std::string("text"), (*json)["b"].as<std::string>());
+  ASSERT_EQ(20, (*json)["c"][1].as<int>());
+  ASSERT_EQ(5, (*json)["d"]["e"].as<int>());
+
+  ASSERT_EQ(1, (*json)[0].as<int>());
+
+  delete json;
+}
+
+TEST(TestOperatorAccess, AccessArrayRoot)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
+  auto json = TinyJSON::TJ::parse(R"(
+    [1, 2, 3]
+    )", options
+  );
+
+  ASSERT_NE(nullptr, json);
+  ASSERT_EQ(2, (*json)[1].as<int>());
+
+  delete json;
+}
+
+TEST(TestOperatorAccess, StrictMissingKeyThrows)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
+  auto json = TinyJSON::TJ::parse(R"(
+    { "a": 1 }
+    )", options
+  );
+
+  ASSERT_NE(nullptr, json);
+  ASSERT_ANY_THROW((*json)["missing"].as<int>());
+
+  delete json;
+}
