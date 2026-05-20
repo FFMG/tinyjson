@@ -405,3 +405,75 @@ TEST(TestOperatorAccess, StrictMissingKeyThrows)
 
   delete json;
 }
+
+TEST(TestOperatorAccess, StdStringKeyOwnership)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "a": 1,
+      "b": 2
+    }
+    )", options
+  );
+
+  ASSERT_NE(nullptr, json);
+
+  std::string key = "a";
+  key.reserve(8);
+  auto accessor = (*json)[key];
+  key[0] = 'b';
+
+  ASSERT_EQ(1, accessor.as<int>());
+
+  auto temp_accessor = (*json)[std::string("a")];
+  ASSERT_EQ(1, temp_accessor.as<int>());
+
+  delete json;
+}
+
+TEST(TestOperatorAccess, ChainedAccessDefaultsOnMissingIntermediate)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "a": { "b": 1 }
+    }
+    )", options
+  );
+
+  ASSERT_NE(nullptr, json);
+
+  ASSERT_EQ(1, (*json)["a"]["b"].as<int>());
+  ASSERT_EQ(0, (*json)["missing"]["b"].as<int>());
+
+  delete json;
+}
+
+TEST(TestOperatorAccess, ObjectIndexOrderingAndBounds)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  options.strict = false;
+  auto json = TinyJSON::TJ::parse(R"(
+    {
+      "first": 1,
+      "second": 2,
+      "third": 3
+    }
+    )", options
+  );
+
+  ASSERT_NE(nullptr, json);
+
+  ASSERT_EQ(1, (*json)[0].as<int>());
+  ASSERT_EQ(2, (*json)[1].as<int>());
+  ASSERT_EQ(3, (*json)[2].as<int>());
+  ASSERT_EQ(0, (*json)[3].as<int>());
+
+  delete json;
+}

@@ -713,6 +713,12 @@ class TJDictionary;
     }
 
     TJValueAccessor operator[](const TJCHAR* key) const;
+
+    /// <summary>
+    /// Index access for arrays and objects.
+    /// For objects, the index follows the non-comment item order (same as TJValueObject::at).
+    /// Out-of-range access returns an empty accessor; calling as<T>() yields default values.
+    /// </summary>
     TJValueAccessor operator[](int index) const;
 
 #if TJ_INCLUDE_STD_STRING == 1
@@ -1641,6 +1647,30 @@ class TJDictionary;
     {
     }
 
+#if TJ_INCLUDE_STD_STRING == 1
+    TJValueAccessor(const TJValue* owner, const std::string& key, bool case_sensitive = true) :
+      _owner(owner),
+      _key(nullptr),
+      _index(0),
+      _by_index(false),
+      _case_sensitive(case_sensitive),
+      _key_storage(key)
+    {
+      _key = _key_storage.c_str();
+    }
+
+    TJValueAccessor(const TJValue* owner, std::string&& key, bool case_sensitive = true) :
+      _owner(owner),
+      _key(nullptr),
+      _index(0),
+      _by_index(false),
+      _case_sensitive(case_sensitive),
+      _key_storage(std::move(key))
+    {
+      _key = _key_storage.c_str();
+    }
+#endif
+
     TJValueAccessor(const TJValue* owner, int index) :
       _owner(owner),
       _key(nullptr),
@@ -1673,22 +1703,35 @@ class TJDictionary;
 
     TJValueAccessor operator[](const TJCHAR* key) const
     {
+      // Chained access uses non-throwing lookup for intermediate nodes.
+      // Missing intermediates yield empty accessors (as<T>() returns defaults).
       return TJValueAccessor(get_value_ptr(), key, true);
     }
 
     TJValueAccessor operator[](int index) const
     {
+      // For objects, index follows non-comment item order (same as TJValueObject::at).
+      // Out-of-range yields empty accessor (as<T>() returns defaults).
       return TJValueAccessor(get_value_ptr(), index);
     }
 
 #if TJ_INCLUDE_STD_STRING == 1
     TJValueAccessor operator[](const std::string& key) const
     {
-      return TJValueAccessor(get_value_ptr(), key.c_str(), true);
+      return TJValueAccessor(get_value_ptr(), key, true);
     }
 #endif
 
   private:
+    const TJValue* _owner;
+    const TJCHAR* _key;
+    int _index;
+    bool _by_index;
+    bool _case_sensitive;
+#if TJ_INCLUDE_STD_STRING == 1
+    std::string _key_storage;
+#endif
+
     template<typename T>
     typename std::enable_if<!std::is_same<T, const TJCHAR*>::value, T>::type
     default_value() const
@@ -1735,11 +1778,6 @@ class TJDictionary;
       return object->try_get_value(_key, _case_sensitive);
     }
 
-    const TJValue* _owner;
-    const TJCHAR* _key;
-    int _index;
-    bool _by_index;
-    bool _case_sensitive;
   };
 
   inline TJValueAccessor TJValue::operator[](const TJCHAR* key) const
@@ -1755,7 +1793,7 @@ class TJDictionary;
 #if TJ_INCLUDE_STD_STRING == 1
   inline TJValueAccessor TJValue::operator[](const std::string& key) const
   {
-    return TJValueAccessor(this, key.c_str());
+    return TJValueAccessor(this, key);
   }
 #endif
 
