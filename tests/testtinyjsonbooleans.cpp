@@ -226,3 +226,14 @@ TEST(TestBooleans, CloneFalse) {
   delete bool1;
   delete bool2;
 }
+
+TEST(TestBooleans, OperatorBracketAccess)
+{
+  auto json = TinyJSON::TJ::parse("true");
+  ASSERT_NE(nullptr, json);
+
+  // operator[] on boolean should return null
+  ASSERT_TRUE((*json)["any_key"].is_null());
+
+  delete json;
+}

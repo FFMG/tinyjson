@@ -514,4 +514,15 @@ TEST(TestNumbers, CreateFloatByPassingNegativeNumber) {
   ASSERT_EQ(-42, value->get_number());
   ASSERT_EQ(-42.5, value->get_float());
   delete json;
-}
+  }
+
+  TEST(TestNumbers, OperatorBracketAccess)
+  {
+  auto json = TinyJSON::TJ::parse("123");
+  ASSERT_NE(nullptr, json);
+
+  // operator[] on number should return null
+  ASSERT_TRUE((*json)["any_key"].is_null());
+
+  delete json;
+  }

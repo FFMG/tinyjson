@@ -67,7 +67,7 @@ TEST(TestObjects, GetItemByIndex) {
   ASSERT_NE(nullptr, jobject);
   ASSERT_EQ(1, jobject->get_number_of_items());
 
-  const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>((*jobject)[0]->value());
+  const auto jobjecta = dynamic_cast<const TinyJSON::TJValueObject*>(jobject->at(0)->value());
   ASSERT_NE(nullptr, jobjecta);
   ASSERT_EQ(1, jobjecta->get_number_of_items());
 
@@ -1255,5 +1255,17 @@ TEST(TestObjects, NumberOfItemsUpdatesOnMutation) {
   json->pop("key1");
   ASSERT_EQ(0, json->get_number_of_items());
 
+  delete json;
+}
+
+TEST(TestObjects, OperatorBracketAccess)
+{
+  auto json = TinyJSON::TJ::parse(R"({"key": "value", "nested": {"a": 1}})");
+  ASSERT_NE(nullptr, json);
+  
+  // Test operator[] for objects
+  ASSERT_STREQ("value", (*json)["key"].as<const char*>());
+  ASSERT_EQ(1, (*json)["nested"]["a"].as<int>());
+  
   delete json;
 }
