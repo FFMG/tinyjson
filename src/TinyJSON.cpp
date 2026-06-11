@@ -5406,6 +5406,10 @@ namespace TinyJSON
         ParseResult _parse_result(_parse_options);
         _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
+      else
+      {
+        _parse_options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("The key was not found!"));
+      }
       return Optional<long double>();
     }
     return Optional<long double>(value->get_raw_float());
@@ -5420,6 +5424,10 @@ namespace TinyJSON
       {
         ParseResult _parse_result(_parse_options);
         _parse_result.assign_exception_message_and_throw("The key was not found!");
+      }
+      else
+      {
+        _parse_options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("The key was not found!"));
       }
       return Optional<long long>();
     }
@@ -5436,6 +5444,10 @@ namespace TinyJSON
         ParseResult _parse_result(_parse_options);
         _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
+      else
+      {
+        _parse_options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("The key was not found!"));
+      }
       return Optional<std::vector<long double>>();
     }
     return Optional<std::vector<long double>>(value->get_raw_floats());
@@ -5450,6 +5462,10 @@ namespace TinyJSON
       {
         ParseResult _parse_result(_parse_options);
         _parse_result.assign_exception_message_and_throw("The key was not found!");
+      }
+      else
+      {
+        _parse_options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("The key was not found!"));
       }
       return Optional<std::vector<long long>>();
     }
@@ -5466,6 +5482,10 @@ namespace TinyJSON
         ParseResult _parse_result(_parse_options);
         _parse_result.assign_exception_message_and_throw("The key was not found!");
       }
+      else
+      {
+        _parse_options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("The key was not found!"));
+      }
       return TJCHARPREFIX("");
     }
     return value->get_string();
@@ -5480,6 +5500,10 @@ namespace TinyJSON
       {
         ParseResult _parse_result(_parse_options);
         _parse_result.assign_exception_message_and_throw("The key was not found!");
+      }
+      else
+      {
+        _parse_options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("The key was not found!"));
       }
       return false;
     }
@@ -5898,6 +5922,7 @@ namespace TinyJSON
     auto value = try_get_value(key, case_sensitive);
     if (nullptr == value)
     {
+      _parse_options.callback_function(parse_options::message_type::warning, TJCHARPREFIX("The key was not found!"));
       return nullptr;
     }
 

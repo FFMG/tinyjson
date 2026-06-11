@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.4-blue.svg)](src/TinyJSON.h)
+[![Version](https://img.shields.io/badge/version-0.2.5-blue.svg)](src/TinyJSON.h)
 
 A lightweight and lightning-fast C++ JSON & JSON5 parser designed for high performance and minimal footprint.
 
@@ -131,8 +131,8 @@ The version is set in the `TinyJSON.h` file.
 ```cpp
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 4;
-static const char TJ_VERSION_STRING[] = "0.2.4";
+static const short TJ_VERSION_PATCH = 5;
+static const char TJ_VERSION_STRING[] = "0.2.5";
 ```
 
 ### Simple Value Access
@@ -169,6 +169,7 @@ if (tj) {
   * json5_1_0_0
 * Callback: (`callback_function:std::function<void(message_type, const TJCHAR*)>`)  Callback function called where there is an error, warning etc.
   NB: The Callback function is called even if Throw is false.
+  * If a getter method (`try_get_string`, `get_*(..)`, or `get<>(..)`) is called on a key that does not exist in a `TJValueObject`, a warning message (`"The key was not found!"`) is passed to the callback function.
   * trace
   * debug
   * info
@@ -673,7 +674,7 @@ auto doubles = obj->get<std::vector<double>>("floats");
 #### Strict Get values
 
 
-Getter methods on `TJValue` (or through `TJValueObject` keys) can be used to retrieve specific types. By default, these methods are non-strict and return default values if the type is incorrect. By setting `strict: true` in `parse_options`, these methods will throw a `TJParseException` instead.
+Getter methods on `TJValue` (or through `TJValueObject` keys) can be used to retrieve specific types. By default, these methods are non-strict and return default values if the type is incorrect. By setting `strict: true` in `parse_options`, these methods will throw a `TJParseException` instead. If a key is not found when calling `try_get_string`, `get_*(..)`, or `get<>(..)`, a warning callback is triggered with the message `"The key was not found!"` (if a callback function is registered in `parse_options`).
 
   - get_number<T>()
   - get_float<T>()
