@@ -12,7 +12,7 @@ void assert_warning_fired(TinyJSON::TJValueObject* obj, int& warning_count, std:
   last_warning_message = "";
   func(obj);
   EXPECT_EQ(1, warning_count);
-  EXPECT_EQ("The key was not found!", last_warning_message);
+  EXPECT_EQ("The key 'missing' was not found!", last_warning_message);
 }
 
 TEST(TestWarnings, GetterWarnings)

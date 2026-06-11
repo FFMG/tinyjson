@@ -1158,6 +1158,7 @@ class TJDictionary;
     }
 
   private:
+    void raise_key_not_found(const TJCHAR* key, bool is_strict) const;
     template<typename V>
     std::vector<V> get_vector_internal(const TJCHAR* key, bool case_sensitive, std::true_type) const
     {

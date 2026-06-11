@@ -169,7 +169,7 @@ if (tj) {
   * json5_1_0_0
 * Callback: (`callback_function:std::function<void(message_type, const TJCHAR*)>`)  Callback function called where there is an error, warning etc.
   NB: The Callback function is called even if Throw is false.
-  * If a getter method (`try_get_string`, `get_*(..)`, or `get<>(..)`) is called on a key that does not exist in a `TJValueObject`, a warning message (`"The key was not found!"`) is passed to the callback function.
+  * If a getter method (`try_get_string`, `get_*(..)`, or `get<>(..)`) is called on a key that does not exist in a `TJValueObject`, a warning message indicating the missing key (e.g. `"The key 'missing' was not found!"`) is passed to the callback function.
   * trace
   * debug
   * info
@@ -674,7 +674,7 @@ auto doubles = obj->get<std::vector<double>>("floats");
 #### Strict Get values
 
 
-Getter methods on `TJValue` (or through `TJValueObject` keys) can be used to retrieve specific types. By default, these methods are non-strict and return default values if the type is incorrect. By setting `strict: true` in `parse_options`, these methods will throw a `TJParseException` instead. If a key is not found when calling `try_get_string`, `get_*(..)`, or `get<>(..)`, a warning callback is triggered with the message `"The key was not found!"` (if a callback function is registered in `parse_options`).
+Getter methods on `TJValue` (or through `TJValueObject` keys) can be used to retrieve specific types. By default, these methods are non-strict and return default values if the type is incorrect. By setting `strict: true` in `parse_options`, these methods will throw a `TJParseException` instead. If a key is not found when calling `try_get_string`, `get_*(..)`, or `get<>(..)`, a warning callback is triggered with a message indicating the key that was not found (e.g. `"The key 'missing' was not found!"`) if a callback function is registered in `parse_options`.
 
   - get_number<T>()
   - get_float<T>()
