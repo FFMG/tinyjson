@@ -35,6 +35,7 @@ set( Sources
   "testtinyjsonstrings.cpp"
   testtinyjsonvaluesget.cpp
   testtinyjsonversion.cpp
+  testtinyjsonwarnings.cpp
   testtinyjsonconstructors.cpp
   testtinyjsonwrite.cpp
   testtinyjsonset.cpp
