@@ -285,7 +285,7 @@ TEST(TestException, GettingNonExistentKeyWillLogAndNotThrow) {
   options.strict = true;
   options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
     EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
-    EXPECT_STREQ(exception_message, "The key was not found!");
+    EXPECT_STREQ(exception_message, "The key 'b' was not found!");
     called = true;
     };
   TinyJSON::TJValue* json = TinyJSON::TJ::parse("{\"a\" : 12}", options);
