@@ -87,3 +87,155 @@ TEST(TJDefaultGet, TypeMismatch) {
 
     delete json;
 }
+
+struct CallbackTracker
+{
+  int* warning_count;
+  int* trace_count;
+  std::string* last_message;
+
+  void operator()(parse_options::message_type type, const TJCHAR* message) const
+  {
+    if (type == parse_options::message_type::warning)
+    {
+      (*warning_count)++;
+    }
+    else if (type == parse_options::message_type::trace)
+    {
+      (*trace_count)++;
+      if (message != nullptr)
+      {
+        *last_message = message;
+      }
+    }
+  }
+};
+
+TEST(TJDefaultGetOr, BooleanDefault)
+{
+  parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
+
+  auto json = TJ::parse(R"({})", options);
+  ASSERT_NE(json, nullptr);
+  auto obj = dynamic_cast<TJValueObject*>(json);
+  ASSERT_NE(obj, nullptr);
+
+  // Default is true, should return true
+  EXPECT_TRUE(obj->get_or<bool>("missing", true));
+
+  // Default is false, should return false
+  EXPECT_FALSE(obj->get_or<bool>("missing2", false));
+
+  // Try with non-strict, no-throw options
+  options.throw_exception = false;
+  options.strict = false;
+  obj->set_parse_options(options);
+
+  EXPECT_TRUE(obj->get_or<bool>("missing", true));
+  EXPECT_FALSE(obj->get_or<bool>("missing2", false));
+
+  delete json;
+}
+
+TEST(TJDefaultGetOr, IntDefault)
+{
+  parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
+
+  auto json = TJ::parse(R"({})", options);
+  ASSERT_NE(json, nullptr);
+  auto obj = dynamic_cast<TJValueObject*>(json);
+  ASSERT_NE(obj, nullptr);
+
+  // Default is 42, should return 42 (not 0)
+  EXPECT_EQ(obj->get_or<int>("missing", 42), 42);
+
+  // Try with non-strict, no-throw options
+  options.throw_exception = false;
+  options.strict = false;
+  obj->set_parse_options(options);
+
+  EXPECT_EQ(obj->get_or<int>("missing", 42), 42);
+
+  delete json;
+}
+
+TEST(TJDefaultGetOr, LongDefault)
+{
+  parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
+
+  auto json = TJ::parse(R"({})", options);
+  ASSERT_NE(json, nullptr);
+  auto obj = dynamic_cast<TJValueObject*>(json);
+  ASSERT_NE(obj, nullptr);
+
+  // Default is 999L, should return 999L
+  EXPECT_EQ(obj->get_or<long>("missing", 999L), 999L);
+  EXPECT_EQ(obj->get_or<long long>("missing2", 9999LL), 9999LL);
+
+  // Try with non-strict, no-throw options
+  options.throw_exception = false;
+  options.strict = false;
+  obj->set_parse_options(options);
+
+  EXPECT_EQ(obj->get_or<long>("missing", 999L), 999L);
+  EXPECT_EQ(obj->get_or<long long>("missing2", 9999LL), 9999LL);
+
+  delete json;
+}
+
+TEST(TJDefaultGetOr, FloatDefault)
+{
+  parse_options options = {};
+  options.throw_exception = true;
+  options.strict = true;
+
+  auto json = TJ::parse(R"({})", options);
+  ASSERT_NE(json, nullptr);
+  auto obj = dynamic_cast<TJValueObject*>(json);
+  ASSERT_NE(obj, nullptr);
+
+  // Default is 3.14f / 2.718, should return default
+  EXPECT_NEAR(obj->get_or<float>("missing", 3.14f), 3.14f, 1e-5f);
+  EXPECT_NEAR(obj->get_or<double>("missing2", 2.718), 2.718, 1e-5);
+
+  // Try with non-strict, no-throw options
+  options.throw_exception = false;
+  options.strict = false;
+  obj->set_parse_options(options);
+
+  EXPECT_NEAR(obj->get_or<float>("missing", 3.14f), 3.14f, 1e-5f);
+  EXPECT_NEAR(obj->get_or<double>("missing2", 2.718), 2.718, 1e-5);
+
+  delete json;
+}
+
+TEST(TJDefaultGetOr, WarningAndTraceLogging)
+{
+  int warning_count = 0;
+  int trace_count = 0;
+  std::string last_message = "";
+  parse_options options = {};
+  CallbackTracker tracker = { &warning_count, &trace_count, &last_message };
+  options.callback_function = tracker;
+
+  auto* json = TJ::parse("{}", options);
+  auto* obj = dynamic_cast<TJValueObject*>(json);
+  ASSERT_NE(nullptr, obj);
+
+  // Calling get_or
+  bool val = obj->get_or<bool>("missing", true);
+  EXPECT_TRUE(val);
+
+  // Should have triggered 1 trace and 0 warnings
+  EXPECT_EQ(0, warning_count);
+  EXPECT_EQ(1, trace_count);
+  EXPECT_EQ("The key 'missing' was not found!", last_message);
+
+  delete json;
+}
