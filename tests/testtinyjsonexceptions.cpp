@@ -299,3 +299,45 @@ TEST(TestException, GettingNonExistentKeyWillLogAndNotThrow) {
   EXPECT_STREQ(value, "");
   delete json;
 }
+
+TEST(TestException, ParseFileNotFoundSmarterError)
+{
+  bool called = false;
+  std::string error_msg;
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message)
+  {
+    if (message_type == TinyJSON::parse_options::error)
+    {
+      called = true;
+      error_msg = exception_message;
+    }
+  };
+  TinyJSON::TJ::parse_file("this_file_does_not_exist_xyz.json", options);
+  EXPECT_TRUE(called);
+  EXPECT_EQ("File 'this_file_does_not_exist_xyz.json' could not be found!", error_msg);
+}
+
+TEST(TestException, ParseDirectorySmarterError)
+{
+  bool called = false;
+  std::string error_msg;
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message)
+  {
+    if (message_type == TinyJSON::parse_options::error)
+    {
+      called = true;
+      error_msg = exception_message;
+    }
+  };
+  TinyJSON::TJ::parse_file(".", options);
+  EXPECT_TRUE(called);
+  EXPECT_NE(error_msg.find("."), std::string::npos);
+  bool matched = (error_msg == "File '.' is a directory!" ||
+                  error_msg == "Access denied to file '.'!" ||
+                  error_msg == "File '.' could not be opened!");
+  EXPECT_TRUE(matched) << "Actual message: " << error_msg;
+}
