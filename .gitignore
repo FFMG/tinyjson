@@ -3,6 +3,8 @@
 .claude/
 .gemini/
 plans/
+GEMINI.md
+CLAUDE.md
 
 # VStudio stuff
 /.vs
