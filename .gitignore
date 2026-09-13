@@ -1,3 +1,9 @@
+# AI
+.agents/
+.claude/
+.gemini/
+plans/
+
 # VStudio stuff
 /.vs
 /.vscode
