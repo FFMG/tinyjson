@@ -352,16 +352,12 @@ TEST(TestBasic, NullInStringIsValid) {
   delete json;
 }
 
-TEST(TestBasic, NothingIsJustAnEmptyString) {
+TEST(TestBasic, EmptyStringReturnsNull) {
   auto json = TinyJSON::TJ::parse("");
-  ASSERT_NE(nullptr, json);
-  ASSERT_TRUE(json->is_string());
-  ASSERT_STREQ("", json->dump_string());
-
-  delete json;
+  ASSERT_EQ(nullptr, json);
 }
 
-TEST(TestBasic, NothingIsJustAnEmptyStringWithSpaces) {
+TEST(TestBasic, WhitespaceOnlyStringReturnsNull) {
   auto json = TinyJSON::TJ::parse(R"(   
 
 
@@ -369,12 +365,10 @@ TEST(TestBasic, NothingIsJustAnEmptyStringWithSpaces) {
 
 
 
-)");
-  ASSERT_NE(nullptr, json);
-  ASSERT_TRUE(json->is_string());
-  ASSERT_STREQ("", json->dump_string());
 
-  delete json;
+
+)");
+  ASSERT_EQ(nullptr, json);
 }
 
 TEST(TestBasic, StringValueIsValid) {
@@ -561,6 +555,14 @@ TEST(TestBasic, ObjectIsValid) {
 
 TEST(TestBasic, ArrayIsValid) {
   ASSERT_TRUE(TinyJSON::TJ::is_valid("[12,13,14]"));
+}
+
+TEST(TestBasic, EmptyStringIsNotValid) {
+  ASSERT_FALSE(TinyJSON::TJ::is_valid(""));
+}
+
+TEST(TestBasic, WhitespaceOnlyIsNotValid) {
+  ASSERT_FALSE(TinyJSON::TJ::is_valid("   \t\r\n   "));
 }
 
 TEST(TestBasic, UserLiteralsArray)

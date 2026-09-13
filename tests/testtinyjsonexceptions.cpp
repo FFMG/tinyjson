@@ -1,6 +1,7 @@
 // Licensed to Florent Guelfucci under one or more agreements.
 // Florent Guelfucci licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+#include <fstream>
 #include <gtest/gtest.h>
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
@@ -341,3 +342,116 @@ TEST(TestException, ParseDirectorySmarterError)
                   error_msg == "File '.' could not be opened!");
   EXPECT_TRUE(matched) << "Actual message: " << error_msg;
 }
+
+namespace
+{
+  struct empty_string_callback_tracker
+  {
+    bool called = false;
+    std::string error_msg;
+
+    void operator()(TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message)
+    {
+      if (message_type == TinyJSON::parse_options::fatal || message_type == TinyJSON::parse_options::error)
+      {
+        called = true;
+        if (nullptr != exception_message)
+        {
+          error_msg = exception_message;
+        }
+      }
+    }
+  };
+}
+
+TEST(TestException, EmptyStringThrowsException)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TJ::parse("", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, WhitespaceOnlyStringThrowsException)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TJ::parse("   \t\r\n   ", options), TinyJSON::TJParseException);
+}
+
+TEST(TestException, EmptyStringThrowsAcrossAllSpecifications)
+{
+  const enum TinyJSON::parse_options::specification specs[] = {
+    TinyJSON::parse_options::rfc4627,
+    TinyJSON::parse_options::rfc7159,
+    TinyJSON::parse_options::rfc8259,
+    TinyJSON::parse_options::json5_1_0_0
+  };
+
+  for (const auto spec : specs)
+  {
+    TinyJSON::parse_options options = {};
+    options.throw_exception = true;
+    options.specification = spec;
+    EXPECT_THROW(TinyJSON::TJ::parse("", options), TinyJSON::TJParseException);
+  }
+}
+
+TEST(TestException, EmptyStringReturnsNullAcrossAllSpecifications)
+{
+  const enum TinyJSON::parse_options::specification specs[] = {
+    TinyJSON::parse_options::rfc4627,
+    TinyJSON::parse_options::rfc7159,
+    TinyJSON::parse_options::rfc8259,
+    TinyJSON::parse_options::json5_1_0_0
+  };
+
+  for (const auto spec : specs)
+  {
+    TinyJSON::parse_options options = {};
+    options.throw_exception = false;
+    options.specification = spec;
+    auto* json = TinyJSON::TJ::parse("", options);
+    EXPECT_EQ(nullptr, json);
+  }
+}
+
+TEST(TestException, EmptyStringCallbackMessage)
+{
+  empty_string_callback_tracker tracker;
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  options.callback_function = std::ref(tracker);
+  auto* json = TinyJSON::TJ::parse("", options);
+  EXPECT_EQ(nullptr, json);
+  EXPECT_TRUE(tracker.called);
+  EXPECT_EQ("The JSON text is empty or contains no value.", tracker.error_msg);
+}
+
+TEST(TestException, EmptyFileThrowsException)
+{
+  const char* empty_filename = "test_empty_file_throws.json";
+  {
+    std::ofstream empty_file(empty_filename);
+  }
+
+  TinyJSON::parse_options options = {};
+  options.throw_exception = true;
+  EXPECT_THROW(TinyJSON::TJ::parse_file(empty_filename, options), TinyJSON::TJParseException);
+
+  std::remove(empty_filename);
+}
+
+TEST(TestException, EmptyFileReturnsNullWithoutException)
+{
+  const char* empty_filename = "test_empty_file_null.json";
+  {
+    std::ofstream empty_file(empty_filename);
+  }
+
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  auto* json = TinyJSON::TJ::parse_file(empty_filename, options);
+  EXPECT_EQ(nullptr, json);
+
+  std::remove(empty_filename);
+}
