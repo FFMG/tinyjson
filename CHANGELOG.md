@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-13
+
+### Changed
+- Incremented version to 0.3.0.
+- **Breaking Change**: Conformed empty and whitespace-only document parsing to RFC 4627, RFC 7159, RFC 8259, and JSON5 specifications. Parsing empty strings, whitespace-only content, or empty files now returns `nullptr` (or throws `TJParseException` when `throw_exception = true`) instead of fabricating an empty `TJValueString`.
+- `TJ::is_valid("")` now correctly returns `false`.
+
+### Fixed
+- Fixed inconsistent behaviour where JSON5 returned `nullptr` on empty input while RFC 7159/8259 returned a `TJValueString`.
+
 ## [0.2.7] - 2026-06-27
 
 ### Added

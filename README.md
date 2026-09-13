@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.7-blue.svg)](src/TinyJSON.h)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](src/TinyJSON.h)
 
 A lightweight and lightning-fast C++ JSON & JSON5 parser designed for high performance and minimal footprint.
 
@@ -130,9 +130,9 @@ The version is set in the `TinyJSON.h` file.
 
 ```cpp
 static const short TJ_VERSION_MAJOR = 0;
-static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 7;
-static const char TJ_VERSION_STRING[] = "0.2.7";
+static const short TJ_VERSION_MINOR = 3;
+static const short TJ_VERSION_PATCH = 0;
+static const char TJ_VERSION_STRING[] = "0.3.0";
 ```
 
 ### Simple Value Access

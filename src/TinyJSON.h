@@ -49,10 +49,11 @@
 // v0.2.5 - added raise warning when key is not found.
 // v0.2.6 - fixed a bug in the resizing of string buffers.
 // v0.2.7 - improved parse_file error reporting with specific system errors and file name.
+// v0.3.0 - conformed empty input parsing to RFC specifications (returns nullptr / throws instead of empty string).
 static const short TJ_VERSION_MAJOR = 0;
-static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 7;
-static const char TJ_VERSION_STRING[] = "0.2.7";
+static const short TJ_VERSION_MINOR = 3;
+static const short TJ_VERSION_PATCH = 0;
+static const char TJ_VERSION_STRING[] = "0.3.0";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1

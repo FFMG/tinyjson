@@ -4222,15 +4222,16 @@ namespace TinyJSON
       return nullptr;
     }
 
-    if (value_found == nullptr && parse_options.specification == parse_options::json5_1_0_0)
+    if (value_found == nullptr)
     {
-       // JSON5 requires a value
-       return nullptr;
+      parse_result.assign_exception_message(TJCHARPREFIX("The JSON text is empty or contains no value."));
+      parse_result.throw_if_exception();
+      return nullptr;
     }
 
     if (parse_options.specification == parse_options::rfc4627 && !parse_result.has_exception_message())
     {
-      if (value_found == nullptr || (!value_found->is_array() && !value_found->is_object()))
+      if (!value_found->is_array() && !value_found->is_object())
       {
         // error: RFC 4627: A JSON text must be either an object or an array.
         parse_result.assign_exception_message("RFC 4627: A JSON text must be either an object or an array.");
@@ -4243,13 +4244,8 @@ namespace TinyJSON
     }
 
     // return if we found anything.
-    // if we found nothing ... then it is not an error, just an empty string
     parse_result.throw_if_exception();
-    if (value_found == nullptr && parse_result.options().specification == parse_options::json5_1_0_0)
-    {
-       return nullptr;
-    }
-    return value_found != nullptr ? value_found : new TJValueString(TJCHARPREFIX(""));
+    return value_found;
   }
 
   /// <summary>
