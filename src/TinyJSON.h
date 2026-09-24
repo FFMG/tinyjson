@@ -961,6 +961,7 @@ class TJDictionary;
     /// </summary>
     /// <returns></returns>
     unsigned int get_number_of_elements() const;
+    bool is_numeric(bool strict = false) const override;
 
     /// <summary>
     /// Try and get a string value, if it does not exist, then we return null.
@@ -1552,6 +1553,7 @@ class TJDictionary;
     TJValue* element_at(int idx) const;
 
     bool is_array() const override;
+    bool is_numeric(bool strict = false) const override;
 
     void add(const TJValue* value);
     void add_boolean(bool value);
@@ -1691,6 +1693,7 @@ class TJDictionary;
     virtual ~TJValueString();
 
     bool is_string() const override;
+    bool is_numeric(bool strict = false) const override;
 
     const TJCHAR* raw_value() const;
 
@@ -1728,6 +1731,7 @@ class TJDictionary;
 
     bool is_true() const override;
     bool is_false() const override;
+    bool is_numeric(bool strict = false) const override;
 
   protected:
     /// <summary>
@@ -1753,6 +1757,7 @@ class TJDictionary;
     virtual ~TJValueNull() = default;
 
     bool is_null() const override;
+    bool is_numeric(bool strict = false) const override;
 
   protected:
     /// <summary>
@@ -1776,6 +1781,7 @@ class TJDictionary;
 
   public:
     bool is_number() const override;
+    bool is_numeric(bool strict = false) const override;
 
     long double get_float() const;
     long long get_number() const;
@@ -1883,6 +1889,7 @@ class TJDictionary;
     virtual ~TJValueComment();
 
     bool is_comment() const override;
+    bool is_numeric(bool strict = false) const override;
 
     const TJCHAR* raw_value() const;
 
