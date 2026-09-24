@@ -543,6 +543,7 @@ class TJDictionary;
     virtual bool is_false() const;
     virtual bool is_null() const;
     virtual bool is_comment() const;
+    virtual bool is_numeric(bool strict = false) const;
 
     const TJCHAR* dump(formatting formatting = formatting::indented, const TJCHAR* indent = TJCHARPREFIX("  ")) const;
     const TJCHAR* dump_string() const;
