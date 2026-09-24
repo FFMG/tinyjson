@@ -4679,7 +4679,7 @@ namespace TinyJSON
     return false;
   }
 
-  bool TJValue::is_numeric(bool strict) const
+  bool TJValue::is_numeric(bool /*strict*/) const
   {
     return false;
   }
@@ -5235,7 +5235,7 @@ namespace TinyJSON
     return !_is_true;
   }
 
-  bool TJValueBoolean::is_numeric(bool strict) const
+  bool TJValueBoolean::is_numeric(bool /*strict*/) const
   {
     return false;
   }
@@ -5301,7 +5301,7 @@ namespace TinyJSON
     return true;
   }
 
-  bool TJValueNull::is_numeric(bool strict) const
+  bool TJValueNull::is_numeric(bool /*strict*/) const
   {
     return false;
   }
@@ -5911,7 +5911,7 @@ namespace TinyJSON
     return true;
   }
 
-  bool TJValueObject::is_numeric(bool strict) const
+  bool TJValueObject::is_numeric(bool /*strict*/) const
   {
     return false;
   }
@@ -6387,7 +6387,7 @@ namespace TinyJSON
     return true;
   }
 
-  bool TJValueArray::is_numeric(bool strict) const
+  bool TJValueArray::is_numeric(bool /*strict*/) const
   {
     return false;
   }
@@ -6712,7 +6712,7 @@ namespace TinyJSON
     return true;
   }
 
-  bool TJValueNumber::is_numeric(bool strict) const
+  bool TJValueNumber::is_numeric(bool /*strict*/) const
   {
     return true;
   }
@@ -7272,7 +7272,7 @@ namespace TinyJSON
     return true;
   }
 
-  bool TJValueComment::is_numeric(bool strict) const
+  bool TJValueComment::is_numeric(bool /*strict*/) const
   {
     return false;
   }
