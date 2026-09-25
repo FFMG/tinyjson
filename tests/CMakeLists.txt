@@ -16,6 +16,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 
 set( Headers
+  "testshelper.h"
 )
 
 set( Sources
@@ -33,28 +34,29 @@ set( Sources
   "testtinyjsonnumbers.cpp"
   "testtinyjsonobjects.cpp"
   "testtinyjsonstrings.cpp"
-  testtinyjsonvaluesget.cpp
-  testtinyjsonversion.cpp
-  testtinyjsonwarnings.cpp
-  testtinyjsonconstructors.cpp
-  testtinyjsonwrite.cpp
-  testtinyjsonset.cpp
-  testtinyjsonoptional.cpp
-  testduplicatekeys.cpp
-  testjson5comments.cpp
-  testjson5spec_comments.cpp
-  testparse5.cpp
-  testjson5strings.cpp
-  testjson5arrays.cpp
-  testjson5numbers.cpp
-  testjson5objects.cpp
-  testjson5misc.cpp
-  testjson5newlines.cpp
-  )
+  "testtinyjsonvaluesget.cpp"
+  "testtinyjsonversion.cpp"
+  "testtinyjsonwarnings.cpp"
+  "testtinyjsonconstructors.cpp"
+  "testtinyjsonwrite.cpp"
+  "testtinyjsonset.cpp"
+  "testtinyjsonoptional.cpp"
+  "testduplicatekeys.cpp"
+  "testjson5comments.cpp"
+  "testjson5spec_comments.cpp"
+  "testparse5.cpp"
+  "testjson5strings.cpp"
+  "testjson5arrays.cpp"
+  "testjson5numbers.cpp"
+  "testjson5objects.cpp"
+  "testjson5misc.cpp"
+  "testjson5newlines.cpp"
+)
 add_executable(
   ${Project}
   ${Headers}
-  ${Sources} "testshelper.h")
+  ${Sources}
+)
 target_link_libraries(${Project} PUBLIC gtest_main TinyJSON)
 
 # Finds all the Google tests associated with the executable
