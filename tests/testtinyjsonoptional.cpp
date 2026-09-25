@@ -140,7 +140,9 @@ TEST(TestOptional, OptionalWithValuesThatAreEqual) {
 TEST(TestOptional, OptionalBooleanNotOperator) {
   Optional<bool> opt1(false);
   Optional<bool> opt2(true);
+  Optional<bool> opt3;
 
-  ASSERT_FALSE(opt1);
-  ASSERT_TRUE(opt2);
+  ASSERT_TRUE(!opt1);
+  ASSERT_FALSE(!opt2);
+  ASSERT_TRUE(!opt3);
 }
