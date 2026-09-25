@@ -4679,6 +4679,11 @@ namespace TinyJSON
     return false;
   }
 
+  bool TJValue::is_numeric(bool /*strict*/) const
+  {
+    return false;
+  }
+
   const TJCHAR* TJValue::dump(formatting formatting, const TJCHAR* indent) const
   {
     free_last_dump();
@@ -5087,6 +5092,63 @@ namespace TinyJSON
     return true;
   }
 
+  bool TJValueString::is_numeric(bool strict) const
+  {
+    if (strict)
+    {
+      return false;
+    }
+
+    const TJCHAR* s = raw_value();
+    if (!s || *s == TJ_NULL_TERMINATOR)
+    {
+      return false;
+    }
+
+    bool has_digit = false;
+    bool has_decimal = false;
+    bool has_exponent = false;
+
+    if (*s == '+' || *s == '-')
+    {
+      s++;
+    }
+
+    while (*s != TJ_NULL_TERMINATOR)
+    {
+      if (std::isdigit(static_cast<unsigned char>(*s)))
+      {
+        has_digit = true;
+      }
+      else if (*s == '.')
+      {
+        if (has_decimal || has_exponent)
+        {
+          return false;
+        }
+        has_decimal = true;
+      }
+      else if (*s == 'e' || *s == 'E')
+      {
+        if (has_exponent || !has_digit)
+        {
+          return false;
+        }
+        has_exponent = true;
+        if (*(s + 1) == '+' || *(s + 1) == '-')
+        {
+          s++;
+        }
+      }
+      else
+      {
+        return false;
+      }
+      s++;
+    }
+    return has_digit;
+  }
+
   void TJValueString::free_value()
   {
     if (nullptr != _value)
@@ -5173,6 +5235,11 @@ namespace TinyJSON
     return !_is_true;
   }
 
+  bool TJValueBoolean::is_numeric(bool /*strict*/) const
+  {
+    return false;
+  }
+
   ///////////////////////////////////////
   /// TJValue null
   TJValueNull::TJValueNull(const parse_options& options) :
@@ -5232,6 +5299,11 @@ namespace TinyJSON
   bool TJValueNull::is_null() const
   {
     return true;
+  }
+
+  bool TJValueNull::is_numeric(bool /*strict*/) const
+  {
+    return false;
   }
 
   ///////////////////////////////////////
@@ -5839,6 +5911,11 @@ namespace TinyJSON
     return true;
   }
 
+  bool TJValueObject::is_numeric(bool /*strict*/) const
+  {
+    return false;
+  }
+
   unsigned int TJValueObject::get_number_of_items() const
   {
     if (_members == nullptr)
@@ -6310,6 +6387,11 @@ namespace TinyJSON
     return true;
   }
 
+  bool TJValueArray::is_numeric(bool /*strict*/) const
+  {
+    return false;
+  }
+
   unsigned int TJValueArray::get_number_of_items() const
   {
     if (_values == nullptr)
@@ -6626,6 +6708,11 @@ namespace TinyJSON
   }
 
   bool TJValueNumber::is_number() const
+  {
+    return true;
+  }
+
+  bool TJValueNumber::is_numeric(bool /*strict*/) const
   {
     return true;
   }
@@ -7183,6 +7270,11 @@ namespace TinyJSON
   bool TJValueComment::is_comment() const
   {
     return true;
+  }
+
+  bool TJValueComment::is_numeric(bool /*strict*/) const
+  {
+    return false;
   }
 
   const TJCHAR* TJValueComment::raw_value() const
