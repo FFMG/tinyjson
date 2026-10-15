@@ -368,6 +368,12 @@ namespace TinyJSON
       }
     }
 
+    void assign_exception_message_and_throw(const char* parse_exception_message)
+    {
+      assign_exception_message(parse_exception_message);
+      throw_if_exception();
+    }
+
     void throw_if_exception()
     {
       if (!_options.throw_exception)
@@ -4116,8 +4122,8 @@ namespace TinyJSON
     ParseResult parse_result(parse_options);
     if (nullptr == source)
     {
-      parse_result.assign_exception_message("The given source is null.");
-      parse_result.throw_if_exception();
+
+      parse_result.assign_exception_message_and_throw("The given source is null.");
       return nullptr;
     }
 
@@ -4191,10 +4197,8 @@ namespace TinyJSON
           else
           {
             // Error: Unexpected multiple JSON values in root.
-            parse_result.assign_exception_message("Unexpected multiple JSON values in root.");
             delete value_found;
-            TJASSERT(parse_result.has_exception_message());
-            parse_result.throw_if_exception();
+            parse_result.assign_exception_message_and_throw("Unexpected multiple JSON values in root.");
             return nullptr;
           }
         }
@@ -4224,8 +4228,7 @@ namespace TinyJSON
 
     if (value_found == nullptr)
     {
-      parse_result.assign_exception_message(TJCHARPREFIX("The JSON text is empty or contains no value."));
-      parse_result.throw_if_exception();
+      parse_result.assign_exception_message_and_throw("The JSON text is empty or contains no value.");
       return nullptr;
     }
 
@@ -4233,12 +4236,11 @@ namespace TinyJSON
     {
       if (!value_found->is_array() && !value_found->is_object())
       {
-        // error: RFC 4627: A JSON text must be either an object or an array.
-        parse_result.assign_exception_message("RFC 4627: A JSON text must be either an object or an array.");
         delete value_found;
 
         // throw if the options want us to, otherwise return null.
-        parse_result.throw_if_exception();
+        // error: RFC 4627: A JSON text must be either an object or an array.
+        parse_result.assign_exception_message_and_throw("RFC 4627: A JSON text must be either an object or an array.");
         return nullptr;
       }
     }
@@ -4263,8 +4265,7 @@ namespace TinyJSON
     auto json = root.dump(write_result.options().write_formatting);
     if (nullptr == json)
     {
-      write_result.assign_exception_message("Unable to dump the json.");
-      write_result.throw_if_exception();
+      write_result.assign_exception_message_and_throw("Unable to dump the json.");
       return false;
     }
 
@@ -4281,9 +4282,8 @@ namespace TinyJSON
     FILE* outFile = std::fopen((const char*)tmp_file_path, "wb");
     if (!outFile)
     {
-      write_result.assign_exception_message("Unable to open file for writing.");
       delete[] tmp_file_path;
-      write_result.throw_if_exception();
+      write_result.assign_exception_message_and_throw("Unable to open file for writing.");
       return false;
     }
 
@@ -4292,10 +4292,9 @@ namespace TinyJSON
       char utf8_marker[3]{ TJ_UTF8_BOM0, TJ_UTF8_BOM1, TJ_UTF8_BOM2 };
       if (std::fwrite(utf8_marker, 1, 3, outFile) != 3)
       {
-        write_result.assign_exception_message("Unable to write UTF-8 BOM.");
         std::fclose(outFile);
         delete[] tmp_file_path;
-        write_result.throw_if_exception();
+        write_result.assign_exception_message_and_throw("Unable to write UTF-8 BOM.");
         return false;
       }
     }
@@ -4303,20 +4302,18 @@ namespace TinyJSON
     auto length = TJHelper::string_length(json);
     if (std::fwrite(json, sizeof(TJCHAR), length, outFile) != length)
     {
-      write_result.assign_exception_message("Unable to write to file.");
       std::fclose(outFile);
       delete[] tmp_file_path;
-      write_result.throw_if_exception();
+      write_result.assign_exception_message_and_throw("Unable to write to file.");
       return false;
     }
 
     // Flush C-runtime buffers to the OS
     if (std::fflush(outFile) != 0)
     {
-      write_result.assign_exception_message("Unable to flush the C-runtime buffer.");
       std::fclose(outFile);
       delete[] tmp_file_path;
-      write_result.throw_if_exception();
+      write_result.assign_exception_message_and_throw("Unable to flush the C-runtime buffer.");
       return false;
     }
 
@@ -4344,9 +4341,8 @@ namespace TinyJSON
 
     if (std::fclose(outFile) != 0)
     {
-      write_result.assign_exception_message("Unable to close the file.");
       delete[] tmp_file_path;
-      write_result.throw_if_exception();
+      write_result.assign_exception_message_and_throw("Unable to close the file.");
       return false;
     }
 
@@ -4354,9 +4350,8 @@ namespace TinyJSON
     std::remove((const char*)file_path);
     if (std::rename((const char*)tmp_file_path, (const char*)file_path) != 0)
     {
-      write_result.assign_exception_message("Unable to atomically rename the temporary file to the target file path.");
       delete[] tmp_file_path;
-      write_result.throw_if_exception();
+      write_result.assign_exception_message_and_throw("Unable to atomically rename the temporary file to the target file path.");
       return false;
     }
 
