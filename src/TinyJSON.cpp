@@ -5111,7 +5111,7 @@ namespace TinyJSON
 
     while (*s != TJ_NULL_TERMINATOR)
     {
-      if (std::isdigit(static_cast<unsigned char>(*s)))
+      if (*s >= '0' && *s <= '9')
       {
         has_digit = true;
       }
@@ -5130,6 +5130,9 @@ namespace TinyJSON
           return false;
         }
         has_exponent = true;
+
+        // the exponent must have at least one digit of its own, ("1e" and "1e+" are not numbers).
+        has_digit = false;
         if (*(s + 1) == '+' || *(s + 1) == '-')
         {
           s++;
