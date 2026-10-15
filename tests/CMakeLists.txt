@@ -29,6 +29,7 @@ set( Sources
   "testtinyjsondump.cpp"
   "testtinyjsonexceptions.cpp"
   "testtinyjsonexponents.cpp"
+  "testtinyjsonis_numeric.cpp"
   "testtinyjsoniterators.cpp"
   "testtinyjsonnulls.cpp"
   "testtinyjsonnumbers.cpp"
