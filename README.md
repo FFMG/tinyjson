@@ -775,7 +775,7 @@ include(FetchContent)
 FetchContent_Declare(
   TinyJSON
   GIT_REPOSITORY https://github.com/FFMG/TinyJSON.git
-  GIT_TAG        v0.2.2 # or main
+  GIT_TAG        v0.2.8 # or main
 )
 FetchContent_MakeAvailable(TinyJSON)
 target_link_libraries(your_target PUBLIC TinyJSON)

@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.8] - 2026-09-13
+## [0.2.8] - 2026-10-15
+
+### Added
+- `is_numeric(bool strict = false)` method on `TJValue` and derived classes, including validation that an exponent has at least one digit of its own (e.g. `"1e"` and `"1e+"` are not numeric).
 
 ### Changed
 - Incremented version to 0.2.8.
@@ -14,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed inconsistent behaviour where JSON5 returned `nullptr` on empty input while RFC 7159/8259 returned a `TJValueString`.
+- Fixed missing `override` specifiers and unused-parameter warnings.
+- Cleaned up the CMake files.
 
 ## [0.2.7] - 2026-06-27
 
@@ -32,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added warning callback trigger when attempting to retrieve non-existent keys in `TJValueObject` using `try_get_string`, `get_*(..)`, or `get<>(..)` methods.
 
 ### Changed
-- Incremented version to 0.2.8.
+- Incremented version to 0.2.5.
 
 ## [0.2.4] - 2026-05-20
 
