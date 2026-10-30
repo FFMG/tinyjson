@@ -20,7 +20,7 @@ TEST(TestWarnings, GetterWarnings)
   int warning_count = 0;
   std::string last_warning_message = "";
   TinyJSON::parse_options options = {};
-  options.callback_function = [&](TinyJSON::parse_options::message_type type, const TJCHAR* message)
+  options.callback_function = [&](TinyJSON::parse_options::message_type type, const TJCHAR* message, int, int)
   {
     if (type == TinyJSON::parse_options::message_type::warning)
     {

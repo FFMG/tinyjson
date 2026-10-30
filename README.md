@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.8-blue.svg)](src/TinyJSON.h)
+[![Version](https://img.shields.io/badge/version-0.2.9-blue.svg)](src/TinyJSON.h)
 
 A lightweight and lightning-fast C++ JSON & JSON5 parser designed for high performance and minimal footprint.
 
@@ -131,8 +131,8 @@ The version is set in the `TinyJSON.h` file.
 ```cpp
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 8;
-static const char TJ_VERSION_STRING[] = "0.2.8";
+static const short TJ_VERSION_PATCH = 9;
+static const char TJ_VERSION_STRING[] = "0.2.9";
 ```
 
 ### Simple Value Access
@@ -167,8 +167,12 @@ if (tj) {
   * rfc7159
   * rfc8259
   * json5_1_0_0
-* Callback: (`callback_function:std::function<void(message_type, const TJCHAR*)>`)  Callback function called where there is an error, warning etc.
+* Callback: (`callback_function:std::function<void(message_type, const TJCHAR*, int line, int column)>`)  Callback function called where there is an error, warning etc.
   NB: The Callback function is called even if Throw is false.
+  * `line` and `column` are 1-based and point to where in the source the message was raised, (the first character is line 1, column 1).
+  * `'\n'`, `'\r\n'` and a lone `'\r'` each count as a single new line, a new line resets the column to 1.
+  * The column counts `TJCHAR` code units, so a multi-byte utf-8 character counts as more than one column. A utf-8 BOM is not counted.
+  * If there is no position, (the source is null, the file could not be opened, a key was not found, a value could not be converted etc.), both `line` and `column` are `-1`.
   * If a getter method (`try_get_string`, `get_*(..)`, or `get<>(..)`) is called on a key that does not exist in a `TJValueObject`, a warning message indicating the missing key (e.g. `"The key 'missing' was not found!"`) is passed to the callback function.
   * trace
   * debug
@@ -183,18 +187,21 @@ For example ...
 TinyJSON::parse_options options = {};
 options.throw_exception = true;
 options.max_depth = 10;
-options.Callback = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message, int line, int column) {
   // something, something ...
+  // line == 2, column == 3 for the example below.
 };
 
 try
 {
-  auto blah = TinyJSON::TJ::parse("[0123]", options)
+  auto blah = TinyJSON::TJ::parse("[\n  0123]", options)
   ...
 }
 catch(TinyJSON::TJParseException ex)
 {
-    ex.what(); // Numbers cannot have leading zeros
+    ex.what();   // Numbers cannot have leading zeros
+    ex.line();   // 2
+    ex.column(); // 3
 }
 ```
 
@@ -237,6 +244,7 @@ catch(TinyJSON::TJParseException ex)
 #### Parsing Exception
 
 The parsing exception is `TinyJSON::TJParseException` and can be made optional in the `TinyJSON::parse_options` flag.
+The exception also has the 1-based `line()` and `column()` of where the error happened, (both are `-1` if there is no position).
 
 ```cpp
   TinyJSON::parse_options options = {};
@@ -248,7 +256,9 @@ The parsing exception is `TinyJSON::TJParseException` and can be made optional i
   }
   catch(TinyJSON::TJParseException ex)
   {
-     ex.what(); // Numbers cannot have leading zeros
+     ex.what();   // Numbers cannot have leading zeros
+     ex.line();   // 1
+     ex.column(); // 2
   }
 ```
 
@@ -775,7 +785,7 @@ include(FetchContent)
 FetchContent_Declare(
   TinyJSON
   GIT_REPOSITORY https://github.com/FFMG/TinyJSON.git
-  GIT_TAG        v0.2.8 # or main
+  GIT_TAG        v0.2.9 # or main
 )
 FetchContent_MakeAvailable(TinyJSON)
 target_link_libraries(your_target PUBLIC TinyJSON)

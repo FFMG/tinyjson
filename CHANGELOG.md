@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-10-29
+
+### Added
+- Line and column numbers for all the parse messages, (see https://github.com/FFMG/tinyjson/issues/51). The numbers are 1-based, `'\n'`, `'\r\n'` and a lone `'\r'` each count as a single new line, and `-1, -1` is given when there is no position (e.g. null source, file could not be opened, key not found).
+- `TJParseException::line()` and `TJParseException::column()` give the position of the parse error.
+- The duplicate key `trace` message now gives the position of the duplicate key.
+
+### Changed
+- Incremented version to 0.2.9.
+- **Breaking Change**: The `parse_options::callback_function` signature is now `std::function<void(message_type, const TJCHAR*, int line, int column)>`, existing callbacks need the two extra `int` parameters.
+- The "We found a value but we expected a comma." error now points to the start of the unexpected value.
+
 ## [0.2.8] - 2026-10-15
 
 ### Added

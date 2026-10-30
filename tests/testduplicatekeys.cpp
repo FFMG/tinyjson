@@ -9,7 +9,7 @@
 TEST(TestDuplicateKeys, DuplicateKeysShouldTriggerTrace) {
   bool trace_triggered = false;
   TinyJSON::parse_options options;
-  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* message) {
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* message, int, int) {
     if (message_type == TinyJSON::parse_options::message_type::trace) {
       trace_triggered = true;
     }
@@ -31,7 +31,7 @@ TEST(TestDuplicateKeys, DuplicateKeysShouldTriggerTrace) {
 TEST(TestDuplicateKeys, DuplicateKeysInSetShouldTriggerTrace) {
   bool trace_triggered = false;
   TinyJSON::parse_options options;
-  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* message) {
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* message, int, int) {
     if (message_type == TinyJSON::parse_options::message_type::trace) {
       trace_triggered = true;
     }
