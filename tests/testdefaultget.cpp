@@ -94,7 +94,7 @@ struct CallbackTracker
   int* trace_count;
   std::string* last_message;
 
-  void operator()(parse_options::message_type type, const TJCHAR* message) const
+  void operator()(parse_options::message_type type, const TJCHAR* message, int, int) const
   {
     if (type == parse_options::message_type::warning)
     {

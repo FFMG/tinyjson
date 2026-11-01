@@ -50,10 +50,11 @@
 // v0.2.6 - fixed a bug in the resizing of string buffers.
 // v0.2.7 - improved parse_file error reporting with specific system errors and file name.
 // v0.2.8 - conformed empty input parsing to RFC specifications (returns nullptr / throws instead of empty string).
+// v0.2.9 - added line and column numbers to parse messages and TJParseException.
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 8;
-static const char TJ_VERSION_STRING[] = "0.2.8";
+static const short TJ_VERSION_PATCH = 9;
+static const char TJ_VERSION_STRING[] = "0.2.9";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
@@ -381,8 +382,11 @@ class TJDictionary;
     //  3 = warning
     //  4 = error
     //  5 = fatal/panic/exception
+    //  The line and column are 1-based and point to where in the source the message was raised.
+    //  If there is no position, (the source is null, the file could not be opened, a key was not found etc.)
+    //  then both the line and column are -1.
     /// <summary>
-    std::function<void(message_type, const TJCHAR*)> callback_function = [] (message_type, const TJCHAR*) {
+    std::function<void(message_type, const TJCHAR*, int, int)> callback_function = [] (message_type, const TJCHAR*, int, int) {
       // do nothing
     };
   };
@@ -433,17 +437,29 @@ class TJDictionary;
   class TJParseException : public std::exception
   {
   public:
-    TJParseException(const char* message);
+    TJParseException(const char* message, int line = -1, int column = -1);
     TJParseException(const TJParseException& exception);
     TJParseException& operator=(const TJParseException& exception);
     virtual ~TJParseException() noexcept;
 
     virtual const char* what() const noexcept;
 
+    /// <summary>
+    /// The 1-based line number where the error happened, -1 if unknown.
+    /// </summary>
+    int line() const noexcept;
+
+    /// <summary>
+    /// The 1-based column number where the error happened, -1 if unknown.
+    /// </summary>
+    int column() const noexcept;
+
   private:
     void free_message() noexcept;
     void assign_message(const char* message);
     char* _message;
+    int _line;
+    int _column;
   };
 
   struct internal_dump_configuration;

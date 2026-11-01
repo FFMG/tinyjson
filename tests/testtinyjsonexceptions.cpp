@@ -257,7 +257,7 @@ TEST(TestException, EscapedTabCharacterInStringWillLogAndThrow) {
   bool called = false;
   TinyJSON::parse_options options = {};
   options.throw_exception = true;
-  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message, int, int) {
     EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
     EXPECT_TRUE(nullptr != exception_message);
     called = true;
@@ -270,7 +270,7 @@ TEST(TestException, EscapedTabCharacterInStringWillLogAndNotThrow) {
   bool called = false;
   TinyJSON::parse_options options = {};
   options.throw_exception = false;
-  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message, int, int) {
     EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
     EXPECT_TRUE(nullptr != exception_message);
     called = true;
@@ -284,7 +284,7 @@ TEST(TestException, GettingNonExistentKeyWillLogAndNotThrow) {
   TinyJSON::parse_options options = {};
   options.throw_exception = false;
   options.strict = true;
-  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message) {
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message, int, int) {
     EXPECT_EQ(message_type, TinyJSON::parse_options::fatal);
     EXPECT_STREQ(exception_message, "The key 'b' was not found!");
     called = true;
@@ -307,7 +307,7 @@ TEST(TestException, ParseFileNotFoundSmarterError)
   std::string error_msg;
   TinyJSON::parse_options options = {};
   options.throw_exception = false;
-  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message)
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message, int, int)
   {
     if (message_type == TinyJSON::parse_options::error)
     {
@@ -326,7 +326,7 @@ TEST(TestException, ParseDirectorySmarterError)
   std::string error_msg;
   TinyJSON::parse_options options = {};
   options.throw_exception = false;
-  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message)
+  options.callback_function = [&](TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message, int, int)
   {
     if (message_type == TinyJSON::parse_options::error)
     {
@@ -350,7 +350,7 @@ namespace
     bool called = false;
     std::string error_msg;
 
-    void operator()(TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message)
+    void operator()(TinyJSON::parse_options::message_type message_type, const TJCHAR* exception_message, int, int)
     {
       if (message_type == TinyJSON::parse_options::fatal || message_type == TinyJSON::parse_options::error)
       {

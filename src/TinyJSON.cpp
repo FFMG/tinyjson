@@ -145,6 +145,59 @@ namespace TinyJSON
     return len;
   }
 
+  /// <summary>
+  /// A 1-based line and column position in a source, -1 if unknown.
+  /// </summary>
+  struct source_position
+  {
+    int _line;
+    int _column;
+  };
+
+  /// <summary>
+  /// Calculate the 1-based line and column of a position in the source.
+  /// '\n', '\r\n' and a lone '\r' all count as a single new line.
+  /// If either the start of the source or the position is unknown we return -1, -1.
+  /// </summary>
+  /// <param name="source_begin">The start of the source.</param>
+  /// <param name="position">The position we want the line/column of.</param>
+  /// <returns></returns>
+  static source_position calculate_source_position(const TJCHAR* source_begin, const TJCHAR* position)
+  {
+    if (nullptr == source_begin || nullptr == position || position < source_begin)
+    {
+      return { -1, -1 };
+    }
+
+    source_position result = { 1, 1 };
+    for (const TJCHAR* p = source_begin; p < position; ++p)
+    {
+      if (*p == TJ_NULL_TERMINATOR)
+      {
+        break;
+      }
+      if (*p == TJ_ESCAPE_CARRIAGE_RETURN)
+      {
+        if (p + 1 < position && *(p + 1) == TJ_ESCAPE_LINE_FEED)
+        {
+          // '\r\n' is a single new line, the '\n' will move us to the next line.
+          continue;
+        }
+        ++result._line;
+        result._column = 1;
+        continue;
+      }
+      if (*p == TJ_ESCAPE_LINE_FEED)
+      {
+        ++result._line;
+        result._column = 1;
+        continue;
+      }
+      ++result._column;
+    }
+    return result;
+  }
+
   static void report_file_open_error(const TJCHAR* file_path, int err_code, const parse_options& options)
   {
     const TJCHAR* prefix = nullptr;
@@ -193,7 +246,7 @@ namespace TinyJSON
     }
     msg[total_len] = TJ_NULL_TERMINATOR;
 
-    options.callback_function(parse_options::message_type::error, msg);
+    options.callback_function(parse_options::message_type::error, msg, -1, -1);
 
     delete[] msg;
   }
@@ -247,7 +300,10 @@ namespace TinyJSON
     ParseResult(const parse_options& parse_options) :
       _exception_message(nullptr),
       _options(parse_options),
-      _depth(0)
+      _depth(0),
+      _source_begin(nullptr),
+      _line(-1),
+      _column(-1)
     {
     }
 
@@ -275,10 +331,29 @@ namespace TinyJSON
     }
 
     /// <summary>
-    /// Assign a parse error message.
+    /// Set where the source starts, all the line/column positions are relative to this.
+    /// </summary>
+    /// <param name="source_begin"></param>
+    void set_source_begin(const TJCHAR* source_begin)
+    {
+      _source_begin = source_begin;
+    }
+
+    /// <summary>
+    /// Assign a parse error message without a known position.
     /// </summary>
     /// <param name="parse_exception_message"></param>
     void assign_exception_message(const char* parse_exception_message)
+    {
+      assign_exception_message(nullptr, parse_exception_message);
+    }
+
+    /// <summary>
+    /// Assign a parse error message at a given position in the source.
+    /// </summary>
+    /// <param name="position">Where in the source the error happened.</param>
+    /// <param name="parse_exception_message"></param>
+    void assign_exception_message(const TJCHAR* position, const char* parse_exception_message)
     {
       free_exception_message();
       if (parse_exception_message != nullptr)
@@ -287,11 +362,20 @@ namespace TinyJSON
         _exception_message = new char[length + 1];
         std::strcpy(_exception_message, parse_exception_message);
       }
+      const auto position_in_source = calculate_source_position(_source_begin, position);
+      _line = position_in_source._line;
+      _column = position_in_source._column;
     }
 
     void assign_exception_message_and_throw(const char* parse_exception_message)
     {
       assign_exception_message(parse_exception_message);
+      throw_if_exception();
+    }
+
+    void assign_exception_message_and_throw(const TJCHAR* position, const char* parse_exception_message)
+    {
+      assign_exception_message(position, parse_exception_message);
       throw_if_exception();
     }
 
@@ -301,12 +385,24 @@ namespace TinyJSON
       {
         return;
       }
-      _options.callback_function(parse_options::message_type::fatal, _exception_message);
+      _options.callback_function(parse_options::message_type::fatal, _exception_message, _line, _column);
       if (!_options.throw_exception)
       {
         return;
       }
-      throw TJParseException(_exception_message);
+      throw TJParseException(_exception_message, _line, _column);
+    }
+
+    /// <summary>
+    /// Raise a non fatal message at a given position in the source.
+    /// </summary>
+    /// <param name="message_type"></param>
+    /// <param name="position">Where in the source the message was raised.</param>
+    /// <param name="message"></param>
+    void raise(parse_options::message_type message_type, const TJCHAR* position, const TJCHAR* message) const
+    {
+      const auto position_in_source = calculate_source_position(_source_begin, position);
+      _options.callback_function(message_type, message, position_in_source._line, position_in_source._column);
     }
 
     bool has_exception_message() const
@@ -332,6 +428,9 @@ namespace TinyJSON
     char* _exception_message;
     parse_options _options;
     unsigned int _depth;
+    const TJCHAR* _source_begin;
+    int _line;
+    int _column;
   };
 
   ///////////////////////////////////////
@@ -413,14 +512,18 @@ namespace TinyJSON
 
   ///////////////////////////////////////
   /// Parsing Exception
-  TJParseException::TJParseException(const char* message) :
-    _message(nullptr)
+  TJParseException::TJParseException(const char* message, int line, int column) :
+    _message(nullptr),
+    _line(line),
+    _column(column)
   {
     assign_message(message);
   }
 
   TJParseException::TJParseException(const TJParseException& exception)
-    : _message(nullptr)
+    : _message(nullptr),
+    _line(-1),
+    _column(-1)
   {
     *this = exception;
   }
@@ -435,6 +538,8 @@ namespace TinyJSON
     if (this != &exception)
     {
       assign_message(exception._message);
+      _line = exception._line;
+      _column = exception._column;
     }
     return *this;
   }
@@ -442,6 +547,16 @@ namespace TinyJSON
   const char* TJParseException::what() const noexcept
   {
     return _message == nullptr ? "Unknown" : _message;
+  }
+
+  int TJParseException::line() const noexcept
+  {
+    return _line;
+  }
+
+  int TJParseException::column() const noexcept
+  {
+    return _column;
   }
 
   void TJParseException::assign_message(const char* message)
@@ -784,6 +899,19 @@ namespace TinyJSON
     /// </summary>
     void set(TJMember* value, const parse_options& options)
     {
+      if (set_or_replace(value))
+      {
+        options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."), -1, -1);
+      }
+    }
+
+    /// <summary>
+    /// set a value in our dictionary, if the value exists, (by name)
+    /// we will replace the old value with the new value.
+    /// </summary>
+    /// <returns>True if an existing value was replaced.</returns>
+    bool set_or_replace(TJMember* value)
+    {
       if (nullptr == _values)
       {
         initilize();
@@ -797,7 +925,7 @@ namespace TinyJSON
           grow();
         }
         _values[_number_of_items++] = value;
-        return;
+        return false;
       }
 
       // check if the key already exists, if it does simply update the value.
@@ -805,9 +933,8 @@ namespace TinyJSON
       auto binary_search_result_cs = binary_search(key, true);
       if (true == binary_search_result_cs._was_found)
       {
-        options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."));
         replace_dictionaries_data(value, binary_search_result_cs._dictionary_index);
-        return;
+        return true;
       }
 
       // check if the value can be added.
@@ -858,6 +985,7 @@ namespace TinyJSON
         _values_dictionary_ci,
         _number_of_items_dictionary_ci
       );
+      return false;
     }
 
     /// <summary>
@@ -2325,7 +2453,7 @@ namespace TinyJSON
     {
       if (parse_result.options().specification != parse_options::json5_1_0_0)
       {
-        parse_result.assign_exception_message(TJCHARPREFIX("Comments are only allowed in json5_1_0_0 specification."));
+        parse_result.assign_exception_message(p, TJCHARPREFIX("Comments are only allowed in json5_1_0_0 specification."));
         return nullptr;
       }
 
@@ -2389,14 +2517,14 @@ namespace TinyJSON
         if (!closed)
         {
           delete[] result;
-          parse_result.assign_exception_message("Multi-line comment was not closed.");
+          parse_result.assign_exception_message(p, "Multi-line comment was not closed.");
           return nullptr;
         }
       }
       else
       {
         delete[] result;
-        parse_result.assign_exception_message("Invalid comment start.");
+        parse_result.assign_exception_message(p, "Invalid comment start.");
         return nullptr;
       }
 
@@ -2425,7 +2553,7 @@ namespace TinyJSON
           if (!add_char_to_string(TJ_NULL_TERMINATOR, result, result_pos, result_max_length))
           {
             delete[] result;
-            parse_result.assign_exception_message("Maximum JSON string read size exceeded.");
+            parse_result.assign_exception_message(p, "Maximum JSON string read size exceeded.");
             return nullptr;
           }
           return result;
@@ -2443,14 +2571,14 @@ namespace TinyJSON
             {
               // ERROR: invalid character inside the string.
               delete[] result;
-              parse_result.assign_exception_message("Invalid character inside the string.");
+              parse_result.assign_exception_message(p, "Invalid character inside the string.");
               return nullptr;
             }
             break;
           case  TJ_ESCAPE_TAB:            // % x74 / ; t    tab             U + 0009
             // ERROR: invalid character inside the string.
             delete[] result;
-            parse_result.assign_exception_message("Invalid character inside the string.");
+            parse_result.assign_exception_message(p, "Invalid character inside the string.");
             return nullptr;
           }
           add_char_to_string(*p, result, result_pos, result_max_length);
@@ -2463,12 +2591,12 @@ namespace TinyJSON
             delete[] result;
             if (result_max_length == 0)
             {
-              parse_result.assign_exception_message("Maximum JSON string read size exceeded.");
+              parse_result.assign_exception_message(p, "Maximum JSON string read size exceeded.");
             }
             else
             {
               // ERROR: invalid/unknown character after single reverse solidus.
-              parse_result.assign_exception_message("Invalid/unknown character after single reverse solidus.");
+              parse_result.assign_exception_message(p, "Invalid/unknown character after single reverse solidus.");
             }
             return nullptr;
           }
@@ -2481,7 +2609,7 @@ namespace TinyJSON
           if (!add_char_to_string(*p, result, result_pos, result_max_length))
           {
             delete[] result;
-            parse_result.assign_exception_message("Maximum JSON string read size exceeded.");
+            parse_result.assign_exception_message(p, "Maximum JSON string read size exceeded.");
             return nullptr;
           }
           p++;
@@ -2491,7 +2619,7 @@ namespace TinyJSON
         case TJ_ESCAPE_FORM_FEED:       // % x66 / ; f    form feed       U + 000C
           delete[] result;
           // ERROR: invalid character inside the string.
-          parse_result.assign_exception_message("Invalid character inside the string..");
+          parse_result.assign_exception_message(p, "Invalid character inside the string..");
           return nullptr;
 
         default:
@@ -2499,7 +2627,7 @@ namespace TinyJSON
           if (!add_char_to_string(*p, result, result_pos, result_max_length))
           {
             delete[] result;
-            parse_result.assign_exception_message("Maximum JSON string read size exceeded.");
+            parse_result.assign_exception_message(p, "Maximum JSON string read size exceeded.");
             return nullptr;
           }
           p++;
@@ -2509,7 +2637,7 @@ namespace TinyJSON
 
       // // ERROR: we could not close the object.
       delete[] result;
-      parse_result.assign_exception_message("We could not close the string.");
+      parse_result.assign_exception_message(p, "We could not close the string.");
       return nullptr;
     }
 
@@ -3053,7 +3181,7 @@ namespace TinyJSON
           if (found_spaces > 0)
           {
             // ERROR: Number has a space between it.
-            parse_result.assign_exception_message("Number has a space between it.");
+            parse_result.assign_exception_message(p, "Number has a space between it.");
             return nullptr;
           }
           p++;
@@ -3089,7 +3217,7 @@ namespace TinyJSON
       auto whole_number = try_read_whole_number(p, parse_result);
       if (nullptr == whole_number)
       {
-        parse_result.assign_exception_message("Fraction does not have a number after the token '.'");
+        parse_result.assign_exception_message(p, "Fraction does not have a number after the token '.'");
         return nullptr;
       }
       // trip the trailling zeros are they are not needed in a fraction
@@ -3241,6 +3369,7 @@ namespace TinyJSON
     /// <returns></returns>
     static TJValue* try_read_number(const TJCHAR*& p, ParseResult& parse_result)
     {
+      const TJCHAR* number_start = p;
       bool is_negative = false;
       if (*p == '-')
       {
@@ -3283,7 +3412,7 @@ namespace TinyJSON
       if (has_possible_double_zero(possible_number) && parse_result.options().specification != parse_options::json5_1_0_0)
       {
         // ERROR: Numbers cannot have leading zeros
-        parse_result.assign_exception_message("Numbers cannot have leading zeros.");
+        parse_result.assign_exception_message(number_start, "Numbers cannot have leading zeros.");
         delete[] possible_number;
         return nullptr;
       }
@@ -3342,7 +3471,7 @@ namespace TinyJSON
         if (nullptr == possible_exponent)
         {
           // ERROR: we cannot have a number like '-12e' or '42e
-          parse_result.assign_exception_message("Number has exponent 'e' or 'E' but does not have a number.");
+          parse_result.assign_exception_message(p, "Number has exponent 'e' or 'E' but does not have a number.");
           return nullptr;
         }
 
@@ -3371,7 +3500,8 @@ namespace TinyJSON
     /// </summary>
     /// <param name="member"></param>
     /// <param name="members"></param>
-    static void move_member_to_members(TJMember* member, TJDICTIONARY*& members, const parse_options& options)
+    /// <returns>True if a member with the same name was replaced.</returns>
+    static bool move_member_to_members(TJMember* member, TJDICTIONARY*& members)
     {
       if (nullptr == members)
       {
@@ -3383,9 +3513,9 @@ namespace TinyJSON
 #if TJ_INCLUDE_STDVECTOR == 1
         members->push_back(member);
 #else
-        members->set(member, options);
+        members->set_or_replace(member);
 #endif
-        return;
+        return false;
       }
 
 #if TJ_INCLUDE_STDVECTOR == 1
@@ -3397,16 +3527,32 @@ namespace TinyJSON
           });
         if (current != members->end())
         {
-          options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."));
           delete* current;
           *current = member;
-          return;
+          return true;
         }
       }
       members->push_back(member);
+      return false;
 #else
-      members->set(member, options);
+      return members->set_or_replace(member);
 #endif
+    }
+
+    /// <summary>
+    /// Move the member to the members while we are parsing,
+    /// if the member replaced a duplicate key we raise a trace message with the position of that key.
+    /// </summary>
+    /// <param name="member"></param>
+    /// <param name="members"></param>
+    /// <param name="parse_result"></param>
+    /// <param name="position">Where the member started in the source.</param>
+    static void move_member_to_members(TJMember* member, TJDICTIONARY*& members, const ParseResult& parse_result, const TJCHAR* position)
+    {
+      if (move_member_to_members(member, members))
+      {
+        parse_result.raise(parse_options::message_type::trace, position, TJCHARPREFIX("Duplicate key found, overwriting."));
+      }
     }
 
     static TJMember* try_read_unquoted_string_and_value(const TJCHAR*& p, ParseResult& parse_result)
@@ -3424,7 +3570,7 @@ namespace TinyJSON
       if (!try_skip_colon(p))
       {
         delete[] key;
-        parse_result.assign_exception_message("Could not locate the expected colon after the unquoted key.");
+        parse_result.assign_exception_message(p, "Could not locate the expected colon after the unquoted key.");
         return nullptr;
       }
 
@@ -3448,7 +3594,7 @@ namespace TinyJSON
       if (parse_result.current_depth() >= parse_result.options().max_depth)
       {
         // Error: We reached the max depth
-        parse_result.assign_exception_message("Reached the max parse depth (object).");
+        parse_result.assign_exception_message(p, "Reached the max parse depth (object).");
         return nullptr;
       }
       //  assume no members in that object.
@@ -3475,7 +3621,7 @@ namespace TinyJSON
           else
           {
             free_members(members);
-            parse_result.assign_exception_message("Unknown character.");
+            parse_result.assign_exception_message(p, "Unknown character.");
             return nullptr;
           }
 
@@ -3489,7 +3635,7 @@ namespace TinyJSON
           }
           TJCHAR* empty_key = nullptr;
           auto member = TJMember::move(empty_key, comment, parse_result.options());
-          move_member_to_members(member, members, parse_result.options());
+          move_member_to_members(member, members, parse_result, p);
           // we are NOT waiting for a string, and we are NOT after a string
           // so that we can find the next actual member or comma or end.
         }
@@ -3502,7 +3648,7 @@ namespace TinyJSON
             // ERROR: unexpected end of object, there was a "," after
             //        the last string and we expected a string now, not a close "}"
             free_members(members);
-            parse_result.assign_exception_message("Unexpected end of object, there was a ', ' after the last string.");
+            parse_result.assign_exception_message(p, "Unexpected end of object, there was a ', ' after the last string.");
             return nullptr;
           }
           p++;
@@ -3516,7 +3662,7 @@ namespace TinyJSON
           if (parse_result.options().specification != parse_options::json5_1_0_0)
           {
             free_members(members);
-            parse_result.assign_exception_message("Single quotes are only allowed in json5_1_0_0 specification.");
+            parse_result.assign_exception_message(p, "Single quotes are only allowed in json5_1_0_0 specification.");
             return nullptr;
           }
         } 
@@ -3532,7 +3678,7 @@ namespace TinyJSON
           {
             // ERROR: expected a comma after the last element
             free_members(members);
-            parse_result.assign_exception_message("Expected a comma after the last element.");
+            parse_result.assign_exception_message(p, "Expected a comma after the last element.");
             return nullptr;
           }
 
@@ -3544,6 +3690,7 @@ namespace TinyJSON
 
           // read the actual string and value
           // that's the way it has to be.
+          const TJCHAR* member_start = p;
           auto member = try_read_string_and_value(p, parse_result, quote_char);
           if (member == nullptr)
           {
@@ -3553,7 +3700,7 @@ namespace TinyJSON
           }
 
           found_comma = false;
-          move_member_to_members(member, members, parse_result.options());
+          move_member_to_members(member, members, parse_result, member_start);
 
           after_string = true;
           }
@@ -3564,7 +3711,7 @@ namespace TinyJSON
             {
               // ERROR: found a comma out of order
               free_members(members);
-              parse_result.assign_exception_message("Found a comma out of order.");
+              parse_result.assign_exception_message(p, "Found a comma out of order.");
               return nullptr;
             }
           // we are no longer after the string
@@ -3587,7 +3734,7 @@ namespace TinyJSON
                if (after_string && !found_comma)
                {
                  free_members(members);
-                 parse_result.assign_exception_message("Expected a comma after the last element.");
+                 parse_result.assign_exception_message(p, "Expected a comma after the last element.");
                  return nullptr;
                }
 
@@ -3597,6 +3744,7 @@ namespace TinyJSON
                // we are no longer after the string
                after_string = false;
 
+               const TJCHAR* member_start = p;
                auto member = try_read_unquoted_string_and_value(p, parse_result);
                if (member == nullptr)
                {
@@ -3605,7 +3753,7 @@ namespace TinyJSON
                }
 
                found_comma = false;
-               move_member_to_members(member, members, parse_result.options());
+               move_member_to_members(member, members, parse_result, member_start);
                after_string = true;
                break;
             }
@@ -3613,14 +3761,14 @@ namespace TinyJSON
 
           // ERROR: unknown character
           free_members(members);
-          parse_result.assign_exception_message("Unknown character.");
+          parse_result.assign_exception_message(p, "Unknown character.");
           return nullptr;
         }
       }
 
       // ERROR end of the string was found and we didn't find what we needed.
       free_members(members);
-      parse_result.assign_exception_message("End of the string was found and we didn't find what we needed.");
+      parse_result.assign_exception_message(p, "End of the string was found and we didn't find what we needed.");
       return nullptr;
     }
 
@@ -3635,7 +3783,7 @@ namespace TinyJSON
       if (parse_result.current_depth() >= parse_result.options().max_depth)
       {
         // Error: We reached the max depth
-        parse_result.assign_exception_message("Reached the max parse depth (array).");
+        parse_result.assign_exception_message(p, "Reached the max parse depth (array).");
         return nullptr;
       }
 
@@ -3662,7 +3810,7 @@ namespace TinyJSON
           else
           {
             free_values(values);
-            parse_result.assign_exception_message("Unknown character.");
+            parse_result.assign_exception_message(p, "Unknown character.");
             return nullptr;
           }
 
@@ -3694,7 +3842,7 @@ namespace TinyJSON
             // ERROR: unexpected end of array, there was a "," after
             //        the last value and we expected a value now, not a close "]"
             free_values(values);
-            parse_result.assign_exception_message("Unexpected end of array, there was a ', ' after the last string.");
+            parse_result.assign_exception_message(p, "Unexpected end of array, there was a ', ' after the last string.");
             return nullptr;
           }
           p++;
@@ -3708,7 +3856,7 @@ namespace TinyJSON
             {
               // ERROR: found a comma out of order, (2 commas)
               free_values(values);
-              parse_result.assign_exception_message("Found a comma out of order, (2 commas).");
+              parse_result.assign_exception_message(p, "Found a comma out of order, (2 commas).");
               return nullptr;
             }
           // we are now waiting for a value
@@ -3723,6 +3871,7 @@ namespace TinyJSON
             p++;
             break;
           }
+          const TJCHAR* value_start = p;
           const auto& value = try_read_Value(p, parse_result);
           if (value == nullptr)
           {
@@ -3739,7 +3888,7 @@ namespace TinyJSON
             // ERROR: We found a value but we expected a comma.
             delete value;
             free_values(values);
-            parse_result.assign_exception_message("We found a value but we expected a comma.");
+            parse_result.assign_exception_message(value_start, "We found a value but we expected a comma.");
             return nullptr;
           }
 #if TJ_INCLUDE_STDVECTOR == 1
@@ -3755,7 +3904,7 @@ namespace TinyJSON
 
       // ERROR: end of the string was found and we didn't find what we needed.
       free_values(values);
-      parse_result.assign_exception_message("End of the string was found and we didn't find what we needed.");
+      parse_result.assign_exception_message(p, "End of the string was found and we didn't find what we needed.");
       return nullptr;
     }
 
@@ -3779,7 +3928,7 @@ namespace TinyJSON
           }
           else
           {
-            parse_result.assign_exception_message("Unexpected Token while trying to read value.");
+            parse_result.assign_exception_message(p, "Unexpected Token while trying to read value.");
             return nullptr;
           }
 
@@ -3787,7 +3936,7 @@ namespace TinyJSON
         {
           if (parse_result.options().specification != parse_options::json5_1_0_0)
           {
-            parse_result.assign_exception_message("Single quotes are only allowed in json5_1_0_0 specification.");
+            parse_result.assign_exception_message(p, "Single quotes are only allowed in json5_1_0_0 specification.");
             return nullptr;
           }
         }
@@ -3813,7 +3962,7 @@ namespace TinyJSON
             if (nullptr == true_value)
             {
               //  ERROR could not read the word 'true'
-              parse_result.assign_exception_message("Could not read the word 'true'.");
+              parse_result.assign_exception_message(p - 1, "Could not read the word 'true'.");
               return nullptr;
             }
             return true_value;
@@ -3825,7 +3974,7 @@ namespace TinyJSON
           if (nullptr == false_value)
           {
             //  ERROR: could not read the word 'false'
-            parse_result.assign_exception_message("Could not read the word 'false'.");
+            parse_result.assign_exception_message(p - 1, "Could not read the word 'false'.");
             return nullptr;
           }
           return false_value;
@@ -3837,7 +3986,7 @@ namespace TinyJSON
           if (nullptr == null_value)
           {
             //  ERROR: could not read the word 'null'
-            parse_result.assign_exception_message("Could not read the word 'null'.");
+            parse_result.assign_exception_message(p - 1, "Could not read the word 'null'.");
             return nullptr;
           }
           return null_value;
@@ -3857,14 +4006,14 @@ namespace TinyJSON
         case 'I':
           if (parse_result.options().specification != parse_options::json5_1_0_0)
           {
-            parse_result.assign_exception_message("Unexpected Token while trying to read value.");
+            parse_result.assign_exception_message(p, "Unexpected Token while trying to read value.");
             return nullptr;
           }
           TJ_FALLTHROUGH;
         case '.':
           if (c == '.' && parse_result.options().specification != parse_options::json5_1_0_0)
           {
-             parse_result.assign_exception_message("Unexpected Token while trying to read value.");
+             parse_result.assign_exception_message(p, "Unexpected Token while trying to read value.");
              return nullptr;
           }
           TJ_FALLTHROUGH;
@@ -3915,7 +4064,7 @@ namespace TinyJSON
             break;
           }
           // ERROR: Unexpected Token while trying to read value.
-          parse_result.assign_exception_message("Unexpected Token while trying to read value.");
+          parse_result.assign_exception_message(p, "Unexpected Token while trying to read value.");
           return nullptr;
         }
       }
@@ -3940,7 +4089,7 @@ namespace TinyJSON
       {
         delete[] string_value;
         //  ERROR: could not locate the expected colon after the key value
-        parse_result.assign_exception_message("Could not locate the expected colon after the key value.");
+        parse_result.assign_exception_message(p, "Could not locate the expected colon after the key value.");
         return nullptr;
       }
 
@@ -4133,8 +4282,12 @@ namespace TinyJSON
       source += 3;
     }
 
+    // all the line/column positions are relative to the start of the source, (after the BOM).
+    parse_result.set_source_begin(source);
+
     // we can only have one value and nothing else
     TJValue* value_found = nullptr;
+    const TJCHAR* value_start = nullptr;
     while (*source != TJ_NULL_TERMINATOR)
     {
       TJCHAR c = *source;
@@ -4198,12 +4351,13 @@ namespace TinyJSON
           {
             // Error: Unexpected multiple JSON values in root.
             delete value_found;
-            parse_result.assign_exception_message_and_throw("Unexpected multiple JSON values in root.");
+            parse_result.assign_exception_message_and_throw(source, "Unexpected multiple JSON values in root.");
             return nullptr;
           }
         }
 
         // try and look for the value
+        value_start = source;
         value_found = TJHelper::try_read_Value(source, parse_result);
         if (nullptr == value_found)
         {
@@ -4218,7 +4372,7 @@ namespace TinyJSON
 
     if (value_found != nullptr && value_found->is_comment())
     {
-      parse_result.assign_exception_message(TJCHARPREFIX("A JSON text cannot contain only a comment."));
+      parse_result.assign_exception_message(source, TJCHARPREFIX("A JSON text cannot contain only a comment."));
       delete value_found;
       value_found = nullptr;
 
@@ -4228,7 +4382,7 @@ namespace TinyJSON
 
     if (value_found == nullptr)
     {
-      parse_result.assign_exception_message_and_throw("The JSON text is empty or contains no value.");
+      parse_result.assign_exception_message_and_throw(source, "The JSON text is empty or contains no value.");
       return nullptr;
     }
 
@@ -4240,7 +4394,7 @@ namespace TinyJSON
 
         // throw if the options want us to, otherwise return null.
         // error: RFC 4627: A JSON text must be either an object or an array.
-        parse_result.assign_exception_message_and_throw("RFC 4627: A JSON text must be either an object or an array.");
+        parse_result.assign_exception_message_and_throw(value_start, "RFC 4627: A JSON text must be either an object or an array.");
         return nullptr;
       }
     }
@@ -5584,7 +5738,7 @@ namespace TinyJSON
 
     if (type == parse_options::message_type::fatal)
     {
-      _parse_options.callback_function(parse_options::message_type::fatal, msg);
+      _parse_options.callback_function(parse_options::message_type::fatal, msg, -1, -1);
       if (_parse_options.throw_exception)
       {
 #if TJ_USE_CHAR == 1
@@ -5599,7 +5753,7 @@ namespace TinyJSON
     }
     else
     {
-      _parse_options.callback_function(type, msg);
+      _parse_options.callback_function(type, msg, -1, -1);
     }
 
     delete[] msg;
@@ -6020,7 +6174,11 @@ namespace TinyJSON
 
   void TJValueObject::move_member_to_members(TJMember* member)
   {
-    TJHelper::move_member_to_members(member, _members, _parse_options);
+    if (TJHelper::move_member_to_members(member, _members))
+    {
+      // there is no position in a source when the member is moved outside of parsing.
+      _parse_options.callback_function(parse_options::message_type::trace, TJCHARPREFIX("Duplicate key found, overwriting."), -1, -1);
+    }
     TJNumberedValues::reset_number_of_items();
   }
 

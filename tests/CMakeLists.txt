@@ -38,6 +38,7 @@ set( Sources
   "testtinyjsonvaluesget.cpp"
   "testtinyjsonversion.cpp"
   "testtinyjsonwarnings.cpp"
+  "testtinyjsonlinecolumn.cpp"
   "testtinyjsonconstructors.cpp"
   "testtinyjsonwrite.cpp"
   "testtinyjsonset.cpp"
