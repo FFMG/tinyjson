@@ -749,3 +749,196 @@ TEST(TestNumbers, Issue55_WholeNumberLongLongMaxIsValid)
   ASSERT_EQ(std::numeric_limits<long long>::max(), json->get_number());
   delete json;
 }
+
+// https://github.com/FFMG/tinyjson/issues/1
+// When numbers exceed supported precision or memory bounds, they should be truncated or converted.
+
+// Functor to track warnings without using lambdas
+struct Issue1WarningTracker
+{
+  int count = 0;
+  std::string last_message;
+
+  void operator()(TinyJSON::parse_options::message_type type, const TJCHAR* message, int, int)
+  {
+    if (type == TinyJSON::parse_options::message_type::warning)
+    {
+      count++;
+      if (nullptr != message)
+      {
+        last_message = message;
+      }
+    }
+  }
+};
+
+// The example from the issue: fraction with 27 digits is truncated to at most 19 significant digits.
+TEST(TestNumbers, Issue1_ExampleFractionTruncatedToSignificantDigits)
+{
+  auto json = TinyJSON::TJ::parse(R"({ "a" : 0.123456789123456789123456789 })");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<const TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto val = jobject->try_get_value("a");
+  ASSERT_NE(nullptr, val);
+
+  ASSERT_STREQ("0.1234567891234567891", val->dump(TinyJSON::formatting::minify));
+  ASSERT_NEAR(0.1234567891234567891, static_cast<double>(val->get_float()), 1e-15);
+
+  delete json;
+}
+
+// Negative fraction with 27 digits is truncated to at most 19 significant digits.
+TEST(TestNumbers, Issue1_NegativeFractionTruncatedToSignificantDigits)
+{
+  auto json = TinyJSON::TJ::parse(R"({ "a" : -0.123456789123456789123456789 })");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<const TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto val = jobject->try_get_value("a");
+  ASSERT_NE(nullptr, val);
+
+  ASSERT_STREQ("-0.1234567891234567891", val->dump(TinyJSON::formatting::minify));
+  ASSERT_NEAR(-0.1234567891234567891, static_cast<double>(val->get_float()), 1e-15);
+
+  delete json;
+}
+
+// The example from the issue: whole number with 27 digits is converted to an exponent number.
+TEST(TestNumbers, Issue1_ExampleWholeNumberConvertedToExponent)
+{
+  auto json = TinyJSON::TJ::parse(R"({ "a" : 123456789123456789123456789 })");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<const TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto val = jobject->try_get_value("a");
+  ASSERT_NE(nullptr, val);
+
+  // 20 digits kept (1.2345678912345678912) and remaining 7 digits shifted to exponent (+26)
+  ASSERT_STREQ("1.2345678912345678912e+26", val->dump(TinyJSON::formatting::minify));
+  ASSERT_NEAR(1.2345678912345678912e26, static_cast<double>(val->get_float()), 1e11);
+
+  delete json;
+}
+
+// Negative whole number with 27 digits is converted to an exponent number.
+TEST(TestNumbers, Issue1_NegativeWholeNumberConvertedToExponent)
+{
+  auto json = TinyJSON::TJ::parse(R"({ "a" : -123456789123456789123456789 })");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<const TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto val = jobject->try_get_value("a");
+  ASSERT_NE(nullptr, val);
+
+  ASSERT_STREQ("-1.2345678912345678912e+26", val->dump(TinyJSON::formatting::minify));
+  ASSERT_NEAR(-1.2345678912345678912e26, static_cast<double>(val->get_float()), 1e11);
+
+  delete json;
+}
+
+// When the whole number exceeds ULLONG_MAX, the fraction digits are negligible.
+TEST(TestNumbers, Issue1_WholeNumberAndFractionBothExceedingPrecision)
+{
+  auto json = TinyJSON::TJ::parse(R"({ "a" : 123456789123456789123456789.9876543210123456789 })");
+  ASSERT_NE(nullptr, json);
+
+  auto jobject = dynamic_cast<const TinyJSON::TJValueObject*>(json);
+  ASSERT_NE(nullptr, jobject);
+
+  auto val = jobject->try_get_value("a");
+  ASSERT_NE(nullptr, val);
+
+  ASSERT_STREQ("1.2345678912345678912e+26", val->dump(TinyJSON::formatting::minify));
+
+  delete json;
+}
+
+// An extremely long run of digits (5,000 zeros) parses and dumps without overflow or crash.
+TEST(TestNumbers, Issue1_ExtremelyLongWholeNumberRunsDoNotOverflow)
+{
+  const std::string long_number = "1" + std::string(5000, '0');
+  auto json = TinyJSON::TJ::parse(long_number.c_str());
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ("1e+5000", text);
+
+  delete json;
+}
+
+// An extremely long fraction (5,000 digits) is truncated to 19 significant digits.
+TEST(TestNumbers, Issue1_ExtremelyLongFractionRunsDoNotOverflow)
+{
+  const std::string long_fraction = "0." + std::string(5000, '9');
+  auto json = TinyJSON::TJ::parse(long_fraction.c_str());
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ("0.9999999999999999999", text);
+
+  delete json;
+}
+
+// A whole number with more than TJ_MAX_EXPONENT digits (> 100,000) exceeds maximum exponent and is rejected.
+TEST(TestNumbers, Issue1_WholeNumberExceedingMaxExponentIsRejected)
+{
+  const std::string huge_number = "1" + std::string(100021, '0');
+  auto json = TinyJSON::TJ::parse(huge_number.c_str());
+  EXPECT_EQ(nullptr, json);
+}
+
+// A warning should be emitted when precision is lost by truncating whole number digits.
+TEST(TestNumbers, Issue1_WarningTriggeredWhenWholeNumberPrecisionIsLost)
+{
+  Issue1WarningTracker tracker;
+  TinyJSON::parse_options options = {};
+  options.callback_function = std::ref(tracker);
+
+  auto json = TinyJSON::TJ::parse(R"({ "a" : 123456789123456789123456789 })", options);
+  ASSERT_NE(nullptr, json);
+
+  EXPECT_GT(tracker.count, 0);
+
+  delete json;
+}
+
+// A warning should be emitted when precision is lost by truncating fraction digits.
+TEST(TestNumbers, Issue1_WarningTriggeredWhenFractionPrecisionIsLost)
+{
+  Issue1WarningTracker tracker;
+  TinyJSON::parse_options options = {};
+  options.callback_function = std::ref(tracker);
+
+  auto json = TinyJSON::TJ::parse(R"({ "a" : 0.123456789123456789123456789 })", options);
+  ASSERT_NE(nullptr, json);
+
+  EXPECT_GT(tracker.count, 0);
+
+  delete json;
+}
+
+// No warning should be emitted when numbers fit within supported precision.
+TEST(TestNumbers, Issue1_NoWarningWhenNumberFitsWithinPrecision)
+{
+  Issue1WarningTracker tracker;
+  TinyJSON::parse_options options = {};
+  options.callback_function = std::ref(tracker);
+
+  auto json = TinyJSON::TJ::parse(R"([ 123456789012345678, 0.123456789012345678 ])", options);
+  ASSERT_NE(nullptr, json);
+
+  EXPECT_EQ(0, tracker.count);
+
+  delete json;
+}
