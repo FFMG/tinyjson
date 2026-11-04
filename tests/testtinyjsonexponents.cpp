@@ -5,6 +5,7 @@
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 #include <cmath>
+#include <limits>
 
 constexpr long double EPSILON = 1e-10;
 
@@ -350,7 +351,11 @@ TEST(TestExponents, ShortNumberWithLongPositiveExponentShiftsEnoughToBecomeANumb
 
   auto valuea = dynamic_cast<const TinyJSON::TJValueNumberInt*>(jobject->try_get_value("a"));
   ASSERT_NE(nullptr, valuea);
-  ASSERT_EQ(10000000000000000000ULL, (unsigned long long)valuea->get_number());
+  // 10^19 does not fit in a long long so get_number() is clamped, (see https://github.com/FFMG/tinyjson/issues/55)
+  // but the number itself is still kept.
+  ASSERT_EQ(std::numeric_limits<long long>::max(), valuea->get_number());
+  ASSERT_DOUBLE_EQ(1e19, static_cast<double>(valuea->get_float()));
+  ASSERT_STREQ("10000000000000000000", valuea->dump(TinyJSON::formatting::minify));
 
   delete json;
 }
@@ -705,5 +710,44 @@ TEST(TestExponents, PositiveExponentToString)
 {
   auto json = TinyJSON::TJ::parse("2.5e+2");
   EXPECT_STREQ("250", json->dump(TinyJSON::formatting::minify));
+  delete json;
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// The whole fraction becomes the whole number, the fraction has more than one digit.
+TEST(TestExponents, Issue54_LongFractionWithLargePositiveExponentBecomesAWholeNumber)
+{
+  auto json = TinyJSON::TJ::parse("0.12e20");
+  ASSERT_NE(nullptr, json);
+
+  auto value = dynamic_cast<const TinyJSON::TJValueNumberInt*>(json);
+  ASSERT_NE(nullptr, value);
+  ASSERT_STREQ("12000000000000000000", json->dump(TinyJSON::formatting::minify));
+  ASSERT_DOUBLE_EQ(1.2e19, static_cast<double>(json->get_float()));
+  delete json;
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// The number is too big to be a whole number so it remains an exponent.
+TEST(TestExponents, Issue54_LongFractionWithVeryLargePositiveExponentRemainsAnExponent)
+{
+  auto json = TinyJSON::TJ::parse("0.12e30");
+  ASSERT_NE(nullptr, json);
+
+  auto value = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(json);
+  ASSERT_NE(nullptr, value);
+  ASSERT_STREQ("1.2e+29", json->dump(TinyJSON::formatting::minify));
+  ASSERT_DOUBLE_EQ(1.2e29, static_cast<double>(json->get_float()));
+  delete json;
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// The fraction has TJ_MAX_NUMBER_OF_DIGGITS digits and a small negative exponent.
+TEST(TestExponents, Issue54_LongFractionWithSmallNegativeExponent)
+{
+  auto json = TinyJSON::TJ::parse("0.1234567890123456789e-1");
+  ASSERT_NE(nullptr, json);
+
+  ASSERT_DOUBLE_EQ(0.01234567890123456789, static_cast<double>(json->get_float()));
   delete json;
 }

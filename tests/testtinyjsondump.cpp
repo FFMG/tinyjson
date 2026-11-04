@@ -493,7 +493,8 @@ TEST(TestDump, Issue53_ExponentWithMoreThan254FractionDigitsCanBeDumped)
 }
 
 // https://github.com/FFMG/tinyjson/issues/53
-// The example given in the issue, "1.000...0001e-1" is normalised to "0.1000...0001"
+// The example given in the issue, "1.000...0001e-1" cannot be moved to "0.1000...0001"
+// without overflowing, so it stays as an exponent.
 TEST(TestDump, Issue53_SmallNegativeExponentWithMoreThan254FractionDigitsCanBeDumped)
 {
   const auto value = make_number_with_zeros("1.", 300, "1e-1");
@@ -503,7 +504,7 @@ TEST(TestDump, Issue53_SmallNegativeExponentWithMoreThan254FractionDigitsCanBeDu
   const auto& text = json->dump(TinyJSON::formatting::minify);
   ASSERT_NE(nullptr, text);
 
-  const auto expected = make_number_with_zeros("0.1", 300, "1");
-  ASSERT_STREQ(expected.c_str(), text);
+  ASSERT_STREQ(value.c_str(), text);
+  ASSERT_NEAR(0.1, static_cast<double>(json->get_float()), 1e-15);
   delete json;
 }

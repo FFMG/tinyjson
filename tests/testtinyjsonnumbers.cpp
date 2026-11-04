@@ -542,7 +542,7 @@ static void assert_rejected_or_close_to(const std::string& value, const long dou
   }
   const auto actual = json->get_float();
   delete json;
-  ASSERT_NEAR(1.0L, actual / expected, 1e-9L) << "Value: " << value << " was parsed as " << actual;
+  ASSERT_NEAR(1.0, static_cast<double>(actual / expected), 1e-9) << "Value: " << value << " was parsed as " << actual;
 }
 
 // https://github.com/FFMG/tinyjson/issues/54
@@ -664,7 +664,7 @@ TEST(TestNumbers, Issue54_ExampleFromTheIssue)
   const auto second = jarray->at(1)->get_float();
   delete json;
 
-  ASSERT_NEAR(1.0L, first / 18446744073709551617.0L, 1e-9L);
+  ASSERT_NEAR(1.0, static_cast<double>(first / 18446744073709551617.0L), 1e-9);
   ASSERT_TRUE(std::isinf(second));
 }
 

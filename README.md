@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/FFMG/TinyJSON/actions/workflows/c-cpp.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.9-blue.svg)](src/TinyJSON.h)
+[![Version](https://img.shields.io/badge/version-0.2.10-blue.svg)](src/TinyJSON.h)
 
 A lightweight and lightning-fast C++ JSON & JSON5 parser designed for high performance and minimal footprint.
 
@@ -131,8 +131,8 @@ The version is set in the `TinyJSON.h` file.
 ```cpp
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 9;
-static const char TJ_VERSION_STRING[] = "0.2.9";
+static const short TJ_VERSION_PATCH = 10;
+static const char TJ_VERSION_STRING[] = "0.2.10";
 ```
 
 ### Simple Value Access
@@ -785,7 +785,7 @@ include(FetchContent)
 FetchContent_Declare(
   TinyJSON
   GIT_REPOSITORY https://github.com/FFMG/TinyJSON.git
-  GIT_TAG        v0.2.9 # or main
+  GIT_TAG        v0.2.10 # or main
 )
 FetchContent_MakeAvailable(TinyJSON)
 target_link_libraries(your_target PUBLIC TinyJSON)

@@ -51,10 +51,11 @@
 // v0.2.7 - improved parse_file error reporting with specific system errors and file name.
 // v0.2.8 - conformed empty input parsing to RFC specifications (returns nullptr / throws instead of empty string).
 // v0.2.9 - added line and column numbers to parse messages and TJParseException.
+// v0.2.10 - fixed number overflows when parsing, dumping and getting numbers, (issues #53, #54 and #55).
 static const short TJ_VERSION_MAJOR = 0;
 static const short TJ_VERSION_MINOR = 2;
-static const short TJ_VERSION_PATCH = 9;
-static const char TJ_VERSION_STRING[] = "0.2.9";
+static const short TJ_VERSION_PATCH = 10;
+static const char TJ_VERSION_STRING[] = "0.2.10";
 
 #ifndef TJ_USE_CHAR
 #  define TJ_USE_CHAR 1
@@ -1819,6 +1820,7 @@ class TJDictionary;
     virtual ~TJValueNumberInt() = default;
 
     long long get_number() const;
+    long double get_float() const;
 
   protected:
     /// <summary>
