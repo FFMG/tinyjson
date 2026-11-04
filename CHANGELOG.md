@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.10] - 2026-11-04
 
+### Added
+- Warning messages via callback when precision is lost due to truncated whole number or fraction digits (see https://github.com/FFMG/tinyjson/issues/1).
+
 ### Changed
 - Incremented version to 0.2.10.
 - **Breaking Change**: `get_number()` now clamps whole numbers that exceed `long long` range to `LLONG_MAX` or `LLONG_MIN` instead of wrapping around (e.g. `18446744073709551615` used to return `-1`). Use `get_float()` or `dump()` to retrieve the full value (see https://github.com/FFMG/tinyjson/issues/55).
 
 ### Fixed
 - Fixed a stack buffer overflow when dumping numbers with more than 254 fraction digits by dynamically sizing the buffer (see https://github.com/FFMG/tinyjson/issues/53).
-- Fixed silent integer overflows and parsing errors for large numbers and exponents (see https://github.com/FFMG/tinyjson/issues/54):
+- Fixed silent integer overflows and parsing errors for large numbers and exponents (see https://github.com/FFMG/tinyjson/issues/1, https://github.com/FFMG/tinyjson/issues/54):
   - Whole numbers exceeding `ULLONG_MAX` are converted to exponent notation instead of wrapping around.
   - Fractions are capped at 19 significant digits without wrapping around.
   - Exponents exceeding 32 bits or outside `[-100000, 100000]` are rejected with an out-of-range parse error.

@@ -3271,6 +3271,24 @@ namespace TinyJSON
       return number_of_digits_read;
     }
 
+    /// <summary>
+    /// Check if a string of digits contains at least one non zero digit.
+    /// </summary>
+    /// <param name="p">The string of digits, it should only contain digits.</param>
+    /// <returns>True if at least one of the digits is not zero.</returns>
+    static bool has_non_zero_digit(const TJCHAR* p)
+    {
+      while (*p >= '0' && *p <= '9')
+      {
+        if (*p != '0')
+        {
+          return true;
+        }
+        ++p;
+      }
+      return false;
+    }
+
     static unsigned long long fast_string_to_long_long(const TJCHAR* p)
     {
       // the numbers are unsigned and should only contain digits.
@@ -3463,6 +3481,10 @@ namespace TinyJSON
       const auto& number_of_whole_digits = string_length(possible_number);
       const auto& number_of_whole_digits_read = fast_string_to_unsigned_long_long_without_overflow(possible_number, number_of_whole_digits, unsigned_whole_number);
       const auto& number_of_whole_digits_ignored = number_of_whole_digits - number_of_whole_digits_read;
+      if (has_non_zero_digit(possible_number + number_of_whole_digits_read))
+      {
+        parse_result.raise(parse_options::message_type::warning, number_start, TJCHARPREFIX("Whole number exceeds supported precision, some digits were truncated."));
+      }
       delete[] possible_number;
 
       // read the fraction if there is one.
@@ -3490,13 +3512,17 @@ namespace TinyJSON
         {
           if (number_of_whole_digits_ignored == 0)
           {
-            // so 001 become exponent = 3
-            // we only keep TJ_MAX_NUMBER_OF_DIGGITS significant digits, the rest of the fraction is ignored
-            // leading zeros are not significant so 0.000...0001 is not truncated.
+            // Keep at most TJ_MAX_NUMBER_OF_DIGGITS significant digits; leading zeros are preserved.
             fraction_exponent = fast_string_to_unsigned_long_long_without_overflow(possible_fraction_number, static_cast<unsigned int>(TJ_MAX_NUMBER_OF_DIGGITS), unsigned_fraction);
+            if (has_non_zero_digit(possible_fraction_number + fraction_exponent))
+            {
+              parse_result.raise(parse_options::message_type::warning, number_start, TJCHARPREFIX("Fraction exceeds supported precision, some digits were truncated."));
+            }
           }
-          // else the whole number was already too big for all its digits
-          // so the fraction is too small to make a difference.
+          else if (has_non_zero_digit(possible_fraction_number))
+          {
+            parse_result.raise(parse_options::message_type::warning, number_start, TJCHARPREFIX("Whole number exceeds supported precision, the fraction was ignored."));
+          }
           delete[] possible_fraction_number;
         }
       }
