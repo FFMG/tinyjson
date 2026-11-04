@@ -42,6 +42,8 @@
 #include <sys/stat.h>
 
 static constexpr short TJ_MAX_NUMBER_OF_DIGGITS = 19;
+// the largest exponent we accept when parsing, 1e100000 or 1e-100000, anything larger is rejected.
+static constexpr long long TJ_MAX_EXPONENT = 100000;
 static constexpr short TJ_DEFAULT_STRING_READ_SIZE = 10;
 static constexpr unsigned int TJ_DEFAULT_STRING_MAX_READ_SIZE = 4294967295;
 
@@ -1546,11 +1548,22 @@ namespace TinyJSON
       return (number << 3) + (number << 1);
     }
 
+    /// <summary>
+    /// Raise 10 to the power of exponent.
+    /// 10^19 is the largest power of 10 that fits in an unsigned long long,
+    /// anything larger returns the max unsigned long long rather than silently wrapping around, (or returning 0).
+    /// </summary>
+    /// <param name="exponent"></param>
+    /// <returns></returns>
     static unsigned long long fast_power_of_10(unsigned int exponent)
     {
       if (exponent == 0)
       {
         return 1;
+      }
+      if (exponent > static_cast<unsigned int>(TJ_MAX_NUMBER_OF_DIGGITS))
+      {
+        return std::numeric_limits<unsigned long long>::max();
       }
 
       unsigned long long base = 10;
@@ -1614,86 +1627,42 @@ namespace TinyJSON
     /// <returns></returns>
     static TJCHAR* fast_number_to_string(unsigned long long number, unsigned int fraction_exponent, bool is_negative, unsigned int& length, bool force_positive_sign = false)
     {
-      TJCHAR reverse_buffer[255];
-      unsigned reverse_position = 0;
-      length = 0;
+      // Work out the exact length needed first; fraction_exponent has no upper limit, so we cannot use a fixed-size buffer:
 
-      if (number == 0)
+      //   - the number of digits, (zero is a single digit).
+      //   - the number of leading zeros, (if the fraction_exponent is longer than the number).
+      //   - the sign, if we need one.
+      const unsigned int number_of_digits = number == 0 ? 1 : get_number_of_digits(number);
+      const unsigned int number_of_leading_zeros = fraction_exponent > number_of_digits ? fraction_exponent - number_of_digits : 0;
+      const unsigned int number_of_signs = (is_negative || force_positive_sign) ? 1 : 0;
+      length = number_of_signs + number_of_leading_zeros + number_of_digits;
+
+      TJCHAR* buffer = new TJCHAR[length + 1];
+      buffer[length] = TJ_NULL_TERMINATOR;
+
+      // write the digits from the end of the buffer.
+      unsigned int position = length;
+      for (unsigned int i = 0; i < number_of_digits; ++i)
       {
-        reverse_buffer[reverse_position++] = '0';
-      }
-      else
-      {
-        while (number > 0)
-        {
-          auto mod = number % 10;
-          switch (mod)
-          {
-          case 0:
-            reverse_buffer[reverse_position++] = '0';
-            break;
-
-          case 1:
-            reverse_buffer[reverse_position++] = '1';
-            break;
-
-          case 2:
-            reverse_buffer[reverse_position++] = '2';
-            break;
-          case 3:
-            reverse_buffer[reverse_position++] = '3';
-            break;
-          case 4:
-            reverse_buffer[reverse_position++] = '4';
-            break;
-          case 5:
-            reverse_buffer[reverse_position++] = '5';
-            break;
-          case 6:
-            reverse_buffer[reverse_position++] = '6';
-            break;
-          case 7:
-            reverse_buffer[reverse_position++] = '7';
-            break;
-          case 8:
-            reverse_buffer[reverse_position++] = '8';
-            break;
-          case 9:
-            reverse_buffer[reverse_position++] = '9';
-            break;
-
-          default:
-            break;
-          }
-          number /= 10;
-        }
+        buffer[--position] = static_cast<TJCHAR>('0' + static_cast<int>(number % 10));
+        number /= 10;
       }
 
-      if (fraction_exponent > reverse_position)
+      // then the leading zeros, if any.
+      while (position > number_of_signs)
       {
-        const unsigned int zeros = fraction_exponent - reverse_position;
-        for (unsigned int j = 0; j < zeros; ++j)
-        {
-          reverse_buffer[reverse_position++] = '0';
-        }
+        buffer[--position] = '0';
       }
+
+      // and finally the sign
       if (is_negative)
       {
-        reverse_buffer[reverse_position++] = '-';
+        buffer[0] = '-';
       }
       else if (force_positive_sign)
       {
-        reverse_buffer[reverse_position++] = '+';
+        buffer[0] = '+';
       }
-
-      TJCHAR* buffer = new TJCHAR[reverse_position + 1];
-      buffer[reverse_position] = TJ_NULL_TERMINATOR;
-      for (unsigned int i = 0; i < reverse_position; ++i)
-      {
-        buffer[reverse_position - 1 - i] = reverse_buffer[i];
-      }
-
-      length = reverse_position;
       return buffer;
     }
 
@@ -2101,6 +2070,12 @@ namespace TinyJSON
       if (number == 0)
       {
         return 0ull;
+      }
+      if (number >= 10000000000000000000ull)
+      {
+        // 10^19 is the largest power of 10 that fits in an unsigned long long
+        // so we cannot multiply by 10 again without wrapping around.
+        return 20;
       }
       unsigned int digit = 0;
       for (unsigned long long i = 0; i <= number; ++digit)
@@ -2900,37 +2875,100 @@ namespace TinyJSON
       return shifted_unsigned_fraction;
     }
 
+    /// <summary>
+    /// Create an exponent number with a single digit whole number, for example 123.45e+6 becomes 1.2345e+8
+    /// and 0.0012e+6 becomes 1.2e+3
+    /// If the fraction would need more than TJ_MAX_NUMBER_OF_DIGGITS digits then it is truncated
+    /// rather than overflowing
+    /// </summary>
+    /// <param name="is_negative"></param>
+    /// <param name="unsigned_whole_number"></param>
+    /// <param name="unsigned_fraction"></param>
+    /// <param name="fraction_exponent"></param>
+    /// <param name="exponent">The signed exponent</param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    static TJValue* create_number_from_parts_as_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const int exponent, const parse_options& options = {})
+    {
+      const auto& max_number_of_digits = static_cast<unsigned int>(TJ_MAX_NUMBER_OF_DIGGITS);
+      if (unsigned_whole_number == 0)
+      {
+        if (unsigned_fraction == 0)
+        {
+          // zero is a positive number
+          return new TJValueNumberInt(0ull, false, options);
+        }
+
+        // the first significant digit of the fraction becomes the whole number.
+        // 0.0012e+6 has 2 leading zeros so the 1 is moved 3 places to the left, 1.2e+3
+        const auto& fraction_length = get_number_of_digits(unsigned_fraction);
+        const auto& leading_zeros = fraction_exponent - fraction_length;
+        unsigned long long shifted_unsigned_fraction = 0;
+        const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_fraction, fraction_length - 1, shifted_unsigned_fraction);
+        return new TJValueNumberExponent(
+          shifted_unsigned_whole_number,
+          shifted_unsigned_fraction,
+          fraction_length - 1,
+          exponent - static_cast<int>(leading_zeros + 1),
+          is_negative, options);
+      }
+
+      // the whole number is moved to a single digit, the rest of the digits are moved to the fraction.
+      // 123.45e+6 the 23 is moved to the front of the fraction, 1.2345e+8
+      const auto& number_of_digit_whole = get_number_of_digits(unsigned_whole_number);
+      const unsigned int whole_number_shift = number_of_digit_whole - 1;
+      unsigned long long whole_number_remainder = 0;
+      const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, whole_number_shift, whole_number_remainder);
+
+      unsigned long long shifted_unsigned_fraction = 0;
+      unsigned int shifted_fraction_exponent = 0;
+      if (whole_number_remainder == 0)
+      {
+        // only zeros were moved, (or nothing at all), so the fraction just has more leading zeros.
+        // 100.5e+6 becomes 1.005e+8
+        shifted_unsigned_fraction = unsigned_fraction;
+        shifted_fraction_exponent = unsigned_fraction == 0 ? 0 : whole_number_shift + fraction_exponent;
+      }
+      else if (whole_number_shift + fraction_exponent <= max_number_of_digits)
+      {
+        // everything fits, we just put the remainder in front of the fraction.
+        shifted_unsigned_fraction = shift_number_left(whole_number_remainder, fraction_exponent) + unsigned_fraction;
+        shifted_fraction_exponent = whole_number_shift + fraction_exponent;
+      }
+      else
+      {
+        // we cannot keep all the digits, so we keep as many of the fraction as we can.
+        const unsigned int fraction_digits_to_keep = max_number_of_digits - whole_number_shift;
+        unsigned long long ignored = 0;
+        shifted_unsigned_fraction = shift_number_left(whole_number_remainder, fraction_digits_to_keep)
+          + shift_number_right(unsigned_fraction, fraction_exponent - fraction_digits_to_keep, ignored);
+        shifted_fraction_exponent = max_number_of_digits;
+      }
+
+      return new TJValueNumberExponent(
+        shifted_unsigned_whole_number,
+        shifted_unsigned_fraction,
+        shifted_fraction_exponent,
+        exponent + static_cast<int>(whole_number_shift),
+        is_negative, options);
+    }
+
     static TJValue* try_create_number_from_parts_positive_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
     {
       if (exponent >= fraction_exponent)
       {
-        unsigned long long shifted_unsigned_fraction = 0;
-        unsigned int shitfed_unsigned_fraction_exponent = 0;
-        const auto& fraction_length = get_number_of_digits(unsigned_fraction);
-        const auto& leading_zeros = fraction_exponent - fraction_length;
-        // we just want the first number so we are passing a 1x exponent only
-        // but we need to add the number of leading zeros to make sure that we shift properly.
-        const auto& shifted_unsigned_whole_number = shift_fraction_left(unsigned_fraction, fraction_exponent, leading_zeros + 1, shifted_unsigned_fraction, shitfed_unsigned_fraction_exponent);
-
-        const auto& shifted_fraction_exponent = exponent - fraction_exponent;
-        if (shifted_fraction_exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+        // the whole fraction moves to the whole number, 0.0012e+6 becomes 1200
+        // so the number is the fraction shifted by what is left of the exponent.
+        const auto& shift = exponent - fraction_exponent;
+        if (shift <= static_cast<unsigned int>(TJ_MAX_NUMBER_OF_DIGGITS) &&
+          unsigned_fraction <= std::numeric_limits<unsigned long long>::max() / fast_power_of_10(shift))
         {
-          if (shifted_unsigned_fraction == 0)
-          {
-            return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent), is_negative, options);
-          }
-
-          return new TJValueNumberFloat(
-            shift_number_left(shifted_unsigned_whole_number, shifted_fraction_exponent),
-            shifted_unsigned_fraction,
-            shifted_fraction_exponent,
-            is_negative, options);
+          return new TJValueNumberInt(shift_number_left(unsigned_fraction, shift), is_negative, options);
         }
 
-        // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
-        return nullptr;
+        // the number is too big, so we keep it as an exponent, 0.12e+30 becomes 1.2e+29
+        return create_number_from_parts_as_exponent(is_negative, 0ull, unsigned_fraction, fraction_exponent, static_cast<int>(exponent), options);
       }
-
 
       // the number is something like 0.00001e+3 the fraction_exponent is 4 and the exponent is 3
       // so we can just move the fraction to the left the whole number will remain zero
@@ -2942,8 +2980,8 @@ namespace TinyJSON
         return new TJValueNumberFloat(0ull, unsigned_fraction, shifted_fraction_exponent, is_negative, options);
       }
 
-      // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
-      return nullptr;
+      // the fraction is too long to be kept as a float, so we keep it as an exponent.
+      return create_number_from_parts_as_exponent(is_negative, 0ull, unsigned_fraction, fraction_exponent, static_cast<int>(exponent), options);
     }
 
     static TJValue* try_create_number_from_parts_positive_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
@@ -3000,23 +3038,8 @@ namespace TinyJSON
       // case 2b:
       //   The whole number is more than zero _and_ the fraction is also non zero.
       //   The total is, (currently), greater than TJ_MAX_NUMBER_OF_DIGGITS
-      const unsigned int shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
-      unsigned long long shifted_unsigned_fraction = 0;
-      const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, shifted_unsigned_whole_number_exponent, shifted_unsigned_fraction);
-
-      // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
-      auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(shifted_fraction_exponent)) + unsigned_fraction;
-
-      // and the exponent also shitt byt the number we moved.
-      const unsigned int shifted_exponent = exponent + shifted_unsigned_whole_number_exponent;
-
-      return new TJValueNumberExponent(
-        shifted_unsigned_whole_number,
-        shifted_unsigned_fraction,
-        (shifted_unsigned_whole_number_exponent + fraction_exponent),
-        shifted_exponent,
-        is_negative, options);
+      //   so we move the whole number to be a single digit and the exponent is moved accordingly.
+      return create_number_from_parts_as_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, static_cast<int>(exponent), options);
     }
 
     static TJValue* try_create_number_from_parts_negative_exponent(const bool& is_negative, const unsigned long long& unsigned_whole_number, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
@@ -3030,7 +3053,10 @@ namespace TinyJSON
       // case 1:
       //   The total number is less than TJ_MAX_NUMBER_OF_DIGGITS
       //   so we can get rid of the exponent altogether.
-      if (number_of_digit_whole + number_of_digit_fraction + exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
+      //   But if the whole number is not zero, the digits we move from the whole number are shifted
+      //   by the fraction_exponent, (leading zeros included), so that must also fit.
+      if (number_of_digit_whole + number_of_digit_fraction + exponent <= TJ_MAX_NUMBER_OF_DIGGITS &&
+        (unsigned_whole_number == 0 || fraction_exponent + exponent <= static_cast<unsigned int>(TJ_MAX_NUMBER_OF_DIGGITS)))
       {
         // we will shift the whole number to the left right by the number of exponents.
         // so 2e-3 would become 0.002
@@ -3073,24 +3099,8 @@ namespace TinyJSON
       // case 2b:
       //   The whole number is more than zero _and_ the fraction is also non zero.
       //   The total is, (currently), greater than TJ_MAX_NUMBER_OF_DIGGITS
-      const unsigned int shifted_unsigned_whole_number_exponent = number_of_digit_whole - 1;
-      unsigned long long shifted_unsigned_fraction = 0;
-      const auto& shifted_unsigned_whole_number = shift_number_right(unsigned_whole_number, shifted_unsigned_whole_number_exponent, shifted_unsigned_fraction);
-
-      // we then need to add shifted_unsigned_fraction in front of unsigned_fraction
-      auto shifted_fraction_exponent = shifted_unsigned_whole_number_exponent + (fraction_exponent - shifted_unsigned_whole_number_exponent);
-      shifted_unsigned_fraction = (shifted_unsigned_fraction * fast_power_of_10(shifted_fraction_exponent)) + unsigned_fraction;
-
-      // and the exponent also shitt by the number we moved.
-      // as it is a negative exponent we need to move to the left.
-      const unsigned int shifted_exponent = exponent - shifted_unsigned_whole_number_exponent;
-
-      return new TJValueNumberExponent(
-        shifted_unsigned_whole_number,
-        shifted_unsigned_fraction,
-        (shifted_unsigned_whole_number_exponent + fraction_exponent),
-        -1 * shifted_exponent,
-        is_negative, options);
+      //   so we move the whole number to be a single digit and the exponent is moved accordingly.
+      return create_number_from_parts_as_exponent(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, -1 * static_cast<int>(exponent), options);
     }
 
     static TJValue* try_create_number_from_parts_negative_exponent_no_whole_number(const bool& is_negative, const unsigned long long& unsigned_fraction, const unsigned int fraction_exponent, const unsigned int exponent, const parse_options& options = {})
@@ -3112,15 +3122,9 @@ namespace TinyJSON
 
       if (actual_shifted_fraction_exponent <= TJ_MAX_NUMBER_OF_DIGGITS)
       {
-        if (shifted_unsigned_fraction == 0)
-        {
-          return new TJValueNumberInt(shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent), is_negative, options);
-        }
-        return new TJValueNumberFloat(
-          shift_number_left(shifted_unsigned_whole_number, shifted_unsigned_fraction_exponent),
-          shifted_unsigned_fraction,
-          shifted_unsigned_fraction_exponent,
-          is_negative, options);
+        // there is no whole number and the exponent is negative so the number is less than one
+        // the fraction remains the same, it just has more leading zeros, 0.12e-1 becomes 0.012
+        return new TJValueNumberFloat(0ull, unsigned_fraction, fraction_exponent + exponent, is_negative, options);
       }
 
       // TODO: Cases where exponent is > than TJ_MAX_NUMBER_OF_DIGGITS
@@ -3230,6 +3234,59 @@ namespace TinyJSON
         --len;
       }
       return whole_number;
+    }
+
+    /// <summary>
+    /// Convert a string of digits to an unsigned long long, but stop before the number overflows
+    /// or before we read more than maximum_number_of_significant_digits, (leading zeros are not significant).
+    /// </summary>
+    /// <param name="p">The string of digits, it should only contain digits.</param>
+    /// <param name="maximum_number_of_significant_digits">The maximum number of significant digits we want to read.</param>
+    /// <param name="number">The number we read.</param>
+    /// <returns>The number of digits we read, if it is less than the length of the string then the rest of the digits were ignored.</returns>
+    static unsigned int fast_string_to_unsigned_long_long_without_overflow(const TJCHAR* p, const unsigned int maximum_number_of_significant_digits, unsigned long long& number)
+    {
+      number = 0;
+      unsigned int number_of_digits_read = 0;
+      unsigned int number_of_significant_digits = 0;
+      while (*p >= '0' && *p <= '9')
+      {
+        const auto& digit = static_cast<unsigned long long>(*p - '0');
+        if (number != 0 || digit != 0)
+        {
+          if (number_of_significant_digits >= maximum_number_of_significant_digits)
+          {
+            break;
+          }
+          if (number > (std::numeric_limits<unsigned long long>::max() - digit) / 10)
+          {
+            break;
+          }
+          ++number_of_significant_digits;
+        }
+        number = fast_multiply_by_10(number) + digit;
+        ++number_of_digits_read;
+        ++p;
+      }
+      return number_of_digits_read;
+    }
+
+    /// <summary>
+    /// Check if a string of digits contains at least one non zero digit.
+    /// </summary>
+    /// <param name="p">The string of digits, it should only contain digits.</param>
+    /// <returns>True if at least one of the digits is not zero.</returns>
+    static bool has_non_zero_digit(const TJCHAR* p)
+    {
+      while (*p >= '0' && *p <= '9')
+      {
+        if (*p != '0')
+        {
+          return true;
+        }
+        ++p;
+      }
+      return false;
     }
 
     static unsigned long long fast_string_to_long_long(const TJCHAR* p)
@@ -3417,11 +3474,20 @@ namespace TinyJSON
         return nullptr;
       }
 
-      // convert that number to an unsigned long, long
-      const auto& unsigned_whole_number = fast_string_to_long_long(possible_number);
+      // convert that number to an unsigned long long
+      // if the number is too big, (more than 18446744073709551615), we keep the digits that fit
+      // and the digits we could not read are added to the exponent, (we lose some precision).
+      unsigned long long unsigned_whole_number = 0;
+      const auto& number_of_whole_digits = string_length(possible_number);
+      const auto& number_of_whole_digits_read = fast_string_to_unsigned_long_long_without_overflow(possible_number, number_of_whole_digits, unsigned_whole_number);
+      const auto& number_of_whole_digits_ignored = number_of_whole_digits - number_of_whole_digits_read;
+      if (has_non_zero_digit(possible_number + number_of_whole_digits_read))
+      {
+        parse_result.raise(parse_options::message_type::warning, number_start, TJCHARPREFIX("Whole number exceeds supported precision, some digits were truncated."));
+      }
       delete[] possible_number;
 
-      // read the faction if there is one.
+      // read the fraction if there is one.
       unsigned long long unsigned_fraction = 0;
       unsigned int fraction_exponent = 0;
       if (*p == '.')
@@ -3444,15 +3510,26 @@ namespace TinyJSON
         }
         else
         {
-          // so 001 become exponent = 3
-          fraction_exponent = string_length(possible_fraction_number);
-          unsigned_fraction = fast_string_to_long_long(possible_fraction_number);
+          if (number_of_whole_digits_ignored == 0)
+          {
+            // Keep at most TJ_MAX_NUMBER_OF_DIGGITS significant digits; leading zeros are preserved.
+            fraction_exponent = fast_string_to_unsigned_long_long_without_overflow(possible_fraction_number, static_cast<unsigned int>(TJ_MAX_NUMBER_OF_DIGGITS), unsigned_fraction);
+            if (has_non_zero_digit(possible_fraction_number + fraction_exponent))
+            {
+              parse_result.raise(parse_options::message_type::warning, number_start, TJCHARPREFIX("Fraction exceeds supported precision, some digits were truncated."));
+            }
+          }
+          else if (has_non_zero_digit(possible_fraction_number))
+          {
+            parse_result.raise(parse_options::message_type::warning, number_start, TJCHARPREFIX("Whole number exceeds supported precision, the fraction was ignored."));
+          }
           delete[] possible_fraction_number;
         }
       }
 
       // try read the exponent if there is one.
-      int exponent = 0;
+      // the digits of the whole number we could not read are added to the exponent
+      long long exponent = static_cast<long long>(number_of_whole_digits_ignored);
       if (*p == 'e' || *p == 'E')
       {
         p++;
@@ -3475,22 +3552,28 @@ namespace TinyJSON
           return nullptr;
         }
 
-        const auto& unsigned_exponent = static_cast<unsigned int>(fast_string_to_long_long(possible_exponent));
+        // read the exponent without overflowing, if we cannot read all of it then it is too big.
+        unsigned long long unsigned_exponent = 0;
+        const auto& number_of_exponent_digits = string_length(possible_exponent);
+        const auto& number_of_exponent_digits_read = fast_string_to_unsigned_long_long_without_overflow(possible_exponent, number_of_exponent_digits, unsigned_exponent);
         delete[] possible_exponent;
+        if (number_of_exponent_digits_read != number_of_exponent_digits || unsigned_exponent > static_cast<unsigned long long>(TJ_MAX_EXPONENT))
+        {
+          parse_result.assign_exception_message(number_start, "Number exponent is out of range.");
+          return nullptr;
+        }
 
         // as per the spec it is allowed to have 1e00
-        // https://github.com/FFMG/tinyjson/issues/14
-        if (0 == unsigned_exponent)
-        {
-          exponent = 0;
-          is_negative_exponent = false;
-        }
-        else
-        {
-          exponent = is_negative_exponent ? unsigned_exponent * -1 : unsigned_exponent;
-        }
+        exponent += is_negative_exponent ? -1 * static_cast<long long>(unsigned_exponent) : static_cast<long long>(unsigned_exponent);
       }
-      return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, exponent, parse_result.options());
+
+      // the exponent could have grown because the whole number was too big.
+      if (exponent > TJ_MAX_EXPONENT || exponent < -1 * TJ_MAX_EXPONENT)
+      {
+        parse_result.assign_exception_message(number_start, "Number exponent is out of range.");
+        return nullptr;
+      }
+      return try_create_number_from_parts(is_negative, unsigned_whole_number, unsigned_fraction, fraction_exponent, static_cast<int>(exponent), parse_result.options());
     }
 
     /// <summary>
@@ -6884,7 +6967,7 @@ namespace TinyJSON
     auto value_int = dynamic_cast<const TinyJSON::TJValueNumberInt*>(this);
     if (nullptr != value_int)
     {
-      return static_cast<long double>(value_int->get_number());
+      return value_int->get_float();
     }
 
     auto value_exponent = dynamic_cast<const TinyJSON::TJValueNumberExponent*>(this);
@@ -6899,12 +6982,35 @@ namespace TinyJSON
     return 0.0L;
   }
 
+  /// <summary>
+  /// Convert a long double to a long long, clamping the values that do not fit
+  /// as casting them is undefined behaviour.
+  /// </summary>
+  /// <param name="value"></param>
+  /// <returns></returns>
+  static long long clamp_long_double_to_long_long(const long double value)
+  {
+    if (std::isnan(value))
+    {
+      return 0;
+    }
+    if (value >= static_cast<long double>(std::numeric_limits<long long>::max()))
+    {
+      return std::numeric_limits<long long>::max();
+    }
+    if (value <= static_cast<long double>(std::numeric_limits<long long>::min()))
+    {
+      return std::numeric_limits<long long>::min();
+    }
+    return static_cast<long long>(value);
+  }
+
   long long TJValueNumber::get_number() const
   {
     auto value_float = dynamic_cast<const TinyJSON::TJValueNumberFloat*>(this);
     if (nullptr != value_float)
     {
-      return static_cast<long long>(value_float->get_number());
+      return clamp_long_double_to_long_long(value_float->get_number());
     }
 
     auto value_int = dynamic_cast<const TinyJSON::TJValueNumberInt*>(this);
@@ -6917,7 +7023,7 @@ namespace TinyJSON
     if (nullptr != value_exponent)
     {
       // probably over/underflow
-      return static_cast<long long>(value_exponent->get_number());
+      return clamp_long_double_to_long_long(value_exponent->get_number());
     }
 
     ParseResult _parse_result(_parse_options);
@@ -7000,7 +7106,30 @@ namespace TinyJSON
 
   long long TJValueNumberInt::get_number() const
   {
-    return _is_negative ? -1 * static_cast<long long>(_number) : static_cast<long long>(_number);
+    // the number is unsigned so it can be bigger than a long long, in that case we clamp it
+    // rather than silently wrapping around
+    const auto& max_long_long = static_cast<unsigned long long>(std::numeric_limits<long long>::max());
+    if (_is_negative)
+    {
+      if (_number > max_long_long)
+      {
+        // this includes LLONG_MIN itself, (max+1), as we cannot do -1 * (max+1)
+        return std::numeric_limits<long long>::min();
+      }
+      return -1 * static_cast<long long>(_number);
+    }
+    if (_number > max_long_long)
+    {
+      return std::numeric_limits<long long>::max();
+    }
+    return static_cast<long long>(_number);
+  }
+
+  long double TJValueNumberInt::get_float() const
+  {
+    // use the unsigned number directly so we do not lose the numbers that do not fit in a long long.
+    const auto& number = static_cast<long double>(_number);
+    return _is_negative ? -1 * number : number;
   }
 
   ///////////////////////////////////////
@@ -7190,6 +7319,13 @@ namespace TinyJSON
 
     if (_fraction == 0) {
       return static_cast<long double>(_number);
+    }
+
+    if (_fraction_exponent > static_cast<unsigned int>(TJ_MAX_NUMBER_OF_DIGGITS))
+    {
+      // the fraction has a lot of leading zeros, 10^_fraction_exponent does not fit in an unsigned long long
+      const auto& fraction = static_cast<long double>(_fraction) / std::pow(10.0L, static_cast<long double>(_fraction_exponent));
+      return (_is_negative ? -1 : 1) * (static_cast<long double>(_number) + fraction);
     }
 
     // Convert b to its fractional form
