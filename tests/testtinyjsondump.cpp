@@ -5,6 +5,9 @@
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 
+#include <string>
+#include <vector>
+
 TEST(TestDump, EmptyArray) {
   auto json = TinyJSON::TJ::parse("[]");
   ASSERT_NE(nullptr, json);
@@ -410,5 +413,97 @@ TEST(TestDump, DumpOfAStringWillExcapeTheNewLine) {
   ASSERT_NE(nullptr, text);
 
   ASSERT_STREQ(R"("This is a string.\nAnd this is a new line")", text);
+  delete json;
+}
+
+// https://github.com/FFMG/tinyjson/issues/53
+// Build a number with a very long run of zeros, for example "0." + "000...000" + "1"
+static std::string make_number_with_zeros(const std::string& prefix, const unsigned int number_of_zeros, const std::string& suffix)
+{
+  return prefix + std::string(number_of_zeros, '0') + suffix;
+}
+
+// https://github.com/FFMG/tinyjson/issues/53
+// The fraction is written into a 255 char buffer, anything longer overflows the stack.
+TEST(TestDump, Issue53_FloatWithMoreThan254FractionDigitsCanBeDumped)
+{
+  const auto value = make_number_with_zeros("0.", 300, "1");
+  auto json = TinyJSON::TJ::parse(value.c_str());
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(value.c_str(), text);
+  delete json;
+}
+
+// https://github.com/FFMG/tinyjson/issues/53
+TEST(TestDump, Issue53_NegativeFloatWithMoreThan254FractionDigitsCanBeDumped)
+{
+  const auto value = make_number_with_zeros("-0.", 300, "1");
+  auto json = TinyJSON::TJ::parse(value.c_str());
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text);
+
+  ASSERT_STREQ(value.c_str(), text);
+  delete json;
+}
+
+// https://github.com/FFMG/tinyjson/issues/53
+// Walk across the 255 char boundary, (fraction lengths 250 to 300).
+TEST(TestDump, Issue53_FloatFractionLengthAroundTheBufferBoundaryCanBeDumped)
+{
+  for (unsigned int number_of_zeros = 249; number_of_zeros < 300; ++number_of_zeros)
+  {
+    const auto value = make_number_with_zeros("0.", number_of_zeros, "1");
+    auto json = TinyJSON::TJ::parse(value.c_str());
+    ASSERT_NE(nullptr, json) << "Number of zeros: " << number_of_zeros;
+
+    const auto& text = json->dump(TinyJSON::formatting::minify);
+    ASSERT_NE(nullptr, text) << "Number of zeros: " << number_of_zeros;
+
+    ASSERT_STREQ(value.c_str(), text) << "Number of zeros: " << number_of_zeros;
+    delete json;
+  }
+}
+
+// https://github.com/FFMG/tinyjson/issues/53
+// Same overflow but via fast_number_fraction_and_exponent_to_string(...)
+TEST(TestDump, Issue53_ExponentWithMoreThan254FractionDigitsCanBeDumped)
+{
+  std::vector<std::string> values;
+  values.push_back(make_number_with_zeros("1.", 300, "1e-20"));
+  values.push_back(make_number_with_zeros("1.", 300, "1e+20"));
+  values.push_back(make_number_with_zeros("-1.", 300, "1e-20"));
+  values.push_back(make_number_with_zeros("-1.", 300, "1e+20"));
+  for (auto& value : values)
+  {
+    auto json = TinyJSON::TJ::parse(value.c_str());
+    ASSERT_NE(nullptr, json);
+
+    const auto& text = json->dump(TinyJSON::formatting::minify);
+    ASSERT_NE(nullptr, text);
+
+    ASSERT_STREQ(value.c_str(), text);
+    delete json;
+  }
+}
+
+// https://github.com/FFMG/tinyjson/issues/53
+// The example given in the issue, "1.000...0001e-1" is normalised to "0.1000...0001"
+TEST(TestDump, Issue53_SmallNegativeExponentWithMoreThan254FractionDigitsCanBeDumped)
+{
+  const auto value = make_number_with_zeros("1.", 300, "1e-1");
+  auto json = TinyJSON::TJ::parse(value.c_str());
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text);
+
+  const auto expected = make_number_with_zeros("0.1", 300, "1");
+  ASSERT_STREQ(expected.c_str(), text);
   delete json;
 }

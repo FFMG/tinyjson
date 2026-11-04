@@ -6,6 +6,8 @@
 #define TJ_USE_CHAR 1
 #include "../src/TinyJSON.h"
 #include <cmath>
+#include <limits>
+#include <string>
 
 TEST(TestNumbers, NumberIsAfterMissingColon) {
   auto json = TinyJSON::TJ::parse(R"(
@@ -526,3 +528,224 @@ TEST(TestNumbers, CreateFloatByPassingNegativeNumber) {
 
   delete json;
   }
+
+
+// https://github.com/FFMG/tinyjson/issues/54
+// A number that does not fit must either be rejected, (parse returns nullptr),
+// or keep (roughly) its real value, what it must never do is silently wrap around.
+static void assert_rejected_or_close_to(const std::string& value, const long double expected)
+{
+  auto json = TinyJSON::TJ::parse(value.c_str());
+  if (nullptr == json)
+  {
+    return;
+  }
+  const auto actual = json->get_float();
+  delete json;
+  ASSERT_NEAR(1.0L, actual / expected, 1e-9L) << "Value: " << value << " was parsed as " << actual;
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// A huge positive exponent must either be rejected or become infinite.
+static void assert_rejected_or_infinite(const std::string& value)
+{
+  auto json = TinyJSON::TJ::parse(value.c_str());
+  if (nullptr == json)
+  {
+    return;
+  }
+  const auto actual = json->get_float();
+  delete json;
+  ASSERT_TRUE(std::isinf(actual)) << "Value: " << value << " was parsed as " << actual;
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// A huge negative exponent must either be rejected or become zero.
+static void assert_rejected_or_zero(const std::string& value)
+{
+  auto json = TinyJSON::TJ::parse(value.c_str());
+  if (nullptr == json)
+  {
+    return;
+  }
+  const auto actual = json->get_float();
+  delete json;
+  ASSERT_EQ(0.0L, actual) << "Value: " << value << " was parsed as " << actual;
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+TEST(TestNumbers, Issue54_WholeNumberLargerThan64BitsDoesNotWrap)
+{
+  std::vector<std::string> values;
+  values.push_back("18446744073709551616");  // 2^64, wraps to 0
+  values.push_back("18446744073709551617");  // 2^64+1, wraps to 1
+  values.push_back("-18446744073709551617"); // wraps to -1
+  values.push_back("99999999999999999999");
+  values.push_back("123456789012345678901234567890");
+  values.push_back("18446744073709551617.5");
+  values.push_back("18446744073709551617e2");
+  for (auto& value : values)
+  {
+    assert_rejected_or_close_to(value, std::stold(value));
+  }
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+TEST(TestNumbers, Issue54_FractionLongerThan64BitsDoesNotWrap)
+{
+  std::vector<std::string> values;
+  values.push_back("0.18446744073709551617"); // fraction wraps to 1, (0.00000000000000000001)
+  values.push_back("1.18446744073709551617");
+  values.push_back("-0.18446744073709551617");
+  values.push_back("0.99999999999999999999");
+  values.push_back("3.14159265358979323846264338327950288");
+  values.push_back("1.18446744073709551617e2");
+  values.push_back("1.18446744073709551617e-2");
+  for (auto& value : values)
+  {
+    assert_rejected_or_close_to(value, std::stold(value));
+  }
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// The exponent is cast to an unsigned int so 2^32 wraps to 0 and 2^32+1 wraps to 1
+TEST(TestNumbers, Issue54_PositiveExponentLargerThan32BitsDoesNotWrap)
+{
+  std::vector<std::string> values;
+  values.push_back("1e4294967296");  // becomes 1
+  values.push_back("1e4294967297");  // becomes 10
+  values.push_back("1e+4294967296");
+  values.push_back("1E4294967296");
+  values.push_back("1.5e4294967296");
+  values.push_back("1e18446744073709551617");
+  for (auto& value : values)
+  {
+    assert_rejected_or_infinite(value);
+  }
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// The unsigned exponent is multiplied by -1 so 2^32-1 becomes +1
+TEST(TestNumbers, Issue54_NegativeExponentLargerThan32BitsDoesNotWrap)
+{
+  std::vector<std::string> values;
+  values.push_back("1e-4294967295"); // becomes 10
+  values.push_back("1e-4294967296"); // becomes 1
+  values.push_back("1.5e-4294967295");
+  values.push_back("1e-18446744073709551617");
+  for (auto& value : values)
+  {
+    assert_rejected_or_zero(value);
+  }
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// 2^31 becomes INT_MIN, and -1 * INT_MIN is undefined behaviour.
+TEST(TestNumbers, Issue54_ExponentOfIntMinDoesNotWrap)
+{
+  assert_rejected_or_zero("1e-2147483648");
+  assert_rejected_or_infinite("1e2147483648");
+}
+
+// https://github.com/FFMG/tinyjson/issues/54
+// The reproduction given in the issue.
+TEST(TestNumbers, Issue54_ExampleFromTheIssue)
+{
+  auto json = TinyJSON::TJ::parse("[18446744073709551617, 1e4294967296]");
+  if (nullptr == json)
+  {
+    return;
+  }
+  auto jarray = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, jarray);
+  ASSERT_EQ(2u, jarray->get_number_of_items());
+
+  const auto first = jarray->at(0)->get_float();
+  const auto second = jarray->at(1)->get_float();
+  delete json;
+
+  ASSERT_NEAR(1.0L, first / 18446744073709551617.0L, 1e-9L);
+  ASSERT_TRUE(std::isinf(second));
+}
+
+
+// https://github.com/FFMG/tinyjson/issues/55
+// Whole numbers between 2^63 and 2^64-1 fit in an unsigned long long but not in a long long.
+// Either the number is rejected, (parse returns nullptr), or get_number() must not flip the sign,
+// (clamping or throwing are both acceptable), get_float() must keep (roughly) the real value
+// and dump() must give the original value back.
+static void assert_rejected_or_does_not_wrap_to_long_long(const std::string& value)
+{
+  auto json = TinyJSON::TJ::parse(value.c_str());
+  if (nullptr == json)
+  {
+    return;
+  }
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text) << "Value: " << value;
+  const std::string dumped(text);
+
+  const auto is_negative = value[0] == '-';
+  bool sign_is_preserved = true;
+  long long actual_number = 0;
+  try
+  {
+    actual_number = json->get_number();
+    sign_is_preserved = is_negative ? actual_number <= 0 : actual_number >= 0;
+  }
+  catch (const TinyJSON::TJParseException&)
+  {
+    // throwing because the number does not fit is acceptable.
+  }
+  delete json;
+
+  ASSERT_EQ(value, dumped);
+  ASSERT_TRUE(sign_is_preserved) << "Value: " << value << " was returned as " << actual_number;
+  assert_rejected_or_close_to(value, std::stold(value));
+}
+
+// https://github.com/FFMG/tinyjson/issues/55
+TEST(TestNumbers, Issue55_WholeNumberLargerThanLongLongDoesNotWrap)
+{
+  std::vector<std::string> values;
+  values.push_back("9223372036854775808");   // LLONG_MAX+1, becomes LLONG_MIN
+  values.push_back("9223372036854775809");
+  values.push_back("18446744073709551615");  // ULLONG_MAX, becomes -1
+  values.push_back("-9223372036854775809");  // LLONG_MIN-1, becomes LLONG_MAX
+  values.push_back("-18446744073709551615"); // becomes 1
+  for (auto& value : values)
+  {
+    assert_rejected_or_does_not_wrap_to_long_long(value);
+  }
+}
+
+// https://github.com/FFMG/tinyjson/issues/55
+// LLONG_MIN is a valid long long, but get_number() does -1 * LLONG_MIN which is undefined behaviour.
+TEST(TestNumbers, Issue55_WholeNumberLongLongMinIsValid)
+{
+  auto json = TinyJSON::TJ::parse("-9223372036854775808");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ("-9223372036854775808", text);
+
+  ASSERT_EQ(std::numeric_limits<long long>::min(), json->get_number());
+  delete json;
+}
+
+// https://github.com/FFMG/tinyjson/issues/55
+// LLONG_MAX is a valid long long and must not be affected by any fix.
+TEST(TestNumbers, Issue55_WholeNumberLongLongMaxIsValid)
+{
+  auto json = TinyJSON::TJ::parse("9223372036854775807");
+  ASSERT_NE(nullptr, json);
+
+  const auto& text = json->dump(TinyJSON::formatting::minify);
+  ASSERT_NE(nullptr, text);
+  ASSERT_STREQ("9223372036854775807", text);
+
+  ASSERT_EQ(std::numeric_limits<long long>::max(), json->get_number());
+  delete json;
+}
