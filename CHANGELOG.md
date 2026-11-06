@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Incremented version to 0.2.10.
 - **Breaking Change**: `get_number()` now clamps whole numbers that exceed `long long` range to `LLONG_MAX` or `LLONG_MIN` instead of wrapping around (e.g. `18446744073709551615` used to return `-1`). Use `get_float()` or `dump()` to retrieve the full value (see https://github.com/FFMG/tinyjson/issues/55).
+- Better error message when we are trying to cast a value in an array to a float or long, the message helps to locate where the issue might be.
 
 ### Fixed
 - Fixed a stack buffer overflow when dumping numbers with more than 254 fraction digits by dynamically sizing the buffer (see https://github.com/FFMG/tinyjson/issues/53).
