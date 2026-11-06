@@ -570,3 +570,113 @@ TEST(TJValueArray, OperatorBracketAccess)
 
   delete json;
 }
+
+static std::string get_numbers_exception_message(const char* source, const bool as_floats)
+{
+  TinyJSON::parse_options options = {};
+  options.specification = TinyJSON::parse_options::json5_1_0_0;
+  options.throw_exception = true;
+  auto* json = TinyJSON::TJ::parse(source, options);
+  if (nullptr == json)
+  {
+    return "<parse failed>";
+  }
+  auto* array = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  std::string message = "<no exception>";
+  try
+  {
+    if (as_floats)
+    {
+      array->get_floats();
+    }
+    else
+    {
+      array->get_numbers();
+    }
+  }
+  catch (const TinyJSON::TJParseException& ex)
+  {
+    message = ex.what();
+  }
+  delete json;
+  return message;
+}
+
+TEST(TJValueArray, GetNumbersErrorIncludesTheStringValueAndIndex)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value \"xyz\" at index 2 could not be converted to a number.",
+    get_numbers_exception_message(R"([1, 2, "xyz", 4])", false));
+}
+
+TEST(TJValueArray, GetFloatsErrorIncludesTheStringValueAndIndex)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value \"xyz\" at index 1 could not be converted to a number.",
+    get_numbers_exception_message(R"([1.5, "xyz", 4.5])", true));
+}
+
+TEST(TJValueArray, GetNumbersErrorIncludesTheBooleanValue)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value true at index 0 could not be converted to a number.",
+    get_numbers_exception_message(R"([true, 1])", false));
+}
+
+TEST(TJValueArray, GetFloatsErrorIncludesTheNullValue)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value null at index 1 could not be converted to a number.",
+    get_numbers_exception_message(R"([1.5, null])", true));
+}
+
+TEST(TJValueArray, GetNumbersErrorIncludesTheEmptyArrayValue)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value [] at index 1 could not be converted to a number.",
+    get_numbers_exception_message(R"([1, []])", false));
+}
+
+TEST(TJValueArray, GetNumbersErrorIndexDoesNotCountComments)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value \"xyz\" at index 1 could not be converted to a number.",
+    get_numbers_exception_message("[\n  1,\n  // a comment\n  /* another comment */\n  \"xyz\"\n]", false));
+}
+
+TEST(TJValueArray, GetNumbersErrorTruncatesLongValues)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value {\"key\":\"a very long value that w... at index 1 could not be converted to a number.",
+    get_numbers_exception_message(R"([1, {"key": "a very long value that will not fit in the message"}])", false));
+}
+
+TEST(TJValueArray, GetNumbersErrorDoesNotTruncateValuesThatFitExactly)
+{
+  // the string with its quotes is exactly 32 characters.
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value \"123456789012345678901234567890\" at index 0 could not be converted to a number.",
+    get_numbers_exception_message(R"(["123456789012345678901234567890"])", false));
+}
+
+TEST(TJValueArray, GetNumbersErrorReplacesNonAsciiCharacters)
+{
+  ASSERT_EQ(
+    "One or more values in the array is not a number! The value \"caf??\" at index 0 could not be converted to a number.",
+    get_numbers_exception_message("[\"caf\xC3\xA9\"]", false));
+}
+
+TEST(TJValueArray, GetNumbersErrorDoesNotThrowWhenExceptionsAreDisabled)
+{
+  TinyJSON::parse_options options = {};
+  options.throw_exception = false;
+  auto* json = TinyJSON::TJ::parse(R"([1, "xyz", 3])", options);
+  ASSERT_NE(nullptr, json);
+  auto* array = dynamic_cast<TinyJSON::TJValueArray*>(json);
+  ASSERT_NE(nullptr, array);
+  const auto numbers = array->get_numbers();
+  ASSERT_EQ(2u, numbers.size());
+  EXPECT_EQ(1, numbers[0]);
+  EXPECT_EQ(3, numbers[1]);
+  delete json;
+}
